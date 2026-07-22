@@ -16,6 +16,7 @@ pydantic==2.13.4
 python-dotenv==1.2.2
 
 # --- models + scoring (versions must match the pickled artifacts) ---
+faker==25.9.2                   # imported by src/data_gen, which pipeline.py imports
 numpy==1.26.4
 pandas==2.3.3
 scikit-learn==1.9.0
