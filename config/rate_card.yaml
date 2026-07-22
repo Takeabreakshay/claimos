@@ -1,0 +1,135 @@
+# =============================================================================
+# ClaimOS — parts + labour rate card  (LOGIC §1, user-supplied 2026-07-23)
+# -----------------------------------------------------------------------------
+# Deterministic repair-cost estimator. Turns a set of damaged parts (from the
+# vision model or the garage estimate line-items) into a P10/P50/P90 rupee band.
+#
+# Provenance:
+#   [SOURCED]  paint depreciation 50% on material · consumables 5-10% of subtotal
+#              (IRDAI Motor tariff / Master Circular depreciation grid).
+#   [DEFAULT]  every price, multiplier, and labour figure below — supplied by the
+#              domain brief, calibrated to the Indian aftermarket, tune on Bajaj
+#              data. Logged in ASSUMPTIONS.md (2026-07-23).
+#
+# All part prices are for a HATCHBACK base. Multiply by segment_mult · region_mult
+# (· import/ev multipliers where applicable). See src/rate_card.py for the
+# assembly formula (LOGIC §1.4-1.5).
+# =============================================================================
+
+# --- 1.1 Segment multipliers -------------------------------------------------
+segment_multipliers:            # [DEFAULT]
+  hatchback:     1.00           # Swift, i20, Baleno, Tiago
+  sedan:         1.35           # City, Verna, Dzire, Ciaz
+  compact_suv:   1.55           # Nexon, Venue, Sonet, Brezza
+  suv:           2.10           # Creta, Seltos, XUV700, Scorpio
+  luxury:        4.50           # Mercedes, BMW, Audi (CBU/CKD)
+  two_wheeler:   0.22           # Pulsar, Activa, Splendor
+default_segment: hatchback
+
+# Additional conditional multipliers.
+ev_electrical_mult:  1.25       # +25% on electrical/battery-adjacent parts  [DEFAULT]
+import_body_mult:    1.60       # +60% on body panels for imported/CBU        [DEFAULT]
+
+# --- 1.1b Region (city-tier) multiplier on the whole estimate ----------------
+# Not in the base spec as a part multiplier, but the labour table is tier-keyed;
+# we keep a light region multiplier on parts too (logistics/markup). [DEFAULT]
+region_multipliers:
+  metro:   1.00
+  tier2:   0.92
+  tier3:   0.85
+default_region: metro
+
+# --- 1.2 Part price + labour table (hatchback base) --------------------------
+# price: [low, high] rupees · labour_hrs · material class (drives depreciation) ·
+# flags: structural / airbag / hidden-risk escalators (LOGIC §1.5, §5).
+# material classes: plastic(50%) glass(0%) rubber(50%) battery(50%) metal(age) other
+parts:                          # [DEFAULT]
+  front_bumper:        {price: [4500, 9000],   labour_hrs: 2.5, material: plastic}
+  rear_bumper:         {price: [4000, 8500],   labour_hrs: 2.5, material: plastic}
+  bonnet:              {price: [8000, 16000],  labour_hrs: 3.5, material: metal}
+  front_fender:        {price: [3500, 7000],   labour_hrs: 2.5, material: metal}
+  rear_fender:         {price: [3500, 7000],   labour_hrs: 2.5, material: metal}
+  front_door:          {price: [12000, 22000], labour_hrs: 4.0, material: metal}
+  rear_door:           {price: [11000, 20000], labour_hrs: 4.0, material: metal}
+  boot_lid:            {price: [9000, 18000],  labour_hrs: 3.5, material: metal}
+  roof_panel:          {price: [15000, 30000], labour_hrs: 8.0, material: metal, structural: true}
+  quarter_panel:       {price: [10000, 20000], labour_hrs: 6.0, material: metal, structural: true}
+  headlamp:            {price: [6000, 18000],  labour_hrs: 1.0, material: plastic}
+  tail_lamp:           {price: [2500, 7000],   labour_hrs: 0.8, material: plastic}
+  windshield_front:    {price: [8000, 16000],  labour_hrs: 2.0, material: glass, hidden_risk: true}
+  windshield_rear:     {price: [5000, 11000],  labour_hrs: 1.8, material: glass}
+  door_glass:          {price: [2500, 5500],   labour_hrs: 1.2, material: glass}
+  orvm:                {price: [2000, 8000],   labour_hrs: 0.6, material: plastic}
+  grille:              {price: [2500, 6000],   labour_hrs: 0.8, material: plastic}
+  radiator:            {price: [6000, 14000],  labour_hrs: 3.0, material: metal, hidden_risk: true}
+  condenser:           {price: [7000, 15000],  labour_hrs: 3.0, material: metal, hidden_risk: true}
+  airbag:              {price: [18000, 45000], labour_hrs: 2.5, material: other, airbag: true}
+  airbag_module:       {price: [12000, 30000], labour_hrs: 2.0, material: metal, airbag: true}
+  suspension_strut:    {price: [4500, 9000],   labour_hrs: 2.0, material: metal}
+  alloy_wheel:         {price: [6000, 14000],  labour_hrs: 0.5, material: metal}
+  steel_wheel:         {price: [2000, 4000],   labour_hrs: 0.5, material: metal}
+  tyre:                {price: [3500, 8000],   labour_hrs: 0.4, material: rubber}
+  battery:             {price: [4500, 9000],   labour_hrs: 0.3, material: battery, ev_electrical: true}
+  engine_assembly:     {price: [60000, 180000], labour_hrs: 20.0, material: metal, structural: true, total_loss_check: true}
+  gearbox:             {price: [40000, 120000], labour_hrs: 12.0, material: metal, structural: true, total_loss_check: true}
+  chassis_straighten:  {price: [15000, 45000], labour_hrs: 14.0, material: labour_only, structural: true}
+
+# --- Paint (per panel) -------------------------------------------------------
+paint:                          # [DEFAULT] material · [SOURCED] 50% dep on material
+  material_per_panel: [2500, 4000]
+  labour_hrs_per_panel: 1.5
+  material_depreciation: 0.50
+
+# --- 1.3 Labour rates (rupees/hour) ------------------------------------------
+labour_rates:                   # [DEFAULT] {metro, tier2, tier3}
+  oem_network:      {metro: [550, 750],  tier2: [420, 550], tier3: [350, 450]}
+  multibrand:       {metro: [400, 550],  tier2: [320, 420], tier3: [260, 350]}
+  non_network:      {metro: [300, 450],  tier2: [250, 350], tier3: [200, 300]}
+  luxury_oem:       {metro: [1200, 2000],tier2: [900, 1400],tier3: [900, 1400]}
+# Map the app's garage_type -> a labour-rate class.
+garage_type_to_labour_class:
+  network:      oem_network
+  multibrand:   multibrand
+  non_network:  non_network
+  luxury:       luxury_oem
+default_labour_class: multibrand
+
+# --- 1.4 Assembly params -----------------------------------------------------
+consumables_rate: [0.05, 0.10]  # [SOURCED] fraction of subtotal
+uncertainty:                    # [DEFAULT] band = base + per_part·n + structural
+  base: 0.15
+  per_part: 0.05
+  structural: 0.10
+
+# --- Depreciation grid (age-based, for metal parts) --------------------------
+# [SOURCED] IRDAI standard parts-depreciation tariff for metal/painted parts.
+metal_depreciation_by_age:      # vehicle_age_years upper bound -> depreciation
+  - {max_years: 0.5,  dep: 0.00}
+  - {max_years: 1.0,  dep: 0.05}
+  - {max_years: 2.0,  dep: 0.10}
+  - {max_years: 3.0,  dep: 0.15}
+  - {max_years: 4.0,  dep: 0.25}
+  - {max_years: 5.0,  dep: 0.35}
+  - {max_years: 10.0, dep: 0.40}
+  - {max_years: 999,  dep: 0.50}
+fixed_material_depreciation:    # non-metal classes: fixed rate regardless of age
+  plastic: 0.50
+  rubber:  0.50
+  battery: 0.50
+  glass:   0.00
+  other:   0.00
+  labour_only: 0.00
+
+# --- 1.5 Hard severity escalators (override ₹ value) -------------------------
+# Any of these on a claim => minimum Lane 2, never Touchless (LOGIC §1.5, §5).
+hard_escalators:                # [DEFAULT, strongly recommended]
+  - airbag_deployed             # any airbag part present
+  - structural                  # roof/quarter/chassis/engine/gearbox
+# total-loss trigger: assessed_cost > total_loss_idv_ratio · IDV  (LOGIC §2.4)
+total_loss_idv_ratio: 0.75      # [SOURCED]
+
+# --- Fraud / mismatch reconciliation thresholds (LOGIC §1.3, §4) -------------
+reconciliation:                 # [DEFAULT]
+  non_network_inflation_mult: 1.30   # non_network AND claim > 1.3x predicted -> tell
+  lane2_inflation_mult: 1.30         # claim > 1.3x line-item -> Lane 2
+  lane3_inflation_mult: 1.80         # claim > 1.8x line-item -> Lane 3 + inflation flag

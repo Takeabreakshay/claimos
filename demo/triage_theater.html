@@ -1,0 +1,693 @@
+<style>
+  /* ============================ TOKENS ============================ */
+  :root{
+    --navy:#0B2A5B; --blue:#1E6FD9; --blue-2:#3b86ef;
+    --ink:#141b26; --slate:#5A6A80; --slate-2:#7c8aa0;
+    --canvas:#eef3fb; --panel:#ffffff; --line:#dbe3f0; --line-2:#e8eef8;
+    --shadow:0 1px 2px rgba(11,42,91,.06), 0 8px 24px rgba(11,42,91,.06);
+    --shadow-lg:0 2px 6px rgba(11,42,91,.08), 0 18px 48px rgba(11,42,91,.12);
+    /* lane trio */
+    --l1-fg:#14532D; --l1-bg:#E4F5E9; --l1-line:#bfe6cd;
+    --l2-fg:#7A5A00; --l2-bg:#FFF4D6; --l2-line:#f0dfa6;
+    --l3-fg:#7B1B12; --l3-bg:#FDE7E7; --l3-line:#f4c4c1;
+    --good:#14803a; --warn:#a9700a; --bad:#b21f13;
+    --r:12px; --r-sm:8px;
+    --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --navy:#dbe6fb; --blue:#5b9bff; --blue-2:#7db0ff;
+      --ink:#e7edf7; --slate:#9aa8bf; --slate-2:#8595ad;
+      --canvas:#0a0f1a; --panel:#101725; --line:#20293b; --line-2:#1a2130;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+      --shadow-lg:0 2px 8px rgba(0,0,0,.5), 0 24px 60px rgba(0,0,0,.5);
+      --l1-fg:#7fe6a6; --l1-bg:#0f2a1b; --l1-line:#1f4a32;
+      --l2-fg:#f4cf72; --l2-bg:#2b2410; --l2-line:#4d4020;
+      --l3-fg:#f4a19a; --l3-bg:#2c1614; --l3-line:#4d2723;
+      --good:#4bd07e; --warn:#e6b350; --bad:#f2776b;
+    }
+  }
+  :root[data-theme="light"]{
+    --navy:#0B2A5B; --blue:#1E6FD9; --blue-2:#3b86ef; --ink:#141b26; --slate:#5A6A80; --slate-2:#7c8aa0;
+    --canvas:#eef3fb; --panel:#ffffff; --line:#dbe3f0; --line-2:#e8eef8;
+    --shadow:0 1px 2px rgba(11,42,91,.06), 0 8px 24px rgba(11,42,91,.06);
+    --shadow-lg:0 2px 6px rgba(11,42,91,.08), 0 18px 48px rgba(11,42,91,.12);
+    --l1-fg:#14532D; --l1-bg:#E4F5E9; --l1-line:#bfe6cd;
+    --l2-fg:#7A5A00; --l2-bg:#FFF4D6; --l2-line:#f0dfa6;
+    --l3-fg:#7B1B12; --l3-bg:#FDE7E7; --l3-line:#f4c4c1;
+    --good:#14803a; --warn:#a9700a; --bad:#b21f13;
+  }
+  :root[data-theme="dark"]{
+    --navy:#dbe6fb; --blue:#5b9bff; --blue-2:#7db0ff; --ink:#e7edf7; --slate:#9aa8bf; --slate-2:#8595ad;
+    --canvas:#0a0f1a; --panel:#101725; --line:#20293b; --line-2:#1a2130;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+    --shadow-lg:0 2px 8px rgba(0,0,0,.5), 0 24px 60px rgba(0,0,0,.5);
+    --l1-fg:#7fe6a6; --l1-bg:#0f2a1b; --l1-line:#1f4a32;
+    --l2-fg:#f4cf72; --l2-bg:#2b2410; --l2-line:#4d4020;
+    --l3-fg:#f4a19a; --l3-bg:#2c1614; --l3-line:#4d2723;
+    --good:#4bd07e; --warn:#e6b350; --bad:#f2776b;
+  }
+
+  *{box-sizing:border-box}
+  .wrap{
+    font-family:var(--sans); color:var(--ink); background:var(--canvas);
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+    padding:clamp(16px,3vw,36px); min-height:100%;
+  }
+  .shell{max-width:1200px;margin:0 auto}
+  h1,h2,h3{margin:0;text-wrap:balance;letter-spacing:-.02em}
+  .num{font-variant-numeric:tabular-nums lining-nums}
+  .mono{font-family:var(--mono)}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--slate)}
+
+  /* ============================ HEADER ============================ */
+  .top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:40px;height:40px;border-radius:11px;flex:none;
+    background:linear-gradient(150deg,var(--blue),var(--navy));
+    display:grid;place-items:center;box-shadow:var(--shadow)}
+  .logo svg{width:22px;height:22px}
+  .brand h1{font-size:20px;font-weight:800;color:var(--navy)}
+  .brand p{margin:2px 0 0;font-size:12.5px;color:var(--slate)}
+  .toolbar{display:flex;gap:8px;align-items:center}
+  .theme-btn{font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--slate);
+    background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;
+    display:flex;gap:6px;align-items:center;transition:border-color .15s,color .15s}
+  .theme-btn:hover{border-color:var(--blue);color:var(--blue)}
+
+  /* contrast banner */
+  .contrast{margin-top:22px;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);
+    background:linear-gradient(115deg,var(--navy),#123a76 60%,var(--blue));
+    color:#fff;padding:22px 26px;display:flex;align-items:center;gap:26px;flex-wrap:wrap}
+  .contrast .big{font-size:clamp(26px,4vw,40px);font-weight:800;letter-spacing:-.03em;display:flex;align-items:baseline;gap:14px}
+  .contrast .big .vs{font-size:15px;font-weight:600;opacity:.7;letter-spacing:.06em}
+  .contrast .big s{color:#ffd0cb;text-decoration-thickness:2px;opacity:.9}
+  .contrast .sub{font-size:13px;opacity:.85;max-width:340px;line-height:1.45}
+  .contrast .sub b{color:#bfe6cd}
+
+  /* ============================ SELECTOR ============================ */
+  .selector{margin-top:26px}
+  .seg{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{flex:1;min-width:210px;text-align:left;cursor:pointer;background:var(--panel);
+    border:1.5px solid var(--line);border-radius:var(--r);padding:14px 16px;
+    transition:border-color .18s,box-shadow .18s,transform .18s;font-family:var(--sans)}
+  .chip:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+  .chip[aria-selected="true"]{border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 18%,transparent)}
+  .chip .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:8px}
+  .chip .t{font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center}
+  .chip .d{font-size:12px;color:var(--slate);margin-top:4px}
+
+  /* ============================ STAGE ============================ */
+  .stage{display:grid;grid-template-columns:minmax(300px,0.85fr) 1.3fr;gap:20px;margin-top:22px;align-items:start}
+  @media (max-width:900px){.stage{grid-template-columns:1fr}}
+  .pane-label{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .pane-label .eyebrow{color:var(--slate)}
+  .pane-label .tag{font-size:10.5px;font-weight:700;color:var(--blue);background:color-mix(in srgb,var(--blue) 12%,transparent);
+    padding:2px 8px;border-radius:999px;letter-spacing:.04em}
+
+  /* customer phone */
+  .phone{background:var(--panel);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow-lg);
+    padding:14px;max-width:360px;margin:0 auto}
+  .phone-notch{width:110px;height:5px;border-radius:9px;background:var(--line);margin:2px auto 12px}
+  .phone-screen{border-radius:16px;overflow:hidden}
+  .cust-head{padding:4px 6px 14px;display:flex;justify-content:space-between;align-items:center}
+  .cust-head .app{font-size:12.5px;font-weight:700;color:var(--navy)}
+  .cust-head .cid{font-size:11px;color:var(--slate)}
+  .outcome{border-radius:14px;padding:18px;border:1px solid;transition:background .3s,border-color .3s}
+  .lane1 .outcome{background:var(--l1-bg);border-color:var(--l1-line)}
+  .lane2 .outcome{background:var(--l2-bg);border-color:var(--l2-line)}
+  .lane3 .outcome{background:var(--l3-bg);border-color:var(--l3-line)}
+  .oc-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;margin-bottom:12px;background:var(--panel)}
+  .lane1 .oc-icon{color:var(--l1-fg)} .lane2 .oc-icon{color:var(--l2-fg)} .lane3 .oc-icon{color:var(--l3-fg)}
+  .oc-status{font-size:13px;font-weight:700;letter-spacing:.02em}
+  .lane1 .oc-status{color:var(--l1-fg)} .lane2 .oc-status{color:var(--l2-fg)} .lane3 .oc-status{color:var(--l3-fg)}
+  .oc-money{font-size:34px;font-weight:800;letter-spacing:-.03em;color:var(--ink);margin:8px 0 2px}
+  .oc-line{font-size:13px;color:var(--ink);opacity:.9}
+  .oc-time{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:12px;font-weight:700;
+    background:var(--panel);color:var(--ink);padding:6px 11px;border-radius:999px;border:1px solid var(--line)}
+  .oc-reason{margin-top:13px;font-size:12.5px;line-height:1.5;color:var(--ink);opacity:.92;
+    border-top:1px dashed;padding-top:11px}
+  .lane1 .oc-reason{border-color:var(--l1-line)} .lane2 .oc-reason{border-color:var(--l2-line)} .lane3 .oc-reason{border-color:var(--l3-line)}
+  .legal{margin-top:12px;font-size:12px;background:var(--panel);border:1px solid var(--l2-line);
+    border-left:3px solid var(--l2-fg);border-radius:8px;padding:9px 11px;color:var(--ink);display:flex;gap:8px}
+  .legal b{color:var(--l2-fg)}
+
+  /* tracker */
+  .tracker{margin-top:14px;padding:14px 8px 6px}
+  .step{display:flex;gap:11px;position:relative;padding-bottom:16px}
+  .step:last-child{padding-bottom:2px}
+  .step .rail{position:absolute;left:8px;top:18px;bottom:-2px;width:2px;background:var(--line)}
+  .step:last-child .rail{display:none}
+  .step .bead{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);background:var(--panel);flex:none;z-index:1;
+    display:grid;place-items:center}
+  .step.done .bead{background:var(--good);border-color:var(--good)}
+  .step.done .rail{background:var(--good)}
+  .step.active .bead{border-color:var(--blue);box-shadow:0 0 0 4px color-mix(in srgb,var(--blue) 18%,transparent)}
+  .step .lbl{font-size:12.5px;font-weight:600;color:var(--ink)}
+  .step.pending .lbl{color:var(--slate-2)}
+  .step .ts{font-size:11px;color:var(--slate);margin-top:1px}
+  .bead svg{width:10px;height:10px;color:#fff}
+
+  /* insurer console */
+  .console{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+  .con-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line-2);flex-wrap:wrap}
+  .con-head .cid{font-size:13px;font-weight:800;color:var(--navy)}
+  .con-head .meta{font-size:11.5px;color:var(--slate);margin-top:2px;display:flex;gap:12px;flex-wrap:wrap}
+  .con-head .meta b{color:var(--ink);font-weight:600}
+  .rows{padding:6px 0}
+  .row{display:grid;grid-template-columns:88px 1fr auto;gap:12px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--line-2);
+    opacity:0;transform:translateY(6px)}
+  .row.in{opacity:1;transform:none;transition:opacity .4s ease,transform .4s ease}
+  .row:last-child{border-bottom:none}
+  .row .mod{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--slate)}
+  .row .val{font-size:14px;font-weight:700;color:var(--ink)}
+  .row .rc{font-size:11.5px;color:var(--slate);margin-top:2px;line-height:1.4}
+  .row .rc code{font-family:var(--mono);font-size:10.5px;background:var(--canvas);padding:1px 5px;border-radius:5px;color:var(--slate)}
+  .costbar{height:8px;border-radius:6px;background:var(--line-2);position:relative;margin-top:7px;max-width:260px}
+  .costbar .band{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--blue) 30%,transparent);border-radius:6px}
+  .costbar .p50{position:absolute;top:-3px;width:3px;height:14px;border-radius:2px;background:var(--blue)}
+  .costbar .claim{position:absolute;top:-5px;width:2px;height:18px;background:var(--bad)}
+
+  /* chips */
+  .conf{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:999px;
+    border:1px solid var(--line);color:var(--ink);background:var(--canvas);white-space:nowrap}
+  .conf .cdot{width:7px;height:7px;border-radius:50%}
+  .conf.hi .cdot{background:var(--good)} .conf.mid .cdot{background:var(--warn)} .conf.lo .cdot{background:var(--bad)}
+
+  .lanebadge{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;padding:6px 12px;border-radius:999px;border:1px solid}
+  .lanebadge svg{width:13px;height:13px}
+  .lb1{color:var(--l1-fg);background:var(--l1-bg);border-color:var(--l1-line)}
+  .lb2{color:var(--l2-fg);background:var(--l2-bg);border-color:var(--l2-line)}
+  .lb3{color:var(--l3-fg);background:var(--l3-bg);border-color:var(--l3-line)}
+
+  /* decision */
+  .decision{padding:16px 18px;background:var(--canvas);border-top:1px solid var(--line-2)}
+  .dec-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .dec-score{display:flex;align-items:baseline;gap:8px}
+  .dec-score .s{font-size:30px;font-weight:800;letter-spacing:-.03em;color:var(--ink)}
+  .dec-score .of{font-size:12px;color:var(--slate)}
+  .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .btn{font-family:var(--sans);font-size:12.5px;font-weight:700;padding:9px 14px;border-radius:9px;cursor:pointer;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink);transition:transform .12s,border-color .15s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .btn.primary:hover{background:var(--blue-2)}
+
+  /* ============================ SECTION shell ============================ */
+  .section{margin-top:34px}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+  .sec-head h2{font-size:19px;font-weight:800;color:var(--navy)}
+  .sec-head p{font-size:13px;color:var(--slate);margin:0}
+
+  /* graph */
+  .graphcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);
+    display:grid;grid-template-columns:1.4fr 1fr;gap:0;overflow:hidden}
+  @media (max-width:760px){.graphcard{grid-template-columns:1fr}}
+  #graph{width:100%;height:340px;display:block;background:
+    radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--blue) 7%,transparent),transparent 60%)}
+  .graph-side{padding:18px;border-left:1px solid var(--line-2);display:flex;flex-direction:column;gap:12px}
+  @media (max-width:760px){.graph-side{border-left:none;border-top:1px solid var(--line-2)}}
+  .gstat{display:flex;align-items:baseline;gap:8px}
+  .gstat .v{font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .gstat .k{font-size:12px;color:var(--slate)}
+  .glegend{display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--slate)}
+  .glegend span{display:inline-flex;align-items:center;gap:8px}
+  .glegend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .gnote{font-size:12.5px;line-height:1.5;color:var(--ink);background:var(--canvas);border-radius:9px;padding:11px 12px;border:1px solid var(--line-2)}
+
+  /* scale dashboard */
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media (max-width:760px){.kpis{grid-template-columns:1fr}}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow)}
+  .kpi .eyebrow{margin-bottom:10px}
+  .kpi .v{font-size:40px;font-weight:800;letter-spacing:-.035em;color:var(--ink);line-height:1}
+  .kpi .sub{font-size:12.5px;color:var(--slate);margin-top:8px;line-height:1.45}
+  .kpi.safe{border-color:var(--l1-line)}
+  .kpi .flow{display:flex;align-items:baseline;gap:9px}
+  .kpi .flow .from{font-size:20px;color:var(--slate);font-weight:700}
+  .kpi .flow .ar{color:var(--blue)}
+  .gauge{height:9px;border-radius:6px;background:var(--line-2);margin-top:12px;position:relative;overflow:hidden}
+  .gauge .fill{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--good)}
+  .gauge .ceil{position:absolute;top:-3px;width:2px;height:15px;background:var(--bad)}
+  .ceil-lbl{font-size:11px;color:var(--bad);font-weight:700;margin-top:8px}
+
+  .dist{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);margin-top:16px}
+  .distbar{display:flex;height:34px;border-radius:8px;overflow:hidden;margin-top:12px;border:1px solid var(--line-2)}
+  .distbar .seg2{display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff;min-width:0}
+  .distleg{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--slate)}
+  .distleg span{display:inline-flex;align-items:center;gap:7px}
+  .distleg i{width:11px;height:11px;border-radius:3px}
+
+  .modelcard{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+  @media (max-width:640px){.modelcard{grid-template-columns:repeat(2,1fr)}}
+  .mc{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:13px 15px;box-shadow:var(--shadow)}
+  .mc .k{font-size:11px;color:var(--slate);font-weight:600}
+  .mc .v{font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-.02em;margin-top:3px}
+  .mc .t{font-size:10.5px;color:var(--good);font-weight:700;margin-top:2px}
+
+  .foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--slate);
+    display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .foot code{font-family:var(--mono)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+    .row{opacity:1;transform:none}
+  }
+</style>
+
+<div class="wrap">
+<div class="shell">
+
+  <!-- HEADER -->
+  <div class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3v6c0 4.5-3.2 8.3-8 11-4.8-2.7-8-6.5-8-11V5l8-3z" fill="#fff" opacity=".95"/><path d="M8.5 12.2l2.4 2.4 4.6-5" stroke="#0B2A5B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h1>ClaimOS <span style="font-weight:600;color:var(--slate);font-size:14px">&#183; Triage Theater</span></h1>
+        <p>Risk-based triage for motor claims &#8212; one claim, two lenses. <span style="opacity:.8">Bajaj Finserv ATOM S9</span></p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="theme-btn" id="themeToggle" type="button" aria-label="Toggle colour theme">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+        <span id="themeLbl">Theme</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTRAST BANNER -->
+  <div class="contrast">
+    <div class="big num"><span>3 minutes</span><span class="vs">vs</span><s>14 days manual</s></div>
+    <div class="sub">Every claim runs the same heavy path today. ClaimOS sends each down the lane its risk actually warrants &#8212; and never trades <b>fraud safety</b> for speed.</div>
+  </div>
+
+  <!-- SELECTOR -->
+  <div class="selector">
+    <div class="eyebrow" style="margin-bottom:10px">Pick a seeded claim &#8212; watch it resolve in both views</div>
+    <div class="seg" role="tablist" id="seg">
+      <button class="chip" role="tab" data-k="clean" aria-selected="true">
+        <span class="t"><span class="dot" style="background:var(--l1-fg)"></span>Clean claim</span>
+        <span class="d">Low value &#183; low fraud &#183; high confidence &#8594; Touchless</span>
+      </button>
+      <button class="chip" role="tab" data-k="fraud_ring" aria-selected="false">
+        <span class="t"><span class="dot" style="background:var(--l3-fg)"></span>Fraud-ring claim</span>
+        <span class="d">Collusion network detected &#8594; Investigative</span>
+      </button>
+      <button class="chip" role="tab" data-k="late_valid" aria-selected="false">
+        <span class="t"><span class="dot" style="background:var(--l2-fg)"></span>Late-but-valid</span>
+        <span class="d">Routed to a human, not auto-rejected &#8594; Assisted</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- STAGE -->
+  <div class="stage">
+    <!-- CUSTOMER -->
+    <div>
+      <div class="pane-label"><span class="eyebrow">Customer</span><span class="tag">mobile app</span></div>
+      <div class="phone" id="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="cust-head">
+            <span class="app">My Claim</span>
+            <span class="cid mono" id="cust-cid">&#8212;</span>
+          </div>
+          <div class="outcome" id="outcome"></div>
+          <div class="tracker" id="tracker"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INSURER -->
+    <div>
+      <div class="pane-label"><span class="eyebrow">Insurer</span><span class="tag">claims-ops console</span></div>
+      <div class="console">
+        <div class="con-head">
+          <div>
+            <div class="cid mono" id="con-cid">&#8212;</div>
+            <div class="meta" id="con-meta"></div>
+          </div>
+          <div id="con-lane"></div>
+        </div>
+        <div class="rows" id="rows"></div>
+        <div class="decision">
+          <div class="dec-top">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">Triage decision</div>
+              <div class="dec-score"><span class="s num" id="score">&#8212;</span><span class="of">/ 100 automation score</span></div>
+            </div>
+            <div id="dec-lane"></div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="act-primary" type="button">Approve</button>
+            <button class="btn" type="button">Override</button>
+            <button class="btn" type="button">Request evidence</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FRAUD GRAPH -->
+  <div class="section">
+    <div class="sec-head">
+      <h2>Collusion graph</h2>
+      <p>Network fraud a single-claim view can't see &#8212; shared garages, surveyors &amp; accounts across "independent" claims.</p>
+    </div>
+    <div class="graphcard">
+      <svg id="graph" viewBox="0 0 460 340" role="img" aria-label="Collusion ring graph"></svg>
+      <div class="graph-side">
+        <div class="gstat"><span class="v num" id="ringrisk" style="color:var(--l3-fg)">&#8212;</span><span class="k">ring-risk score</span></div>
+        <div class="gnote" id="graphnote">&#8212;</div>
+        <div class="glegend">
+          <span><i style="background:var(--l3-fg)"></i>Claim in a detected ring</span>
+          <span><i style="background:var(--blue)"></i>Shared entity (garage / surveyor / account)</span>
+          <span><i style="background:var(--slate-2)"></i>Isolated / genuine claim</span>
+        </div>
+        <div style="font-size:11.5px;color:var(--slate);margin-top:auto">Graph model recovers <b style="color:var(--ink)">100%</b> of seeded rings on 50k claims.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCALE DASHBOARD -->
+  <div class="section">
+    <div class="sec-head">
+      <h2>The book at scale</h2>
+      <p>Does it move the number, and is it safe? Three answers, on 50,000 claims.</p>
+    </div>
+    <div class="kpis">
+      <div class="kpi">
+        <div class="eyebrow">Auto-settled (Touchless)</div>
+        <div class="v num" id="k-touch">&#8212;</div>
+        <div class="sub">of claims clear straight-through, no human &#8212; bounded by the leakage ceiling, not forced.</div>
+      </div>
+      <div class="kpi">
+        <div class="eyebrow">Settled within 7 days</div>
+        <div class="flow"><span class="from num" id="k-t7from">&#8212;</span><span class="ar">&#8594;</span><span class="v num" id="k-t7to">&#8212;</span></div>
+        <div class="sub">Low-risk claims settle in days; Lane 3 stays deliberately thorough.</div>
+      </div>
+      <div class="kpi safe">
+        <div class="eyebrow">Lane-1 leakage &#8212; the make-or-break</div>
+        <div class="v num" id="k-leak" style="color:var(--good)">&#8212;</div>
+        <div class="gauge"><div class="fill" id="leakfill"></div><div class="ceil" id="leakceil"></div></div>
+        <div class="ceil-lbl">&#9650; 1.5% hard ceiling &#8212; auto-tightens before it ships</div>
+      </div>
+    </div>
+
+    <div class="dist">
+      <div class="eyebrow">How the book self-sorts</div>
+      <div class="distbar" id="distbar"></div>
+      <div class="distleg" id="distleg"></div>
+    </div>
+
+    <div class="modelcard" id="modelcard"></div>
+  </div>
+
+  <div class="foot">
+    <span>100% synthetic data &#183; all rails mocked &#183; zero external API keys &#183; deterministic <code>SEED=42</code></span>
+    <span>Numbers are live from the ClaimOS evaluation harness on 50,000 claims.</span>
+  </div>
+
+</div>
+</div>
+
+<script id="demo-data" type="application/json">
+{"claims":{
+"clean":{"claim_id":"CLM0000001","claim_type":"OD","claim_amount":11267,"idv":294583,"severity":"moderate","garage_type":"network","geo":"urban","vehicle_age":5.0,"policy_status":"active","intimation_gt_48h":0,"outcome":"lane1_touchless","reasons":["all_lane1_conditions_met"],"legal_check":false,"p_fraud":0.0081,"p_escalation":0.0418,"confidence":0.8679,"cost_p10":21801,"cost_p50":24821,"cost_p90":30572,"ring_risk":0.0,"final_settlement":9016,"fraud_drivers":[["is_non_network",-0.3877],["intimation_delay_hours",-0.2937],["rail_days_since_last_claim",-0.2417]],"cost_drivers":[["idv",-24459.27],["severity_ord",-13083.39],["is_theft_total",-5946.83]],"escalation_drivers":[["vehicle_age_years",0.342],["severity_ord",0.3306],["is_TP",-0.3031]],"coverage_reason":"none"},
+"fraud_ring":{"claim_id":"CLM0000012","claim_type":"OD","claim_amount":61227,"idv":1043909,"severity":"minor","garage_type":"network","geo":"urban","vehicle_age":1.7,"policy_status":"active","intimation_gt_48h":0,"outcome":"lane3_investigative","reasons":["fraud_prob>=0.5"],"legal_check":false,"p_fraud":1.0,"p_escalation":0.0418,"confidence":0.89,"cost_p10":27136,"cost_p50":30984,"cost_p90":33104,"ring_risk":0.992,"final_settlement":27122,"fraud_drivers":[["mod_mismatch",1.5759],["claim_to_predicted_ratio",0.5386],["is_non_network",-0.4385]],"cost_drivers":[["severity_ord",-69871.48],["idv",43481.75],["is_theft_total",-11375.14]],"escalation_drivers":[["is_TP",-0.2924],["claim_to_idv_ratio",0.2677],["severity_ord",0.1951]],"coverage_reason":"undeclared_modification"},
+"late_valid":{"claim_id":"CLM0000027","claim_type":"OD","claim_amount":15697,"idv":643609,"severity":"minor","garage_type":"network","geo":"urban","vehicle_age":11.3,"policy_status":"active","intimation_gt_48h":1,"outcome":"lane2_assisted","reasons":["legal_check:delayed_intimation_valid_reason"],"legal_check":true,"p_fraud":0.0447,"p_escalation":0.0418,"confidence":0.8621,"cost_p10":15893,"cost_p50":18933,"cost_p90":22616,"ring_risk":0.0,"final_settlement":8607,"fraud_drivers":[["intimation_delay_hours",0.835],["intimation_gt_48h",0.4421],["is_non_network",-0.4304]],"cost_drivers":[["severity_ord",-53469.79],["idv",10632.44],["is_theft_total",-7472.07]],"escalation_drivers":[["is_TP",-0.3295],["severity_ord",0.2719],["photo_quality_score",0.1846]],"coverage_reason":"none"}},
+"ring_graph":{"nodes":[
+{"id":"CLM0000012","type":"claim","ring_risk":0.99},{"id":"CLM0002151","type":"claim","ring_risk":0.99},{"id":"CLM0008698","type":"claim","ring_risk":0.99},{"id":"CLM0009516","type":"claim","ring_risk":0.99},{"id":"CLM0014459","type":"claim","ring_risk":0.99},{"id":"CLM0018042","type":"claim","ring_risk":0.99},{"id":"CLM0022748","type":"claim","ring_risk":0.99},{"id":"CLM0025107","type":"claim","ring_risk":0.99},
+{"id":"garage:RGAR020_0","type":"garage","label":"RGAR020_0"},{"id":"surveyor:RSUR020","type":"surveyor","label":"RSUR020"},{"id":"bank:RAC020","type":"bank","label":"RAC020"}],
+"edges":[
+{"source":"CLM0000012","target":"garage:RGAR020_0"},{"source":"CLM0002151","target":"garage:RGAR020_0"},{"source":"CLM0008698","target":"garage:RGAR020_0"},{"source":"CLM0009516","target":"garage:RGAR020_0"},{"source":"CLM0014459","target":"garage:RGAR020_0"},{"source":"CLM0018042","target":"garage:RGAR020_0"},{"source":"CLM0022748","target":"garage:RGAR020_0"},{"source":"CLM0025107","target":"garage:RGAR020_0"},
+{"source":"CLM0000012","target":"surveyor:RSUR020"},{"source":"CLM0002151","target":"surveyor:RSUR020"},{"source":"CLM0008698","target":"surveyor:RSUR020"},{"source":"CLM0009516","target":"surveyor:RSUR020"},{"source":"CLM0014459","target":"surveyor:RSUR020"},{"source":"CLM0018042","target":"surveyor:RSUR020"},{"source":"CLM0022748","target":"surveyor:RSUR020"},{"source":"CLM0025107","target":"surveyor:RSUR020"},
+{"source":"CLM0000012","target":"bank:RAC020"},{"source":"CLM0002151","target":"bank:RAC020"},{"source":"CLM0008698","target":"bank:RAC020"},{"source":"CLM0009516","target":"bank:RAC020"},{"source":"CLM0014459","target":"bank:RAC020"},{"source":"CLM0018042","target":"bank:RAC020"},{"source":"CLM0022748","target":"bank:RAC020"},{"source":"CLM0025107","target":"bank:RAC020"}],
+"ring_id":20,"n_members":8},
+"scale":{"n_claims":50000,"lane1_leakage_count":0.01195,"lane1_leakage_ceiling":0.015,"leakage_under_ceiling":true,"touchless_share":0.2511,
+"lane_mix":{"lane2_assisted":16836,"lane1_touchless":12554,"retake":10315,"coverage_reject":6223,"lane3_investigative":4072},
+"fraud":{"auc":0.9322,"precision":0.8836,"recall":0.4981,"f1":0.6371,"brier":0.0477,"ece":0.0225},
+"escalation":{"auc":0.8667,"brier":0.0491},
+"cost":{"mae":7491.83,"mape":0.1041},
+"tat":{"baseline_median_days":16.35,"triaged_median_days":2.59,"pct_within_7d_baseline":0.0167,"pct_within_7d_triaged":0.5497}},
+"seed":42}
+</script>
+<script>
+(function(){
+  "use strict";
+  const DEMO = JSON.parse(document.getElementById("demo-data").textContent);
+  const rupee = n => "&#8377;" + Math.round(n).toLocaleString("en-IN");
+  const pct = (x,d=1) => (x*100).toFixed(d) + "%";
+  const LANE = {
+    lane1_touchless:{n:1,label:"Touchless",cls:"lb1",pane:"lane1"},
+    lane2_assisted:{n:2,label:"Assisted",cls:"lb2",pane:"lane2"},
+    lane3_investigative:{n:3,label:"Investigative",cls:"lb3",pane:"lane3"},
+    retake:{n:0,label:"Evidence retake",cls:"lb2",pane:"lane2"},
+    coverage_reject:{n:0,label:"Coverage review",cls:"lb3",pane:"lane3"}
+  };
+  const shield = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 2.5v5C19 15 16 18.5 12 20.5 8 18.5 5 15 5 10.5v-5L12 3z"/><path d="M9 12l2 2 4-4"/></svg>';
+  const clock = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  const search = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.2-3.2"/></svg>';
+  const check = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg>';
+
+  function confClass(c){ return c>=0.85?"hi":c>=0.6?"mid":"lo"; }
+  function confChip(c,label){
+    return '<span class="conf '+confClass(c)+'"><span class="cdot"></span>'+label+' '+Math.round(c*100)+'%</span>';
+  }
+  // component certainty = distance from decision boundary
+  const cCert = p => Math.min(1, 2*Math.abs(p-0.5));
+
+  function laneBadge(outcome){
+    const L = LANE[outcome]||LANE.lane2_assisted;
+    const icon = L.n===1?shield:L.n===3?search:clock;
+    return '<span class="lanebadge '+L.cls+'">'+icon+'Lane '+(L.n||"&#183;")+' &#183; '+L.label+'</span>';
+  }
+
+  /* ---------------- customer ---------------- */
+  function renderCustomer(c){
+    const L = LANE[c.outcome];
+    document.getElementById("phone").className = "phone " + L.pane;
+    document.getElementById("cust-cid").textContent = c.claim_id;
+
+    let icon, status, money, line, time, reason;
+    if(c.outcome==="lane1_touchless"){
+      icon=shield; status="APPROVED &#8212; SETTLING NOW";
+      money=rupee(c.final_settlement); line="Paid straight to your account.";
+      time="Settled in ~3 minutes";
+      reason="Low value, low fraud signals and high model confidence &#8212; cleared straight through. No paperwork, no wait.";
+    } else if(c.outcome==="lane3_investigative"){
+      icon=search; status="A QUICK ADDITIONAL CHECK";
+      money=rupee(c.cost_p50); line="Estimated repair &#8212; under review.";
+      time="Decision in ~2&#8211;3 days";
+      reason="We spotted signals that need a specialist to confirm before we pay, so your claim is handled fairly and accurately. A named investigator is assigned.";
+    } else {
+      icon=clock; status="ALMOST THERE";
+      money=rupee(c.cost_p50); line="A claims officer is confirming your estimate.";
+      time="Expected by 6 pm today";
+      reason="Your claim is complete &#8212; an officer is doing a final confirmation. You'll get the payout as soon as it's approved.";
+    }
+    let legal = c.legal_check ? '<div class="legal"><span>&#9878;</span><span><b>Handled fairly.</b> Late intimation with a valid reason is <b>not</b> auto-rejected (Supreme Court rulings) &#8212; a person reviews it.</span></div>' : "";
+
+    document.getElementById("outcome").innerHTML =
+      '<div class="oc-icon">'+icon+'</div>'+
+      '<div class="oc-status">'+status+'</div>'+
+      '<div class="oc-money num">'+money+'</div>'+
+      '<div class="oc-line">'+line+'</div>'+
+      '<div class="oc-time num">'+clock+time+'</div>'+
+      legal+
+      '<div class="oc-reason">'+reason+'</div>';
+
+    // tracker
+    const steps = [["Reported","done"],["Verified","done"],["Assessed","done"]];
+    if(c.outcome==="lane1_touchless"){ steps.push(["Decision","done"],["Payout","done"]); }
+    else if(c.outcome==="lane3_investigative"){ steps.push(["Decision","active"],["Payout","pending"]); }
+    else { steps.push(["Decision","active"],["Payout","pending"]); }
+    const now=new Date();
+    document.getElementById("tracker").innerHTML = steps.map((s,i)=>{
+      const bead = s[1]==="done"? '<span class="bead">'+check+'</span>' : '<span class="bead"></span>';
+      const ts = s[1]==="pending" ? "" : '<div class="ts num">'+new Date(now.getTime()-(steps.length-i)*90000).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})+'</div>';
+      return '<div class="step '+s[1]+'"><div class="rail"></div>'+bead+'<div><div class="lbl">'+s[0]+'</div>'+ts+'</div></div>';
+    }).join("");
+  }
+
+  /* ---------------- insurer ---------------- */
+  function renderInsurer(c){
+    document.getElementById("con-cid").innerHTML = c.claim_id + "  &#183;  " + c.claim_type;
+    document.getElementById("con-meta").innerHTML =
+      'Claimed <b class="num">'+rupee(c.claim_amount)+'</b>'+
+      '<span>IDV <b class="num">'+rupee(c.idv)+'</b></span>'+
+      '<span>'+c.severity+'</span><span>'+c.geo+'</span>'+
+      '<span>'+c.vehicle_age+'y</span><span>'+c.garage_type.replace("_","-")+'</span>';
+    document.getElementById("con-lane").innerHTML = laneBadge(c.outcome);
+    document.getElementById("dec-lane").innerHTML = laneBadge(c.outcome);
+
+    // automation score: high for touchless, low for lane3
+    const score = Math.round(c.confidence*100*(c.outcome==="lane1_touchless"?1: c.outcome==="lane3_investigative"?0.35:0.7));
+
+    const gap = c.claim_amount / Math.max(c.cost_p50,1);
+    const claimPos = Math.max(4, Math.min(96, (c.claim_amount-c.cost_p10)/Math.max(c.cost_p90-c.cost_p10,1)*100));
+    const bandL = 8, bandR = 92, p50pos = Math.max(bandL,Math.min(bandR,(c.cost_p50-c.cost_p10)/Math.max(c.cost_p90-c.cost_p10,1)*84+8));
+    const drv = a => a.slice(0,2).map(d=>'<code>'+d[0]+'</code>').join(" ");
+
+    const rows = [
+      {mod:"Cost", val:rupee(c.cost_p50)+' <span style="font-weight:600;color:var(--slate);font-size:12px">P50</span>',
+       rc:'Band '+rupee(c.cost_p10)+'&#8211;'+rupee(c.cost_p90)+' &#183; claimed '+(gap>1.15?'<b style="color:var(--bad)">'+gap.toFixed(2)+'&#215; predicted</b>':gap.toFixed(2)+'&#215;')+
+          '<div class="costbar"><div class="band" style="left:'+bandL+'%;right:'+(100-bandR)+'%"></div><div class="p50" style="left:'+p50pos+'%"></div><div class="claim" style="left:'+claimPos+'%"></div></div>',
+       conf:cCert(0.5-Math.min(0.49,(c.cost_p90-c.cost_p10)/(2*c.cost_p50))) , confLbl:"cost", raw:1-Math.min(1,(c.cost_p90-c.cost_p10)/(2*c.cost_p50))},
+      {mod:"Fraud", val:pct(c.p_fraud,0)+' probability',
+       rc:'Top drivers '+drv(c.fraud_drivers), conf:cCert(c.p_fraud), confLbl:"conf", raw:cCert(c.p_fraud)},
+      {mod:"Escalation", val:pct(c.p_escalation,0)+' jumper/sleeper',
+       rc:'Latent 90-day risk &#183; drivers '+drv(c.escalation_drivers), conf:cCert(c.p_escalation), confLbl:"conf", raw:cCert(c.p_escalation)},
+      {mod:"Coverage", val:(c.coverage_reason==="none"?'Clear':c.coverage_reason==="undeclared_modification"?'Flag':'Review'),
+       rc:(c.coverage_reason==="none"?'Policy active &#183; eligible &#183; docs verified':'Rule hit: <code>'+c.coverage_reason+'</code>')+(c.legal_check?' &#183; <b style="color:var(--l2-fg)">legal-check: late-but-valid</b>':''),
+       conf:1, confLbl:"rule", raw:1}
+    ];
+    const rowsEl = document.getElementById("rows");
+    rowsEl.innerHTML = rows.map(r=>
+      '<div class="row"><div class="mod">'+r.mod+'</div>'+
+      '<div><div class="val">'+r.val+'</div><div class="rc">'+r.rc+'</div></div>'+
+      '<div>'+confChip(Math.max(0,Math.min(1,r.raw)), r.confLbl)+'</div></div>'
+    ).join("");
+
+    // count-up score + staggered rows
+    animateScore(score);
+    const rowEls=[...rowsEl.children];
+    rowEls.forEach((el,i)=> setTimeout(()=>el.classList.add("in"), 90*i+60));
+  }
+
+  let scoreTimer;
+  function animateScore(target){
+    const el=document.getElementById("score"); clearInterval(scoreTimer);
+    if(matchMedia("(prefers-reduced-motion:reduce)").matches){el.textContent=target;return;}
+    let v=0; const step=Math.max(1,Math.round(target/26));
+    scoreTimer=setInterval(()=>{v+=step; if(v>=target){v=target;clearInterval(scoreTimer);} el.textContent=v;},22);
+  }
+
+  /* ---------------- graph ---------------- */
+  function renderGraph(key){
+    const svg=document.getElementById("graph"); const g=DEMO.ring_graph;
+    const isRing = key==="fraud_ring";
+    const cx=225, cy=168, R=112;
+    const NS="http://www.w3.org/2000/svg"; svg.innerHTML="";
+    if(!isRing){
+      // isolated / genuine
+      const c=DEMO.claims[key];
+      const node=document.createElementNS(NS,"circle");
+      node.setAttribute("cx",cx);node.setAttribute("cy",cy);node.setAttribute("r",22);
+      node.setAttribute("fill","var(--panel)");node.setAttribute("stroke","var(--slate-2)");node.setAttribute("stroke-width","2");
+      svg.appendChild(node);
+      const t=document.createElementNS(NS,"text");
+      t.setAttribute("x",cx);t.setAttribute("y",cy+42);t.setAttribute("text-anchor","middle");
+      t.setAttribute("fill","var(--slate)");t.setAttribute("font-size","12");t.setAttribute("font-family","var(--sans)");
+      t.textContent="No shared entities &#8212; isolated claim";
+      svg.appendChild(t);
+      document.getElementById("ringrisk").textContent = "0.00";
+      document.getElementById("ringrisk").style.color="var(--slate)";
+      document.getElementById("graphnote").innerHTML = "This "+(key==="clean"?"clean":"late-but-valid")+" claim links to <b>no</b> other claims. Genuine claims sit alone in the graph &#8212; nothing to investigate.";
+      return;
+    }
+    const claims=g.nodes.filter(n=>n.type==="claim");
+    const ents=g.nodes.filter(n=>n.type!=="claim");
+    const pos={};
+    claims.forEach((n,i)=>{ const a=-Math.PI/2 + i/claims.length*2*Math.PI; pos[n.id]=[cx+R*Math.cos(a), cy+R*Math.sin(a)]; });
+    const entColors={garage:"#1E6FD9",surveyor:"#3b86ef",bank:"#5b9bff"};
+    ents.forEach((n,i)=>{ pos[n.id]=[cx+(i-1)*54, cy+(i%2?18:-14)]; });
+    // edges
+    g.edges.forEach(e=>{
+      const a=pos[e.source], b=pos[e.target]; if(!a||!b) return;
+      const ln=document.createElementNS(NS,"line");
+      ln.setAttribute("x1",a[0]);ln.setAttribute("y1",a[1]);ln.setAttribute("x2",b[0]);ln.setAttribute("y2",b[1]);
+      ln.setAttribute("stroke","var(--l3-line)");ln.setAttribute("stroke-width","1.3");ln.setAttribute("opacity","0");
+      svg.appendChild(ln);
+      requestAnimationFrame(()=>{ln.style.transition="opacity .5s";ln.setAttribute("opacity","0.7");});
+    });
+    // entity nodes
+    ents.forEach(n=>{ const p=pos[n.id];
+      const c=document.createElementNS(NS,"rect");
+      c.setAttribute("x",p[0]-9);c.setAttribute("y",p[1]-9);c.setAttribute("width",18);c.setAttribute("height",18);c.setAttribute("rx",5);
+      c.setAttribute("fill",entColors[n.type]||"#1E6FD9");svg.appendChild(c);
+      const t=document.createElementNS(NS,"text");
+      t.setAttribute("x",p[0]);t.setAttribute("y",p[1]+22);t.setAttribute("text-anchor","middle");
+      t.setAttribute("fill","var(--slate)");t.setAttribute("font-size","9.5");t.setAttribute("font-family","var(--mono)");
+      t.textContent=n.type;svg.appendChild(t);
+    });
+    // claim nodes (glow)
+    claims.forEach((n,i)=>{ const p=pos[n.id];
+      const glow=document.createElementNS(NS,"circle");
+      glow.setAttribute("cx",p[0]);glow.setAttribute("cy",p[1]);glow.setAttribute("r",16);
+      glow.setAttribute("fill","var(--l3-fg)");glow.setAttribute("opacity","0.14");svg.appendChild(glow);
+      const c=document.createElementNS(NS,"circle");
+      c.setAttribute("cx",p[0]);c.setAttribute("cy",p[1]);c.setAttribute("r",9);
+      c.setAttribute("fill","var(--l3-fg)");c.setAttribute("stroke","var(--panel)");c.setAttribute("stroke-width","2");
+      c.setAttribute("opacity","0"); svg.appendChild(c);
+      setTimeout(()=>{c.style.transition="opacity .4s";c.setAttribute("opacity","1");
+        glow.style.transition="r 1.4s ease-in-out";},120*i+250);
+    });
+    document.getElementById("ringrisk").textContent = g.nodes.find(n=>n.type==="claim").ring_risk.toFixed(2);
+    document.getElementById("ringrisk").style.color="var(--l3-fg)";
+    document.getElementById("graphnote").innerHTML = "<b>"+g.n_members+" &#8220;independent&#8221; claims</b> funnel through the <b>same garage, surveyor and bank account</b>. A single-claim view misses this; the graph makes the ring glow.";
+  }
+
+  /* ---------------- scale dashboard ---------------- */
+  function renderScale(){
+    const s=DEMO.scale;
+    document.getElementById("k-touch").textContent = pct(s.touchless_share);
+    document.getElementById("k-t7from").textContent = pct(s.tat.pct_within_7d_baseline,0);
+    document.getElementById("k-t7to").textContent = pct(s.tat.pct_within_7d_triaged,0);
+    document.getElementById("k-leak").textContent = pct(s.lane1_leakage_count,2);
+    const leakPctOfCeil = Math.min(100, s.lane1_leakage_count/s.lane1_leakage_ceiling*100);
+    document.getElementById("leakfill").style.width = leakPctOfCeil+"%";
+    document.getElementById("leakceil").style.left = "100%";
+
+    // distribution
+    const mix=s.lane_mix, total=s.n_claims;
+    const order=[["lane1_touchless","Touchless","var(--l1-fg)"],["lane2_assisted","Assisted","var(--l2-fg)"],
+      ["retake","Evidence retake","var(--blue)"],["coverage_reject","Coverage review","var(--slate)"],
+      ["lane3_investigative","Investigative","var(--l3-fg)"]];
+    document.getElementById("distbar").innerHTML = order.filter(o=>mix[o[0]]).map(o=>{
+      const w=mix[o[0]]/total*100;
+      return '<div class="seg2" style="flex:'+w+' 0 0;background:'+o[2]+'">'+(w>7?Math.round(w)+"%":"")+'</div>';
+    }).join("");
+    document.getElementById("distleg").innerHTML = order.filter(o=>mix[o[0]]).map(o=>
+      '<span><i style="background:'+o[2]+'"></i>'+o[1]+' &#183; '+(mix[o[0]]/total*100).toFixed(1)+'%</span>').join("");
+
+    const mc=[
+      ["Fraud ROC-AUC", s.fraud.auc.toFixed(3), "target > 0.80"],
+      ["Escalation AUC", s.escalation.auc.toFixed(3), "target > 0.70"],
+      ["Cost MAPE", pct(s.cost.mape,1), "target < 25%"],
+      ["Calibration Brier", s.fraud.brier.toFixed(3), "target < 0.15"]
+    ];
+    document.getElementById("modelcard").innerHTML = mc.map(m=>
+      '<div class="mc"><div class="k">'+m[0]+'</div><div class="v num">'+m[1]+'</div><div class="t">'+m[2]+' &#10003;</div></div>').join("");
+  }
+
+  /* ---------------- wire up ---------------- */
+  function select(key){
+    const c=DEMO.claims[key];
+    document.querySelectorAll("#seg .chip").forEach(ch=>ch.setAttribute("aria-selected", ch.dataset.k===key));
+    const L=LANE[c.outcome];
+    document.getElementById("act-primary").textContent = c.outcome==="lane1_touchless"?"Confirm auto-settlement":c.outcome==="lane3_investigative"?"Assign investigator":"Approve estimate";
+    renderCustomer(c);
+    renderInsurer(c);
+    renderGraph(key);
+  }
+  document.querySelectorAll("#seg .chip").forEach(ch=>ch.addEventListener("click",()=>select(ch.dataset.k)));
+
+  // theme toggle
+  const root=document.documentElement, tl=document.getElementById("themeLbl");
+  function setLbl(){ const d=getComputedStyle(root).getPropertyValue("--canvas").trim(); tl.textContent = (root.getAttribute("data-theme")||"") ? (root.getAttribute("data-theme")==="dark"?"Light":"Dark") : "Theme"; }
+  document.getElementById("themeToggle").addEventListener("click",()=>{
+    const cur=root.getAttribute("data-theme");
+    const next = cur==="dark"?"light": cur==="light"?"dark" : (matchMedia("(prefers-color-scheme:dark)").matches?"light":"dark");
+    root.setAttribute("data-theme",next); tl.textContent = next==="dark"?"Light":"Dark";
+    // re-render graph so SVG picks up new colours (currentColor-free)
+    const sel=document.querySelector('#seg .chip[aria-selected="true"]'); if(sel) renderGraph(sel.dataset.k);
+  });
+
+  renderScale();
+  select("clean");
+})();
+</script>

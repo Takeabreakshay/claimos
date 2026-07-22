@@ -1,0 +1,66 @@
+[tool.poetry]
+name = "claimos"
+version = "0.1.0"
+description = "ClaimOS — a risk-triage decision layer for motor-insurance claims (Bajaj Finserv ATOM S9 prototype). Scores each claim and routes it into Touchless / Assisted / Investigative lanes on calibrated synthetic data. No real PII, no production APIs."
+authors = ["Utkarsh Sharma <you@example.com>"]
+readme = "README.md"
+license = "Proprietary"
+packages = [{ include = "src" }]
+
+# ---------------------------------------------------------------------------
+# Poetry keeps the project structured: one manifest, one locked dependency set,
+# one virtual environment. Run everything through `poetry run ...` so the env
+# is always the one described here. See CLAUDE.md for the full build brief.
+# ---------------------------------------------------------------------------
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+pandas = "^2.2"
+numpy = "^1.26"
+lightgbm = "^4.3"
+scikit-learn = "^1.4"
+shap = "^0.45"
+networkx = "^3.3"
+pyyaml = "^6.0"
+matplotlib = "^3.8"
+joblib = "^1.4"
+faker = "^25.0"            # synthetic, clearly-fake Indian names / plates
+streamlit = "^1.35"        # demo/app.py only — drop if you build a static HTML demo
+supabase = "^2.31.0"
+imagehash = "^4.3.2"
+python-dotenv = "^1.2.2"
+rapidocr-onnxruntime = "^1.4.4"
+fastapi = "^0.139.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2"
+ruff = "^0.4"              # lint + format, keeps the code tidy
+black = "^24.4"
+
+# Convenience entry points — `poetry run <name>`
+[tool.poetry.scripts]
+claimos-generate = "src.data_gen:main"
+claimos-pipeline = "src.pipeline:main"
+claimos-evaluate = "src.evaluate:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# ---------------------------------------------------------------------------
+# Tooling config (kept in-manifest so there's a single source of structure)
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]

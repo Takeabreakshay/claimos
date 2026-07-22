@@ -1,0 +1,87 @@
+# =============================================================================
+# ClaimOS — routing thresholds  (Phase 4 · the wedge · see CLAUDE.md §6)
+# -----------------------------------------------------------------------------
+# These are TUNABLE. The pipeline may auto-tighten Lane 1 if leakage exceeds the
+# ceiling in config below — but it must never loosen past a leaky point silently.
+# The ₹50,000 max_claim_amount is the IRDAI surveyor-mandate ANCHOR — do not
+# change it without flagging in ASSUMPTIONS.md and the deck.
+# =============================================================================
+
+# Routing order (enforced in triage.py):
+#   1) evidence_gap  -> if triggered, RETAKE (bounded), then re-score
+#   2) lane3 triggers (ANY)   -> Investigative
+#   3) lane1 conditions (ALL) -> Touchless
+#   4) else                   -> Assisted (default)
+
+evidence_gap:
+  min_component_confidence: 0.60   # any critical signal below this -> retake loop
+  max_retake_loops: 1
+
+lane1_touchless:                   # ALL must hold to auto-settle
+  max_claim_amount: 50000          # [ANCHOR] IRDAI surveyor-mandate seam
+  max_fraud_prob: 0.07             # tightened 0.10 -> 0.07 on 2026-07-20 per the Bajaj
+                                   # feature brief. Measured cost: ZERO — the sweep in
+                                   # reports/threshold_sweep.json shows identical touchless
+                                   # (25.11%) and leakage (1.195%) anywhere in 0.06-0.10,
+                                   # because calibrated fraud scores are bimodal.
+  min_confidence: 0.80             # calibrated fraud certainty (see model_params.
+                                   # escalation_in_confidence). Lowered 0.85 -> 0.80 on
+                                   # 2026-07-23: the 0.85 floor was binding on nearly the
+                                   # whole book, capping touchless at ~5%. The envelope
+                                   # backtest shows 0.80 is safe when paired with the fraud
+                                   # gate; the auto-tighten guardrail still holds leakage < ceiling.
+  max_escalation_prob: 0.15
+  allowed_severity: [minor, moderate]
+  require_coverage_clear: true
+  require_intimation_ok: true      # <=48h OR intimation_reason_valid
+
+lane3_investigative:               # ANY trigger routes here
+  min_fraud_prob: 0.50
+  high_value_threshold: 200000
+  severities: [total]
+  min_escalation_prob: 0.50
+  tp_with_injury: true
+
+# lane2_assisted has no thresholds — it is the default catch-all.
+
+# --- Guardrail: Lane-1 leakage ceiling (the make-or-break metric) -----------
+guardrails:
+  lane1_leakage_ceiling: 0.015     # 1.5% max fraud false-clear in Lane 1.
+                                   # If exceeded: auto-tighten (raise min_confidence,
+                                   # lower max_fraud_prob) and re-evaluate. Never ship above this.
+
+# --- Duplicate / re-filing detection (LOGIC §3, four-tier) ------------------
+# The coarse single-window rule under-/over-fires; the four-tier rule (T1-T4) is
+# sharper. Jaccard overlap on damaged-parts sets drives T2/T4. [DEFAULT, tune on data]
+duplicate_detection:
+  window_days: 30                  # legacy coarse window (still used as a fallback)
+  amount_tolerance: 0.20
+  parts_overlap_jaccard: 0.60      # T2/T4 fire at/above this parts overlap
+  t2_window_days: 7                # near-duplicate incident spacing
+  t2_amount_tolerance: 0.25
+  t3_window_days: 90               # re-filing after a rejection/withdrawal
+  t4_window_days: 180              # same-part repeat with no repair evidence between
+  frequency_12m_flag: 3            # >=3 claims on a private car in 12m -> flag
+  frequency_30d_lane3: 2           # >=2 claims within 30d -> Lane 3
+  near_inception_days: 15          # incident within N days of inception -> flag (backdating)
+  near_expiry_days: 7              # incident within N days before expiry -> flag
+
+# --- Damage-mismatch action policy (LOGIC §4) -------------------------------
+# vision_severity - declared_severity, on the ordinal minor<moderate<severe<total.
+# These are HARD rules, not advisory (advisory mismatch detection is worthless).
+damage_mismatch:
+  severity_rank: {minor: 0, moderate: 1, severe: 2, total: 3}
+  silent_tolerance_confidence: 0.75  # 1 rank disagreement silent only below this conf
+  fraud_bump_on_over_declared: 0.15  # delta <= -2 (declared >> visible) -> +0.15 p_fraud
+  # delta >= +2 -> Lane 3 ; delta == +1 -> Lane 2 ; delta == -1 -> Lane 2 ; delta <= -2 -> Lane 3
+
+# --- Vision confidence floor (LOGIC §5, value-tiered) -----------------------
+# Below the floor for the claim's value band, the damage read isn't trusted for
+# Touchless -> force Lane 2. >50k never Touchless anyway (the 50k anchor).
+vision_confidence_floor:
+  - {max_value: 25000,  floor: 0.80}
+  - {max_value: 50000,  floor: 0.88}
+capture_quality_min: 0.60          # below this -> request retake (don't score the photo)
+min_photos: 4                      # fewer -> request more angles (advisory)
+exif_staleness_hours: 72           # EXIF vs incident gap beyond this -> flag
+non_network_confidence_penalty: 0.05  # raise the floor when garage is non-network

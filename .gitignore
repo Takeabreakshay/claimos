@@ -1,0 +1,58 @@
+# ============================================================
+# ClaimOS .gitignore
+# Commit: source, configs, CLAUDE.md, README, ASSUMPTIONS, poetry.lock,
+#         and ONE small sample dataset (data/synth/sample_100.csv).
+# Ignore: generated data, trained models, reports, envs, caches.
+# ============================================================
+
+# --- Generated synthetic data (regenerable; seed-deterministic) ---
+data/synth/*
+!data/synth/.gitkeep
+!data/synth/sample_100.csv      # keep a tiny sample for reviewers
+
+# --- Trained model artifacts ---
+# The .pkl artifacts (8 MB) ARE committed so the deployed web service can score
+# without retraining on boot. Everything else under models/ stays ignored.
+models/*
+!models/.gitkeep
+!models/*.pkl
+
+# --- Eval outputs & figures (regenerable) ---
+reports/*
+!reports/.gitkeep
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# --- Poetry / virtual envs ---
+.venv/
+venv/
+env/
+# NOTE: DO commit poetry.lock (it pins the exact env). It is NOT ignored.
+
+# --- Testing / tooling caches ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- Notebooks (if any) ---
+.ipynb_checkpoints/
+
+# --- Secrets / local env (never commit keys) ---
+.env
+.env.*
+*.key
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

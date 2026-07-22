@@ -1,0 +1,74 @@
+# =============================================================================
+# ClaimOS — coverage matrix  (LOGIC §2, user-supplied 2026-07-23)
+# -----------------------------------------------------------------------------
+# Deductibles, NCB, add-ons, and the settlement waterfall. Drives the live
+# coverage engine's 4-state decision (CLEAR / FLAG / HARD_DECLINE / LEGAL_WEAK)
+# and the payable computation.
+#
+# Provenance:
+#   [SOURCED]  compulsory excess grid · NCB slab · owner-driver PA ₹15L ·
+#              total-loss at 75% IDV — IRDAI Motor tariff / Master Circular.
+#   [DEFAULT]  add-on eligibility ages/caps, invoice-variance tolerance,
+#              voluntary-excess options offered — Bajaj's exact wording governs.
+# =============================================================================
+
+# --- 2.1 Deductibles ---------------------------------------------------------
+compulsory_excess:              # [SOURCED] mandatory, not waivable (rupees)
+  private_car:
+    lt_1500cc: 1000
+    gte_1500cc: 2000
+  two_wheeler:
+    lt_150cc: 100
+    gte_150cc: 200
+voluntary_excess_options: [0, 2500, 5000, 7500, 15000]   # [DEFAULT] opted at purchase
+
+# --- 2.2 NCB slab ------------------------------------------------------------
+ncb_slab:                       # [SOURCED] consecutive claim-free years -> NCB %
+  - {years: 1, ncb: 0.20}
+  - {years: 2, ncb: 0.25}
+  - {years: 3, ncb: 0.35}
+  - {years: 4, ncb: 0.45}
+  - {years: 5, ncb: 0.50}      # 5+
+ncb_resets_on_od_claim: true    # any OD claim resets NCB to 0 (TP-only does not)
+ncb_protect_default_claims_allowed: 1   # [DEFAULT] NCB Protect: claims/yr w/o reset
+
+# --- 2.3 Add-on rules --------------------------------------------------------
+addons:                         # [DEFAULT eligibility unless noted]
+  zero_depreciation:
+    max_vehicle_age_years: 5
+    claims_per_year_cap: 2
+  engine_protection:
+    max_vehicle_age_years: 7
+  consumables:
+    max_vehicle_age_years: 999
+  return_to_invoice:
+    max_vehicle_age_years: 3
+  roadside_assistance: {}
+  key_replacement: {}
+  tyre_protector: {}
+personal_accident_cover: 1500000   # [SOURCED] mandatory owner-driver PA ₹15 lakh
+
+# --- 2.4 Settlement waterfall params -----------------------------------------
+total_loss_idv_ratio: 0.75      # [SOURCED] assessed > 75% IDV -> total-loss branch
+idv_depreciation_by_age:        # [SOURCED] IDV depreciation grid (total-loss payout)
+  - {max_years: 0.5,  dep: 0.05}
+  - {max_years: 1.0,  dep: 0.15}
+  - {max_years: 2.0,  dep: 0.20}
+  - {max_years: 3.0,  dep: 0.30}
+  - {max_years: 4.0,  dep: 0.40}
+  - {max_years: 5.0,  dep: 0.50}
+  - {max_years: 999,  dep: 0.50}
+
+# --- 2.5 Peril / cover rules -------------------------------------------------
+# An OD (own-damage) claim on a third-party-only policy is an instant decline.
+cover_type_allows:              # product_type -> claim_types payable
+  comprehensive: [OD, TP, theft_total]
+  od_only:       [OD]
+  tp_only:       [TP]
+engine_damage_needs_addon: engine_protection   # peril excluded without it
+
+# --- Invoice / estimate reconciliation ---------------------------------------
+invoice_variance_reapproval: 0.15   # [DEFAULT] final bill > estimate by >15% -> re-approve
+
+# --- Intimation window (fairness / legal-weak) -------------------------------
+intimation_late_hours: 48       # > this = "late"; late-alone is NOT auto-reject

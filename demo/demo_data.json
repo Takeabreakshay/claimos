@@ -1,0 +1,428 @@
+{
+  "claims": {
+    "clean": {
+      "claim_id": "CLM0000001",
+      "claim_type": "OD",
+      "claim_amount": 11267,
+      "idv": 294583,
+      "severity": "moderate",
+      "garage_type": "network",
+      "geo": "urban",
+      "vehicle_age": 5.0,
+      "policy_status": "active",
+      "intimation_gt_48h": 0,
+      "outcome": "lane1_touchless",
+      "reasons": [
+        "all_lane1_conditions_met"
+      ],
+      "legal_check": false,
+      "p_fraud": 0.0081,
+      "p_escalation": 0.0418,
+      "confidence": 0.8679,
+      "cost_p10": 21801,
+      "cost_p50": 24821,
+      "cost_p90": 30572,
+      "ring_risk": 0.0,
+      "final_settlement": 9016,
+      "fraud_drivers": [
+        [
+          "is_non_network",
+          -0.3877
+        ],
+        [
+          "intimation_delay_hours",
+          -0.2937
+        ],
+        [
+          "rail_days_since_last_claim",
+          -0.2417
+        ]
+      ],
+      "cost_drivers": [
+        [
+          "idv",
+          -24459.2747
+        ],
+        [
+          "severity_ord",
+          -13083.387
+        ],
+        [
+          "is_theft_total",
+          -5946.8264
+        ]
+      ],
+      "escalation_drivers": [
+        [
+          "vehicle_age_years",
+          0.342
+        ],
+        [
+          "severity_ord",
+          0.3306
+        ],
+        [
+          "is_TP",
+          -0.3031
+        ]
+      ],
+      "plain_reason": "Auto-settled (Touchless): claim Rs11,267 is under the Rs50,000 seam, fraud probability 1% is low, and model confidence is high. Top fraud signals: is_non_network, intimation_delay_hours, rail_days_since_last_claim. Estimated repair (P50): Rs24,821.",
+      "coverage_reason": "none"
+    },
+    "fraud_ring": {
+      "claim_id": "CLM0000012",
+      "claim_type": "OD",
+      "claim_amount": 61227,
+      "idv": 1043909,
+      "severity": "minor",
+      "garage_type": "network",
+      "geo": "urban",
+      "vehicle_age": 1.7,
+      "policy_status": "active",
+      "intimation_gt_48h": 0,
+      "outcome": "lane3_investigative",
+      "reasons": [
+        "fraud_prob>=0.5"
+      ],
+      "legal_check": false,
+      "p_fraud": 1.0,
+      "p_escalation": 0.0418,
+      "confidence": 0.89,
+      "cost_p10": 27136,
+      "cost_p50": 30984,
+      "cost_p90": 33104,
+      "ring_risk": 0.992,
+      "final_settlement": 27122,
+      "fraud_drivers": [
+        [
+          "mod_mismatch",
+          1.5759
+        ],
+        [
+          "claim_to_predicted_ratio",
+          0.5386
+        ],
+        [
+          "is_non_network",
+          -0.4385
+        ]
+      ],
+      "cost_drivers": [
+        [
+          "severity_ord",
+          -69871.4765
+        ],
+        [
+          "idv",
+          43481.7456
+        ],
+        [
+          "is_theft_total",
+          -11375.1415
+        ]
+      ],
+      "escalation_drivers": [
+        [
+          "is_TP",
+          -0.2924
+        ],
+        [
+          "claim_to_idv_ratio",
+          0.2677
+        ],
+        [
+          "severity_ord",
+          0.1951
+        ]
+      ],
+      "plain_reason": "Routed to Investigative: fraud_prob>=0.5. Top fraud signals: mod_mismatch, claim_to_predicted_ratio, is_non_network. Estimated repair (P50): Rs30,984.",
+      "coverage_reason": "undeclared_modification"
+    },
+    "late_valid": {
+      "claim_id": "CLM0000027",
+      "claim_type": "OD",
+      "claim_amount": 15697,
+      "idv": 643609,
+      "severity": "minor",
+      "garage_type": "network",
+      "geo": "urban",
+      "vehicle_age": 11.3,
+      "policy_status": "active",
+      "intimation_gt_48h": 1,
+      "outcome": "lane2_assisted",
+      "reasons": [
+        "legal_check:delayed_intimation_valid_reason"
+      ],
+      "legal_check": true,
+      "p_fraud": 0.0447,
+      "p_escalation": 0.0418,
+      "confidence": 0.8621,
+      "cost_p10": 15893,
+      "cost_p50": 18933,
+      "cost_p90": 22616,
+      "ring_risk": 0.0,
+      "final_settlement": 8607,
+      "fraud_drivers": [
+        [
+          "intimation_delay_hours",
+          0.835
+        ],
+        [
+          "intimation_gt_48h",
+          0.4421
+        ],
+        [
+          "is_non_network",
+          -0.4304
+        ]
+      ],
+      "cost_drivers": [
+        [
+          "severity_ord",
+          -53469.7922
+        ],
+        [
+          "idv",
+          10632.4435
+        ],
+        [
+          "is_theft_total",
+          -7472.0653
+        ]
+      ],
+      "escalation_drivers": [
+        [
+          "is_TP",
+          -0.3295
+        ],
+        [
+          "severity_ord",
+          0.2719
+        ],
+        [
+          "photo_quality_score",
+          0.1846
+        ]
+      ],
+      "plain_reason": "Routed to Assisted (officer review): legal_check:delayed_intimation_valid_reason. Legal-check flag: late intimation with a valid reason is NOT auto-rejected (SC rulings) \u2014 a human confirms the decision. Top fraud signals: intimation_delay_hours, intimation_gt_48h, is_non_network. Estimated repair (P50): Rs18,933.",
+      "coverage_reason": "none"
+    }
+  },
+  "ring_graph": {
+    "nodes": [
+      {
+        "id": "CLM0000012",
+        "type": "claim",
+        "ring_risk": 0.99
+      },
+      {
+        "id": "CLM0002151",
+        "type": "claim",
+        "ring_risk": 0.99
+      },
+      {
+        "id": "CLM0008698",
+        "type": "claim",
+        "ring_risk": 0.99
+      },
+      {
+        "id": "CLM0009516",
+        "type": "claim",
+        "ring_risk": 0.99
+      },
+      {
+        "id": "CLM0014459",
+        "type": "claim",
+        "ring_risk": 0.99
+      },
+      {
+        "id": "CLM0018042",
+        "type": "claim",
+        "ring_risk": 0.99
+      },
+      {
+        "id": "CLM0022748",
+        "type": "claim",
+        "ring_risk": 0.99
+      },
+      {
+        "id": "CLM0025107",
+        "type": "claim",
+        "ring_risk": 0.99
+      },
+      {
+        "id": "garage:RGAR020_0",
+        "type": "garage",
+        "label": "RGAR020_0"
+      },
+      {
+        "id": "surveyor:RSUR020",
+        "type": "surveyor",
+        "label": "RSUR020"
+      },
+      {
+        "id": "bank:RAC020",
+        "type": "bank",
+        "label": "RAC020"
+      }
+    ],
+    "edges": [
+      {
+        "source": "CLM0000012",
+        "target": "garage:RGAR020_0"
+      },
+      {
+        "source": "CLM0002151",
+        "target": "garage:RGAR020_0"
+      },
+      {
+        "source": "CLM0008698",
+        "target": "garage:RGAR020_0"
+      },
+      {
+        "source": "CLM0009516",
+        "target": "garage:RGAR020_0"
+      },
+      {
+        "source": "CLM0014459",
+        "target": "garage:RGAR020_0"
+      },
+      {
+        "source": "CLM0018042",
+        "target": "garage:RGAR020_0"
+      },
+      {
+        "source": "CLM0022748",
+        "target": "garage:RGAR020_0"
+      },
+      {
+        "source": "CLM0025107",
+        "target": "garage:RGAR020_0"
+      },
+      {
+        "source": "CLM0000012",
+        "target": "surveyor:RSUR020"
+      },
+      {
+        "source": "CLM0002151",
+        "target": "surveyor:RSUR020"
+      },
+      {
+        "source": "CLM0008698",
+        "target": "surveyor:RSUR020"
+      },
+      {
+        "source": "CLM0009516",
+        "target": "surveyor:RSUR020"
+      },
+      {
+        "source": "CLM0014459",
+        "target": "surveyor:RSUR020"
+      },
+      {
+        "source": "CLM0018042",
+        "target": "surveyor:RSUR020"
+      },
+      {
+        "source": "CLM0022748",
+        "target": "surveyor:RSUR020"
+      },
+      {
+        "source": "CLM0025107",
+        "target": "surveyor:RSUR020"
+      },
+      {
+        "source": "CLM0000012",
+        "target": "bank:RAC020"
+      },
+      {
+        "source": "CLM0002151",
+        "target": "bank:RAC020"
+      },
+      {
+        "source": "CLM0008698",
+        "target": "bank:RAC020"
+      },
+      {
+        "source": "CLM0009516",
+        "target": "bank:RAC020"
+      },
+      {
+        "source": "CLM0014459",
+        "target": "bank:RAC020"
+      },
+      {
+        "source": "CLM0018042",
+        "target": "bank:RAC020"
+      },
+      {
+        "source": "CLM0022748",
+        "target": "bank:RAC020"
+      },
+      {
+        "source": "CLM0025107",
+        "target": "bank:RAC020"
+      }
+    ],
+    "ring_id": 20,
+    "n_members": 8
+  },
+  "scale": {
+    "n_claims": 50000,
+    "lane1_leakage_count": 0.01195,
+    "lane1_leakage_value": 0.00488,
+    "lane1_leakage_ceiling": 0.015,
+    "leakage_under_ceiling": true,
+    "auto_tighten_steps": 0,
+    "final_lane1_min_confidence": 0.85,
+    "final_lane1_max_fraud_prob": 0.1,
+    "touchless_share": 0.2511,
+    "lane_mix": {
+      "lane2_assisted": 16836,
+      "lane1_touchless": 12554,
+      "retake": 10315,
+      "coverage_reject": 6223,
+      "lane3_investigative": 4072
+    },
+    "fraud": {
+      "auc": 0.9322,
+      "precision": 0.8836,
+      "recall": 0.4981,
+      "f1": 0.6371,
+      "brier": 0.0477,
+      "ece": 0.0225
+    },
+    "escalation": {
+      "auc": 0.8667,
+      "brier": 0.0491
+    },
+    "cost": {
+      "mae": 7491.83,
+      "mape": 0.1041
+    },
+    "tat": {
+      "baseline_median_days": 16.35,
+      "triaged_median_days": 2.59,
+      "baseline_mean_days": 30.08,
+      "triaged_mean_days": 25.68,
+      "baseline_p90_days": 43.07,
+      "triaged_p90_days": 63.41,
+      "median_improvement": 0.8414,
+      "mean_improvement": 0.1463,
+      "pct_within_7d_baseline": 0.0167,
+      "pct_within_7d_triaged": 0.5497
+    },
+    "appeal_rate": {
+      "legally_weak_claims": 3633,
+      "appeals_avoided_rate": 0.9133
+    },
+    "targets": {
+      "lane1_leakage": "<0.015 (HARD)",
+      "fraud_auc": ">0.80",
+      "escalation_auc": ">0.70",
+      "cost_mape": "<0.25",
+      "brier": "<0.15"
+    }
+  },
+  "seed": 42
+}

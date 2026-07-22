@@ -1,0 +1,35 @@
+# ClaimOS — runtime dependencies for the web service (server/main.py).
+# Pinned to the versions the models were trained/pickled with, so joblib.load
+# stays compatible. This is the LEAN server set: the batch-only libs (shap,
+# matplotlib, streamlit, faker) are intentionally excluded — nothing in the API
+# import chain uses them (calibration.py imports matplotlib lazily, eval-only).
+#
+# Generate/refresh from Poetry if you change deps:
+#   poetry export -f requirements.txt --without-hashes -o requirements.txt
+# (then trim shap/matplotlib/streamlit/faker for a leaner deploy).
+
+# --- web server ---
+fastapi==0.139.2
+uvicorn==0.51.0
+python-multipart==0.0.32        # required for UploadFile / Form (photo + doc upload)
+pydantic==2.13.4
+python-dotenv==1.2.2
+
+# --- models + scoring (versions must match the pickled artifacts) ---
+numpy==1.26.4
+pandas==2.3.3
+scikit-learn==1.9.0
+lightgbm==4.7.0
+joblib==1.5.3
+networkx==3.6.1
+pyyaml==6.0.3
+
+# --- live layer ---
+supabase==2.31.0
+imagehash==4.3.2                # perceptual-hash photo-reuse detection
+pillow==12.3.0                  # photo analysis (PIL)
+
+# --- optional: local OCR fallback (RapidOCR). NVIDIA Nemotron OCR is primary,
+#     so this is not required. Uncomment to enable the on-device fallback
+#     (adds onnxruntime, ~200 MB build). ---
+# rapidocr-onnxruntime==1.4.4

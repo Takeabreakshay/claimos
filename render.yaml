@@ -1,0 +1,38 @@
+# ClaimOS — Render Blueprint (single service: serves the SPA + the /api engine).
+# Deploy: push to GitHub -> Render -> New -> Blueprint -> pick this repo.
+# Secrets (sync:false) are entered once in the Render dashboard, never committed.
+services:
+  - type: web
+    name: claimos
+    runtime: python
+    plan: free
+    region: singapore                 # closest to India; change if you prefer
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      # --- Supabase (set the two secrets in the dashboard) ---
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET
+        value: claim-evidence
+      # --- NVIDIA NIM (set the two keys in the dashboard) ---
+      - key: NVIDIA_LLM_KEY
+        sync: false
+      - key: NVIDIA_OCR_KEY
+        sync: false
+      - key: NVIDIA_LLM_MODEL
+        value: meta/llama-3.3-70b-instruct
+      - key: NVIDIA_VLM_MODEL
+        value: meta/llama-3.2-11b-vision-instruct
+      - key: NVIDIA_OCR_MODEL
+        value: nvidia/nemotron-ocr-v2
+      - key: LLM_PROVIDER
+        value: nvidia
+      - key: RAILS_LIVE
+        value: "false"

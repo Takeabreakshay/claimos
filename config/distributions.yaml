@@ -1,0 +1,298 @@
+# =============================================================================
+# ClaimOS — synthetic data distributions  (Phase 1, see CLAUDE.md §5)
+# -----------------------------------------------------------------------------
+# TAGS:
+#   [SOURCED]     = from IRDAI AR 2024-25 / 2024 Master Circular / IIB / PwC (CLAUDE.md §2). Do not change.
+#   [ASSUMPTION]  = modeling calibration consistent with §2. Changeable, but log any change in ASSUMPTIONS.md.
+# All randomness uses seed below. Same seed -> identical dataset.
+# =============================================================================
+
+seed: 42                       # [SOURCED-as-convention] global reproducibility
+n_claims: 50000                # [ASSUMPTION] sample size
+
+# --- Claim mix ---------------------------------------------------------------
+claim_type_mix:                # [ASSUMPTION] OD dominates by count in Indian motor
+  OD: 0.75
+  TP: 0.18
+  theft_total: 0.07
+
+# --- Claim amounts (lognormal in natural-log space) --------------------------
+# mu values are ln(target_median). Chosen so most OD claims fall under the
+# IRDAI ₹50,000 surveyor seam, while TP / theft_total sit above it.
+claim_amount:                  # [ASSUMPTION]
+  OD:          { mu: 10.05, sigma: 0.90 }   # median ~Rs23k; nudged up from 9.80 (ln18000)
+                                            # on 2026-07-19 to bring sub_50k_share into
+                                            # the 0.55-0.68 band (was 0.704). See ASSUMPTIONS.md.
+  TP:          { mu: 11.35, sigma: 1.00 }   # ln(85000)
+  theft_total: { idv_fraction: [0.90, 1.00] }  # settlement ~ IDV
+idv:           { mu: 13.02, sigma: 0.50 }   # ln(450000)  [ASSUMPTION]
+
+# HARD acceptance check on generated data (assert in test_data_gen):
+acceptance:
+  sub_50k_share: [0.55, 0.68]  # share of ALL claims with amount < ₹50,000 must land here
+
+# --- Fraud (ground-truth labels) --------------------------------------------
+fraud_base_rate:               # [ASSUMPTION, anchored to §2: 10–15% overall, TP much higher]
+  OD: 0.08
+  TP: 0.20
+  theft_total: 0.15
+fraud_type_given_fraud:        # [SOURCED §2: ~70% document falsification]
+  document_falsification: 0.70
+  staged_or_inflated: 0.20
+  other: 0.10
+# Keep fraud LEARNABLE BUT NOT TRIVIAL: target fraud ROC-AUC ~0.80–0.90, not 0.99.
+fraud_signal_lift:             # [ASSUMPTION] how much fraud shifts these signals (probabilities)
+  non_network_garage: 0.35     # reduced 2026-07-19 (was 0.55) to land fraud AUC in 0.80-0.90 band
+  intimation_gt_48h: 0.30      # reduced (was 0.40) — see ASSUMPTIONS.md
+  modification_undeclared: 0.30  # reduced (was 0.35)
+  photo_reuse_flag: 0.20       # reduced (was 0.30)
+
+# --- Severity / process fields ----------------------------------------------
+severity_mix:                  # [ASSUMPTION]; theft_total is always 'total'
+  minor: 0.55
+  moderate: 0.30
+  severe: 0.15
+policy_status:                 # [ASSUMPTION]; lapsed -> coverage reject
+  active: 0.93
+  lapsed: 0.07
+garage_type:                   # [ASSUMPTION]; non_network -> reimbursement route (+15–30d TAT)
+  network: 0.65
+  non_network: 0.35
+
+intimation:                    # the "delayed intimation" trap
+  within_48h_share: 0.85       # [ASSUMPTION]
+  late_reason_valid_share: 0.40  # [SOURCED-behaviour §2/§7: SC rulings — late alone ≠ valid reject]
+
+driver:
+  valid_license: 0.95          # [ASSUMPTION]
+  dui_flag: 0.02
+modification:
+  actual_rate: 0.10            # [ASSUMPTION]
+  declared_given_actual: 0.40  # -> undeclared-mod subset (fraud/eligibility signal)
+photo:
+  quality_beta: [5, 2]         # [ASSUMPTION] Beta(a,b) -> quality score in [0,1]
+  num_photos: [2, 8]           # uniform int range
+vehicle_age_years: { min: 0, max: 15, skew: right }   # [ASSUMPTION]
+geo:                           # [ASSUMPTION]
+  metro: 0.40
+  urban: 0.40
+  rural: 0.20
+
+# --- Jumper / sleeper escalation label --------------------------------------
+escalation:                    # [SOURCED §2: spike ~90 days]; label = escalated_at_90d
+  base_rate: 0.07              # [ASSUMPTION]
+  window_days: 90              # [SOURCED]
+  # Concentrate escalations in claims that look benign at FNOL (low amount,
+  # minor/moderate) but carry latent signals (TP linkage, ambiguous liability,
+  # injury hint). Target escalation ROC-AUC ~0.70 — hard to see at FNOL by design.
+
+# --- Collusion rings (for the graph model) ----------------------------------
+rings:                         # [ASSUMPTION]
+  n_rings: [30, 50]            # seed this many fraud rings
+  entities: [customer_id, phone, bank_account, garage_id, surveyor_id]
+  claims_per_ring: [5, 20]
+  # Legit claims get sparse random linkage; rings reuse a few garages/surveyors/accounts.
+  # Graph model must recover >= 80% of seeded rings.
+
+# --- TAT ceilings (SOURCED — IRDAI 2024 Master Circular) --------------------
+tat_ceilings:                  # [SOURCED §2] used by the TAT simulation, do not change
+  surveyor_appointment_hours: 24
+  survey_report_days: 15
+  decision_after_report_days: 7
+  reimbursement_extra_days: [15, 30]
+  cashless_days: [1, 7]
+
+# =============================================================================
+# ADDED IN PHASE 1 — parameters required by LOGIC_AND_FORMULAS.md that were not
+# present in the originally provided config. Nothing above this line is changed;
+# these blocks are purely additive. Every entry is [ASSUMPTION] and logged in
+# ASSUMPTIONS.md (2026-07-19). See LOGIC_AND_FORMULAS.md §1.3-1.8 for the math.
+# =============================================================================
+
+# --- Fraud-signal genuine marginals: q_s = P(signal=1 | NOT fraud) (§1.3) ----
+# Fraud lifts each signal by fraud_signal_lift (above); q_s is the clean-claim
+# baseline. Overall marginals sit slightly above q_s by ~fraud_share*lift — that
+# upward drift IS the learnable fraud correlation (these marginals are not gated).
+fraud_signal_base:             # [ASSUMPTION]
+  non_network_garage: 0.35     # matches garage_type.non_network baseline
+  intimation_gt_48h: 0.15      # matches 1 - intimation.within_48h_share
+  photo_reuse_flag: 0.05
+  modification_actual: 0.10    # matches modification.actual_rate; lifted under fraud
+
+# --- True repair cost model (label for the cost estimator) (§1.4) ------------
+cost:                          # [ASSUMPTION]
+  severity_factor:             # base_cost = idv * severity_factor * U(base_noise)
+    minor: 0.03
+    moderate: 0.09
+    severe: 0.22
+    total: 0.95
+  base_noise: [0.90, 1.10]     # U(a,b) multiplicative noise on base_cost
+  genuine_lognorm_sigma: 0.12  # genuine: true_repair_cost = base_cost * exp(sigma*Z)
+  inflated_claim_mult: [1.30, 2.50]  # staged_or_inflated: claim_amount = base_cost * U(a,b)
+
+# --- Jumper/sleeper escalation latent logistic (§1.5) ------------------------
+# The intercept (beta0) is NOT stored: it is auto-tuned at generation time by
+# bisection so mean P(escalate) == escalation.base_rate (0.07). Deterministic
+# given the seeded feature draws, so still fully reproducible.
+escalation_model:              # [ASSUMPTION]
+  hidden_signal_rate:          # Bern(p) for the FNOL-latent signals
+    tp_linkage: 0.15
+    ambiguous_liability: 0.12
+    injury_hint: 0.10
+  beta:                        # logit weights (intercept auto-tuned to base_rate)
+    tp_linkage: 0.3            # hidden latent (classifier can't see it)
+    ambiguous_liability: 0.3   # hidden latent
+    injury_hint: 0.4           # hidden latent
+    low_amount: 0.8            # weight on 1[claim_amount < 50000]  (FNOL-visible)
+    low_severity: 0.7          # weight on 1[severity in {minor, moderate}] (FNOL-visible)
+    claim_type_tp: 2.4         # weight on 1[type == TP]  (FNOL-visible; TP claims escalate)
+  noise_sigma: 0.5             # 0.5*Z latent noise -> keeps AUC ~0.70 (hard at FNOL)
+
+# --- Surveyor verdict / settlement / override labels (§1.6) ------------------
+surveyor:                      # [ASSUMPTION]
+  fraud_reject_prob: 0.60      # P(reject | fraud) — surveyor catches most, not all
+  partial_base: 0.05           # base P(partial verdict)
+  partial_age_slope: 0.02      # + per vehicle_age year (depreciation/consumables dispute)
+  partial_max: 0.45
+  partial_settlement_factor: [0.50, 0.85]  # U(a,b) haircut applied on partial approvals
+  settlement_true_noise: [0.90, 1.05]      # U(a,b) on true_repair_cost -> settlement basis
+  depreciation_age_slope: 0.04             # depreciation fraction per vehicle_age year
+  depreciation_max: 0.50
+  human_override_rate: 0.10    # Bern(p) — feeds the future feedback loop
+
+# --- Graph entity wiring (§1.7) ----------------------------------------------
+# Genuine (non-ring) claims get UNIQUE entities (sparse linkage) so the graph
+# cleanly isolates seeded rings, which deliberately REUSE a few shared entities.
+# This is the LOGIC §1.7 "unique/random for non-ring" design.
+entities:                      # [ASSUMPTION]
+  ring_shared_garages: [1, 2]  # garages reused within a single ring
+  ring_bank_share_prob: 0.50   # chance a ring also shares one bank account
+
+# --- Collusion-graph model params (§3.5) -------------------------------------
+graph:                         # [ASSUMPTION]
+  link_entities: [garage_id, surveyor_id, bank_account, phone]
+  ring_min_component_size: 5   # components >= this size are flagged as rings
+  ring_risk_lambda: 0.3        # ring_risk = 1 - exp(-lambda * (component_size - 1))
+
+# --- LightGBM hyperparameters (Phase 3 models; CLAUDE §7, §11 GBT-only) -------
+model_params:                  # [ASSUMPTION]
+  common:
+    learning_rate: 0.05
+    num_leaves: 31
+    min_child_samples: 40
+    subsample: 0.8
+    colsample_bytree: 0.8
+    n_estimators: 400
+    random_state: 42           # == SEED
+  cost_quantiles: [0.10, 0.50, 0.90]
+  test_size: 0.25              # holdout fraction for target-metric evaluation
+  calibration_size: 0.20       # of the training portion, held out to fit calibrators
+  cost_band_penalty_weight: 0.30  # CLAUDE §7: model_confidence = min(c_fraud[,c_esc]) *
+                                  # (1 - w*cost_band); cost uncertainty is a PENALTY, not a
+                                  # co-equal min term (which starved Lane 1). Leakage stays
+                                  # capped by the auto-tighten guardrail.
+  escalation_in_confidence: false # 2026-07-23: escalation RISK is already gated separately
+                                  # (lane1.max_escalation_prob). Keeping c_esc inside the
+                                  # confidence min double-counted it — a claim the escalation
+                                  # model was merely UNSURE about (p_esc~0.5 -> c_esc~0) had its
+                                  # confidence crushed even with confidently-low fraud, capping
+                                  # touchless at ~5%. Fraud is the auto-clear safety signal;
+                                  # escalation risk stays governed by its own gate.
+
+# =============================================================================
+# reference_data  —  REAL published values (Apify-sourced, see REFERENCE_DATA.md)
+# [SOURCED] IRDAI / Indian Motor Tariff / insurer wordings. Real grids & lists used
+# verbatim for settlement realism and category vocabularies. Do not invent alternatives.
+# =============================================================================
+reference_data:
+
+  idv_depreciation_by_age:      # [SOURCED] drives theft / total-loss settlement
+    - {max_years: 0.5,  dep: 0.05}
+    - {max_years: 1.0,  dep: 0.15}
+    - {max_years: 2.0,  dep: 0.20}
+    - {max_years: 3.0,  dep: 0.30}
+    - {max_years: 4.0,  dep: 0.40}
+    - {max_years: 5.0,  dep: 0.50}
+    - {max_years: 99.0, dep: 0.65}
+
+  total_loss_threshold_pct: 0.75    # [SOURCED] repair > 75% of IDV => constructive total loss
+
+  parts_depreciation:           # [SOURCED] erstwhile Indian Motor Tariff
+    rubber_plastic_tyre_battery: 0.50
+    fibreglass: 0.30
+    glass: 0.00
+    paint_material: 0.50
+    metal_by_age:
+      - {max_years: 0.5,  dep: 0.00}
+      - {max_years: 1.0,  dep: 0.05}
+      - {max_years: 2.0,  dep: 0.10}
+      - {max_years: 3.0,  dep: 0.15}
+      - {max_years: 4.0,  dep: 0.25}
+      - {max_years: 5.0,  dep: 0.35}
+      - {max_years: 10.0, dep: 0.40}
+      - {max_years: 99.0, dep: 0.50}
+
+  consumables_pct: [0.05, 0.10]       # [SOURCED] 5-10% of repair cost
+  voluntary_deductible_tiers: [1000, 2500, 5000, 7500]   # [SOURCED] INR
+  ncb_slab_pct: [0, 20, 25, 35, 45, 50]                  # [SOURCED]
+  tp_base_premium_lt1000cc: 2094      # [SOURCED] INR/yr, directional regulated floor
+
+  product_types: [comprehensive, third_party_only, od_only]
+  add_ons: [zero_depreciation, engine_protection, return_to_invoice, consumables,
+            ncb_protector, roadside_assistance, key_replacement, tyre_protector,
+            rim_damage, personal_belongings, daily_allowance, emi_protection,
+            pay_as_you_drive, personal_accident, engine_gearbox, geo_extension,
+            ev_battery, electric_motor, ev_charger]
+  exclusions: [third_party_liability_under_od, depreciation_wear_tear,
+               mechanical_electrical_breakdown, consequential_loss,
+               driving_without_valid_licence, driving_under_influence,
+               outside_geographical_area, use_contrary_to_limitations,
+               non_factory_accessories, war_nuclear, deliberate_illegal_acts]
+  covered_perils: [accident_collision, fire_explosion_lightning, natural_disaster,
+                   man_made_riot_terror_burglary, theft, animal_rodent, in_transit]
+
+  vehicle_catalogue:            # [SOURCED] real make -> models
+    Maruti:  [Swift, WagonR, Baleno, Alto800, Dzire, Ertiga, Celerio, Ciaz, VitaraBrezza, Eeco]
+    Hyundai: [Creta, Venue, Verna, Aura, i20, Xcent]
+    Tata:    [Nexon, Punch, Tiago, Altroz, Tigor]
+    Mahindra: [Scorpio, XUV700, XUV300, Thar, Bolero]
+    Kia:     [Seltos, Sonet]
+    Toyota:  [Innova, Fortuner]
+    Honda:   [City, Amaze]
+    Renault: [Kwid, Triber, Duster]
+    MG:      [Astor, Hector]
+  two_wheeler_models: [BajajPulsar, HondaActiva, HeroSplendor, TVSJupiter]
+  commercial_models:  [TataAce, MahindraBoleroPickup]
+  segments: [hatchback, sedan, suv, muv]
+  fuel_types: [petrol, diesel, cng, ev]
+  rto_state_codes: [DL, MH, KA, TN, TS, UP, GJ, HR, RJ, WB, KL]
+  metro_cities: [Delhi, Mumbai, Bengaluru, Chennai, Hyderabad, Pune, Ahmedabad, Gurgaon, Kolkata]
+
+  insurers_psu: [National, NewIndiaAssurance, Oriental, UnitedIndia]
+  insurers_private: [BajajAllianz, ICICILombard, HDFCErgo, TataAIG, Digit, CholaMS,
+                     IFFCOTokio, FutureGenerali, Liberty, MagmaHDI, RoyalSundaram,
+                     SBIGeneral, Shriram, UniversalSompo, RahejaQBE, ZurichKotak, ZUNO, IndusInd]
+
+  fraud_red_flags: [padding_inflated_claim, staged_accident, application_misrepresentation,
+                    document_falsification, duplicate_claim, repeated_frequent_claims,
+                    reused_or_tampered_photos, collusion_ring, non_network_inflated_estimate,
+                    exaggerated_tp_injury, missing_or_inconsistent_fir, claim_near_inception_or_expiry,
+                    description_photo_estimate_mismatch]
+
+  reimbursement_docs: [rc_copy, policy_copy, driving_licence, fir_if_applicable,
+                       repair_estimate, final_bills, claim_form, bank_details]
+
+# --- Baseline (all-manual) TAT simulation draws (§1.8) -----------------------
+# Draw bounds that touch SOURCED ceilings (survey<=15d, decision<=7d) reuse the
+# tat_ceilings values above and must not exceed them.
+tat_sim:                       # [ASSUMPTION except where noted SOURCED]
+  survey_report_tri: [2, 8, 15]   # Tri(min, mode, max) days; max=15 [SOURCED ceiling]
+  decision_days: [1, 7]           # U(a,b) days; max=7 [SOURCED ceiling]
+  litigation_dispute_prob: 0.50   # share of rejected claims entering the litigation tail
+  litigation_lognorm: { mu: 4.607, sigma: 0.60 }  # LogNormal -> mean ~120 days (3-12+ mo tail)
+
+# --- Per-lane REALIZED TAT after triage (Phase 6 eval; LOGIC TAT simulation) --
+tat_realized:                  # [ASSUMPTION] draws; reimbursement/litigation reuse SOURCED values
+  lane1_days: [0.02, 1.0]      # U(a,b): minutes-hours (touchless)
+  lane2_days: [0.5, 3.0]       # U(a,b): hours-few days (+reimbursement if non_network)
+  lane3_tri_days: [15, 30, 90] # Tri(min,mode,max): survey path (+litigation tail if reject)
