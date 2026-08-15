@@ -17,28 +17,32 @@
      Derived from ClaimOS_Bajaj.thmx: accent1 #1959A5, dk2 #0B2A5B, lt2 #EAF1FA,
      green #2E8B57, gold #D9A21B, red #C0392B (brightened for a dark ground). */
   /* grey ramp (dark navy -> light) */
-  --g-900:#070E1B; --g-850:#0B1626; --g-800:#0F1E36; --g-700:#182b48;
-  --g-600:#213353; --g-500:#33466a; --g-400:#4b5f83; --g-300:#6c7891;
-  --g-200:#8b97ab; --g-150:#a3adbe; --g-100:#c4cbd7; --g-50:#e2e7ef;
+  /* light theme: ramp inverted — LOW numbers = light surfaces, HIGH = dark text */
+  --g-900:#ffffff; --g-850:#f5f8fd; --g-800:#eef3fa; --g-700:#e4ebf6;
+  --g-600:#d5e0f0; --g-500:#aab9d2; --g-400:#8090a6; --g-300:#5a6a80;
+  --g-200:#3c4c65; --g-150:#28384f; --g-100:#1a2b45; --g-50:#0e2547;
 
-  --blue:#3b8bf0; --blue-2:#6aa8f5; --blue-soft:rgba(59,139,240,.14);
-  --accent:#2e78d6;                 /* Bajaj blue (brightened) — the hot accent */
-  --accent-ink:#eaf3ff;             /* text on an accent fill */
-  --navy:#eaf1fa;
+  --blue:#1959A5; --blue-2:#2f74d0; --blue-soft:rgba(25,89,165,.08);
+  --accent:#1959A5;                 /* Bajaj blue — the hot accent (AA on white) */
+  --accent-ink:#ffffff;             /* text on an accent fill */
+  --navy:#0b2a5b;                   /* deep navy for text on light */
 
-  --ink:#f2f6fc; --ink-2:#c4cbd7; --slate:#8b97ab; --slate-2:#6c7891;
-  --canvas:#070E1B; --panel:#0F1E36; --line:#1e3352; --line-2:#16273f;
-  --rail:#050A14; --rail-2:#0B1626; --rail-line:#1c3151;
-  --rail-text:#a3adbe; --rail-active:#ffffff;
+  /* LIGHT base: white page, navy ink, brand colors darkened for AA on white.
+     The sidebar and hero panels (risk dial, workflow wedge, stream) stay navy —
+     "white page, sections highlighted in blue". */
+  --ink:#0e2547; --ink-2:#37475f; --slate:#5a6a80; --slate-2:#8090a6;
+  --canvas:#f4f7fc; --panel:#ffffff; --line:#dce5f2; --line-2:#eef3fa;
+  --rail:#081226; --rail-2:#0b1a33; --rail-line:#16305a;
+  --rail-text:#a9b8d4; --rail-active:#ffffff;
 
-  /* lane semantics — Bajaj brand green/gold/red, brightened for a dark ground */
-  --l1-fg:#35c06a; --l1-bg:rgba(53,192,106,.10); --l1-line:rgba(53,192,106,.30); --l1-dot:#35c06a;
-  --l2-fg:#e6b52e; --l2-bg:rgba(230,181,46,.10); --l2-line:rgba(230,181,46,.30); --l2-dot:#e6b52e;
-  --l3-fg:#e2564a; --l3-bg:rgba(226,86,74,.10); --l3-line:rgba(226,86,74,.30); --l3-dot:#e2564a;
-  --good:#35c06a; --warn:#e6b52e; --bad:#e2564a;
+  /* lane semantics — Bajaj green/gold/red, darkened for legibility on white */
+  --l1-fg:#1f9d57; --l1-bg:rgba(46,139,87,.12); --l1-line:rgba(46,139,87,.32); --l1-dot:#2e8b57;
+  --l2-fg:#9a7d16; --l2-bg:rgba(217,162,27,.14); --l2-line:rgba(217,162,27,.36); --l2-dot:#d9a21b;
+  --l3-fg:#c0392b; --l3-bg:rgba(192,57,43,.10); --l3-line:rgba(192,57,43,.30); --l3-dot:#c0392b;
+  --good:#1f9d57; --warn:#9a7d16; --bad:#c0392b;
 
-  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 28px rgba(0,0,0,.35);
-  --shadow-lg:0 2px 10px rgba(0,0,0,.6), 0 28px 64px rgba(0,0,0,.5);
+  --shadow:0 1px 2px rgba(16,42,80,.06), 0 8px 24px rgba(16,42,80,.09);
+  --shadow-lg:0 4px 14px rgba(16,42,80,.10), 0 24px 56px rgba(16,42,80,.15);
 
   /* motion signature */
   --ease:cubic-bezier(.645,.045,.355,1);
@@ -574,14 +578,14 @@ input[type=range].dial::-moz-range-thumb{width:22px;height:22px;border-radius:50
      · depth is expressed by blur radius + border luminance, not shadow alone
    ========================================================================== */
 :root{
-  --glass-1:rgba(22,26,33,.55);      /* near surface  */
-  --glass-2:rgba(18,21,27,.68);      /* mid           */
-  --glass-3:rgba(13,16,21,.78);      /* deep / rail   */
-  --glass-brd:rgba(255,255,255,.10);
-  --glass-brd-hi:rgba(255,255,255,.20);
-  --glass-blur:18px;
-  --glass-blur-lg:28px;
-  --lift:0 1px 0 rgba(255,255,255,.06) inset;
+  --glass-1:rgba(255,255,255,.74);   /* frosted white — near surface */
+  --glass-2:rgba(255,255,255,.84);   /* mid          */
+  --glass-3:rgba(255,255,255,.92);   /* deep         */
+  --glass-brd:rgba(25,89,165,.14);
+  --glass-brd-hi:rgba(25,89,165,.28);
+  --glass-blur:16px;
+  --glass-blur-lg:24px;
+  --lift:0 1px 0 rgba(255,255,255,.7) inset;
 }
 
 /* ---- ambient field: what the glass actually refracts ---- */
@@ -589,16 +593,16 @@ body{position:relative;background:var(--canvas)}
 body::before{
   content:"";position:fixed;inset:-20vmax;z-index:-2;pointer-events:none;
   background:
-    radial-gradient(38vmax 34vmax at 14% 10%, rgba(41,141,255,.20), transparent 62%),
-    radial-gradient(32vmax 30vmax at 86% 16%, rgba(120,90,255,.14), transparent 60%),
-    radial-gradient(36vmax 32vmax at 74% 88%, rgba(46,120,214,.12), transparent 62%),
-    radial-gradient(30vmax 28vmax at 22% 82%, rgba(74,222,128,.09), transparent 60%);
+    radial-gradient(38vmax 34vmax at 14% 10%, rgba(25,89,165,.08), transparent 62%),
+    radial-gradient(32vmax 30vmax at 86% 16%, rgba(47,116,208,.06), transparent 60%),
+    radial-gradient(36vmax 32vmax at 74% 88%, rgba(25,89,165,.06), transparent 62%),
+    radial-gradient(30vmax 28vmax at 22% 82%, rgba(46,139,87,.045), transparent 60%);
   filter:saturate(120%);
   animation:drift 38s ease-in-out infinite alternate;
 }
 body::after{  /* fine grain so the blur has texture instead of flat wash */
-  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;
-  background-image:radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px);
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.45;
+  background-image:radial-gradient(rgba(25,89,165,.05) 1px, transparent 1px);
   background-size:3px 3px;
 }
 @keyframes drift{
@@ -608,12 +612,12 @@ body::after{  /* fine grain so the blur has texture instead of flat wash */
 }
 
 /* ---- the glass surfaces ---- */
-.card,.kpi,.slane,.wf-stage,.dial-card,.wf-loop,.stream-wrap{
+.card,.kpi,.wf-stage{
   background:var(--glass-1);
-  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(150%);
-  backdrop-filter:blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(140%);
+  backdrop-filter:blur(var(--glass-blur)) saturate(140%);
   border:1px solid var(--glass-brd);
-  box-shadow:0 10px 34px rgba(0,0,0,.42), var(--lift);
+  box-shadow:var(--shadow);
 }
 .topbar{
   background:var(--glass-2);
@@ -743,3 +747,28 @@ input:focus,select:focus,textarea:focus{background:rgba(10,13,18,.78)}
 @media (prefers-reduced-motion: reduce){
   .flowsvg animate,.flowsvg animateMotion{display:none}
 }
+
+/* ===================== LIGHT THEME — hero panels & fixes =====================
+   White page, navy sidebar, and a few feature panels kept navy so they read as
+   "sections highlighted in blue". Appended last so these win the cascade. */
+.rail{background:linear-gradient(180deg,#0b1f3d,#081327)}
+/* Only the risk dial stays navy (its text is hardcoded light) — the signature
+   "section highlighted in blue". The wedge (.wf-wedge) keeps its own dark rule. */
+.dial-card{
+  background:linear-gradient(140deg,#0d1f3d,#0a1730 60%,#0e1c34) !important;
+  border:1px solid rgba(47,116,208,.28);
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+  box-shadow:0 16px 42px rgba(11,26,51,.20);
+}
+/* stream + workflow loop are LIGHT cards (their text is token-based) */
+.stream-wrap,.slane,.wf-loop{
+  background:var(--glass-1) !important; border:1px solid var(--glass-brd);
+  box-shadow:var(--shadow);
+}
+.card:hover,.kpi:hover{box-shadow:var(--shadow-lg)}
+/* workflow modules → faint blue tile on white */
+.wf-mod{background:rgba(25,89,165,.05);border-color:var(--line)}
+/* info note legible on the light ground */
+.note.info{color:#1959A5;border-color:rgba(25,89,165,.28)}
+/* blue accent bar on section headers — "sections highlighted in blue" */
+.card-h{border-bottom:1px solid var(--line-2);box-shadow:inset 3px 0 0 var(--blue)}

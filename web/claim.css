@@ -15,8 +15,8 @@ body.cx{
 body.cx::before{
   content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
   background:
-    radial-gradient(60vw 50vh at 78% -8%, rgba(41,141,255,.16), transparent 60%),
-    radial-gradient(50vw 45vh at 10% 8%, rgba(255,108,61,.10), transparent 62%);
+    radial-gradient(60vw 50vh at 78% -8%, rgba(25,89,165,.10), transparent 60%),
+    radial-gradient(50vw 45vh at 10% 8%, rgba(47,116,208,.06), transparent 62%);
 }
 
 .cx-bar{
@@ -47,7 +47,7 @@ body.cx::before{
 
 /* glass card */
 .cx-card{
-  background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015));
+  background:var(--panel);
   border:1px solid var(--line); border-radius:18px; padding:22px;
   backdrop-filter:blur(18px) saturate(120%); -webkit-backdrop-filter:blur(18px) saturate(120%);
   box-shadow:var(--shadow); animation:cxrise .5s var(--ease-out) both;
