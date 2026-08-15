@@ -13,25 +13,29 @@
    confident type, precise easing. Density kept at operator level — this is an
    instrument, not a marketing page. */
 :root{
-  /* grey ramp (dark -> light) */
-  --g-900:#0B0D0F; --g-850:#101316; --g-800:#131518; --g-700:#1a1d21;
-  --g-600:#222529; --g-500:#343940; --g-400:#4b515b; --g-300:#6c7584;
-  --g-200:#89919f; --g-150:#a1a7b2; --g-100:#c2c6cd; --g-50:#e0e2e6;
+  /* ClaimOS · Bajaj theme — deep navy ground, Bajaj-blue accent, brand semantics.
+     Derived from ClaimOS_Bajaj.thmx: accent1 #1959A5, dk2 #0B2A5B, lt2 #EAF1FA,
+     green #2E8B57, gold #D9A21B, red #C0392B (brightened for a dark ground). */
+  /* grey ramp (dark navy -> light) */
+  --g-900:#070E1B; --g-850:#0B1626; --g-800:#0F1E36; --g-700:#182b48;
+  --g-600:#213353; --g-500:#33466a; --g-400:#4b5f83; --g-300:#6c7891;
+  --g-200:#8b97ab; --g-150:#a3adbe; --g-100:#c4cbd7; --g-50:#e2e7ef;
 
-  --blue:#298dff; --blue-2:#5aa6ff; --blue-soft:rgba(41,141,255,.12);
-  --accent:#ff6c3d;                 /* the single hot accent — use sparingly */
-  --navy:#eaf1fc;
+  --blue:#3b8bf0; --blue-2:#6aa8f5; --blue-soft:rgba(59,139,240,.14);
+  --accent:#2e78d6;                 /* Bajaj blue (brightened) — the hot accent */
+  --accent-ink:#eaf3ff;             /* text on an accent fill */
+  --navy:#eaf1fa;
 
-  --ink:#f4f5f7; --ink-2:#c2c6cd; --slate:#89919f; --slate-2:#6c7584;
-  --canvas:#0B0D0F; --panel:#131518; --line:#252a30; --line-2:#1c2025;
-  --rail:#08090B; --rail-2:#101316; --rail-line:#20242a;
-  --rail-text:#a1a7b2; --rail-active:#ffffff;
+  --ink:#f2f6fc; --ink-2:#c4cbd7; --slate:#8b97ab; --slate-2:#6c7891;
+  --canvas:#070E1B; --panel:#0F1E36; --line:#1e3352; --line-2:#16273f;
+  --rail:#050A14; --rail-2:#0B1626; --rail-line:#1c3151;
+  --rail-text:#a3adbe; --rail-active:#ffffff;
 
-  /* lane semantics — re-toned for a dark ground, contrast-checked */
-  --l1-fg:#4ade80; --l1-bg:rgba(74,222,128,.10); --l1-line:rgba(74,222,128,.28); --l1-dot:#4ade80;
-  --l2-fg:#fbbf47; --l2-bg:rgba(251,191,71,.10); --l2-line:rgba(251,191,71,.28); --l2-dot:#fbbf47;
-  --l3-fg:#ff7a6b; --l3-bg:rgba(255,122,107,.10); --l3-line:rgba(255,122,107,.28); --l3-dot:#ff7a6b;
-  --good:#4ade80; --warn:#fbbf47; --bad:#ff7a6b;
+  /* lane semantics — Bajaj brand green/gold/red, brightened for a dark ground */
+  --l1-fg:#35c06a; --l1-bg:rgba(53,192,106,.10); --l1-line:rgba(53,192,106,.30); --l1-dot:#35c06a;
+  --l2-fg:#e6b52e; --l2-bg:rgba(230,181,46,.10); --l2-line:rgba(230,181,46,.30); --l2-dot:#e6b52e;
+  --l3-fg:#e2564a; --l3-bg:rgba(226,86,74,.10); --l3-line:rgba(226,86,74,.30); --l3-dot:#e2564a;
+  --good:#35c06a; --warn:#e6b52e; --bad:#e2564a;
 
   --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 28px rgba(0,0,0,.35);
   --shadow-lg:0 2px 10px rgba(0,0,0,.6), 0 28px 64px rgba(0,0,0,.5);
@@ -45,7 +49,7 @@
      ALL DATA = JetBrains Mono. Numbers read as system output, not website copy. */
   /* Switzer carries both display and UI, the way Everett does on sui.io.
      Space Grotesk / Inter remain as fallbacks if the local font 404s. */
-  --font-display:"Switzer","Space Grotesk",system-ui,sans-serif;
+  --font-display:"Montserrat","Switzer","Space Grotesk",system-ui,sans-serif;
   --font-ui:"Switzer","Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --font-data:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --sans:var(--font-ui);
@@ -482,11 +486,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue);
 .dial-card{background:linear-gradient(135deg,#0d1b34,#0a1526 60%,#101a2e);
   border:1px solid rgba(41,141,255,.28);border-radius:16px;padding:22px 24px;position:relative;
   overflow:hidden}
-.dial-card.clamped{border-color:rgba(255,108,61,.55)}
+.dial-card.clamped{border-color:rgba(226,86,74,.55)}
 .dial-card::before{content:"";position:absolute;inset:-40%;
   background:radial-gradient(circle at 50% 0%,rgba(41,141,255,.16),transparent 55%);
   transition:background .5s var(--ease)}
-.dial-card.clamped::before{background:radial-gradient(circle at 50% 0%,rgba(255,108,61,.18),transparent 55%)}
+.dial-card.clamped::before{background:radial-gradient(circle at 50% 0%,rgba(226,86,74,.18),transparent 55%)}
 .dial-card>*{position:relative}
 .dial-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:18px}
 .dial-head h3{color:#fff;font-size:16px}
@@ -496,7 +500,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue);
 .dial-track .end{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
   color:#7f9bc4;white-space:nowrap}
 input[type=range].dial{-webkit-appearance:none;appearance:none;flex:1;height:6px;border-radius:5px;
-  background:linear-gradient(90deg,#1c4a86,#298dff);outline:none;cursor:grab;min-height:0}
+  background:linear-gradient(90deg,#1959A5,#3b8bf0);outline:none;cursor:grab;min-height:0}
 input[type=range].dial:active{cursor:grabbing}
 input[type=range].dial::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;
   border-radius:50%;background:#fff;border:3px solid var(--blue);cursor:grab;
@@ -504,9 +508,9 @@ input[type=range].dial::-webkit-slider-thumb{-webkit-appearance:none;width:22px;
 input[type=range].dial::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;
   border:3px solid var(--blue);cursor:grab;box-shadow:0 0 0 6px rgba(41,141,255,.18)}
 .dial-card.clamped input[type=range].dial::-webkit-slider-thumb{border-color:var(--accent);
-  box-shadow:0 0 0 6px rgba(255,108,61,.22)}
+  box-shadow:0 0 0 6px rgba(226,86,74,.22)}
 .dial-card.clamped input[type=range].dial::-moz-range-thumb{border-color:var(--accent);
-  box-shadow:0 0 0 6px rgba(255,108,61,.22)}
+  box-shadow:0 0 0 6px rgba(226,86,74,.22)}
 
 .dial-thr{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
 .dial-thr span{font-family:var(--font-data);font-size:11.5px;padding:5px 10px;border-radius:7px;
@@ -525,7 +529,7 @@ input[type=range].dial::-moz-range-thumb{width:22px;height:22px;border-radius:50
 .guardrail{margin-top:16px;border-radius:10px;padding:11px 14px;font-size:12.5px;display:flex;gap:9px;
   align-items:center;border:1px solid rgba(74,222,128,.3);background:rgba(74,222,128,.08);
   color:var(--l1-fg);transition:all .4s var(--ease)}
-.guardrail.hot{border-color:rgba(255,108,61,.5);background:rgba(255,108,61,.12);color:var(--accent)}
+.guardrail.hot{border-color:rgba(226,86,74,.5);background:rgba(226,86,74,.12);color:var(--accent)}
 .guardrail b{font-weight:700}
 
 /* lane distribution bar inside the dial */
@@ -587,7 +591,7 @@ body::before{
   background:
     radial-gradient(38vmax 34vmax at 14% 10%, rgba(41,141,255,.20), transparent 62%),
     radial-gradient(32vmax 30vmax at 86% 16%, rgba(120,90,255,.14), transparent 60%),
-    radial-gradient(36vmax 32vmax at 74% 88%, rgba(255,108,61,.10), transparent 62%),
+    radial-gradient(36vmax 32vmax at 74% 88%, rgba(46,120,214,.12), transparent 62%),
     radial-gradient(30vmax 28vmax at 22% 82%, rgba(74,222,128,.09), transparent 60%);
   filter:saturate(120%);
   animation:drift 38s ease-in-out infinite alternate;
@@ -731,3 +735,11 @@ input:focus,select:focus,textarea:focus{background:rgba(10,13,18,.78)}
 .wf-fall-row.total{border-bottom:0;border-top:2px solid var(--line);margin-top:4px;
   padding-top:10px;color:var(--ink);font-weight:700;font-size:15px}
 .wf-fall-row.total .num{color:var(--good);font-size:17px}
+
+/* ---- Live triage flow (dashboard) ---- */
+.flowsvg{overflow:visible}
+.flowdot{filter:drop-shadow(0 0 4px currentColor)}
+.flowsvg text{letter-spacing:-.01em}
+@media (prefers-reduced-motion: reduce){
+  .flowsvg animate,.flowsvg animateMotion{display:none}
+}

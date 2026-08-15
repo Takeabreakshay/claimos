@@ -185,7 +185,7 @@ async function renderDashboard(el) {
 
     ${POP && POP.length ? `<div style="margin-top:18px">${dialCard()}</div>` : ""}
     ${POP && POP.length ? streamCard() : ""}
-    ${envelopeCard()}
+    ${flowCard(d)}
 
     <div class="grid g2" style="margin-top:16px">
       <div class="card"><div class="card-h"><h3>Lane distribution</h3><span class="sub">how the book self-sorts</span></div>
@@ -951,59 +951,65 @@ async function loadEnvelope() {
   return ENV;
 }
 
-function envelopeCard() {
-  if (!ENV || !ENV.frontier) return "";
-  const W = 520, H = 240, PAD = 42;
-  const pts = ENV.frontier.filter(f => f.n_lane1_holdout >= 30);
-  const maxT = Math.max(0.3, ...pts.map(p => p.touchless));
-  const maxL = Math.max(0.035, ...pts.map(p => p.leakage));
-  const x = t => PAD + (t / maxT) * (W - PAD - 14);
-  const y = l => H - PAD - (l / maxL) * (H - PAD - 16);
-  const ceilY = y(ENV.ceiling);
-  const marginY = y(ENV.margin);
-  const a = ENV.adopted;
+function flowCard(d) {
+  const mix = d.lane_mix || {};
+  const t = mix.lane1_touchless || 0, a = mix.lane2_assisted || 0, iv = mix.lane3_investigative || 0;
+  const rt = mix.retake || 0, cr = mix.coverage_reject || 0;
+  const total = t + a + iv + rt + cr || 1;
+  const leak = d.leakage_rate || 0, ceil = d.leakage_ceiling || 0.015;
+  const leakOk = leak <= ceil;
+  const wgt = n => 5 + (n / total) * 34;                 // channel width ∝ share
+  const SX = 100, SY = 152, TX = 452;
+  const lanes = [
+    { key: "L1", name: "Touchless", sub: "straight-through · minutes", n: t, y: 66, col: "var(--l1-fg)", dot: "var(--l1-dot)", dur: 1.9 },
+    { key: "L2", name: "Assisted", sub: "AI-prepped · officer approves", n: a, y: 152, col: "var(--l2-fg)", dot: "var(--l2-dot)", dur: 2.5 },
+    { key: "L3", name: "Investigative", sub: "surveyor + fraud unit", n: iv, y: 238, col: "var(--l3-fg)", dot: "var(--l3-dot)", dur: 3.3 },
+  ];
+  const pathD = y => `M ${SX},${SY} C ${SX + 150},${SY} ${TX - 150},${y} ${TX},${y}`;
+  const particles = (id, col, dur, count) => Array.from({ length: count }, (_, k) =>
+    `<circle r="3.4" fill="${col}" class="flowdot"><animateMotion dur="${dur}s" begin="${(k * dur / count).toFixed(2)}s" repeatCount="indefinite"><mpath href="#${id}"/></animateMotion></circle>`).join("");
 
   return `
-  <div class="card" style="margin-top:16px"><div class="card-h">
-    <h3>The automation envelope</h3>
-    <span class="sub">how much we could safely automate — backtested on held-out claims</span>
+  <div class="card flowcard" style="margin-top:16px"><div class="card-h">
+    <h3>Live triage flow</h3>
+    <span class="sub">every claim in the book, routed by risk — not one queue</span>
   </div><div class="card-b">
-    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">
-      <rect x="${PAD}" y="${ceilY}" width="${W - PAD - 14}" height="${H - PAD - ceilY}"
-        fill="rgba(74,222,128,.05)"/>
-      <rect x="${PAD}" y="14" width="${W - PAD - 14}" height="${ceilY - 14}"
-        fill="rgba(255,108,61,.06)"/>
-      <line x1="${PAD}" y1="${ceilY}" x2="${W - 14}" y2="${ceilY}"
-        stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 4"/>
-      <text x="${W - 16}" y="${ceilY - 6}" text-anchor="end" font-size="10"
-        fill="var(--accent)" font-family="var(--font-data)">1.5% ceiling — never cross</text>
-      <line x1="${PAD}" y1="${marginY}" x2="${W - 14}" y2="${marginY}"
-        stroke="var(--l1-fg)" stroke-width="1" stroke-dasharray="3 4" opacity=".7"/>
-      <text x="${W - 16}" y="${marginY - 5}" text-anchor="end" font-size="9.5"
-        fill="var(--l1-fg)" font-family="var(--font-data)">adopt below here (margin)</text>
-      <line x1="${PAD}" y1="${H - PAD}" x2="${W - 14}" y2="${H - PAD}" stroke="var(--line)"/>
-      <line x1="${PAD}" y1="14" x2="${PAD}" y2="${H - PAD}" stroke="var(--line)"/>
-      ${pts.map(p => `<circle cx="${x(p.touchless).toFixed(1)}" cy="${y(p.leakage).toFixed(1)}"
-        r="${p.safe ? 4 : 3}" fill="${p.safe ? "var(--l1-dot)" : "var(--l3-dot)"}"
-        opacity="${p.safe ? .9 : .45}"><title>conf ${p.min_conf} · fraud ${p.max_fraud} →
-        ${(p.touchless * 100).toFixed(1)}% touchless, ${(p.leakage * 100).toFixed(2)}% leakage</title></circle>`).join("")}
-      ${a ? `<circle cx="${x(a.touchless).toFixed(1)}" cy="${y(a.leakage).toFixed(1)}" r="8"
-        fill="none" stroke="#fff" stroke-width="2"/>
-        <text x="${x(a.touchless).toFixed(1)}" y="${(y(a.leakage) - 14).toFixed(1)}"
-          text-anchor="middle" font-size="10" fill="#fff"
-          font-family="var(--font-data)">shipped</text>` : ""}
-      <text x="${PAD}" y="${H - 12}" font-size="10" fill="var(--slate)">0</text>
-      <text x="${W - 14}" y="${H - 12}" text-anchor="end" font-size="10"
-        fill="var(--slate)">${(maxT * 100).toFixed(0)}% touchless →</text>
-      <text x="8" y="20" font-size="10" fill="var(--slate)">↑ leakage</text>
+    <svg viewBox="0 0 640 304" style="width:100%;height:auto;display:block" class="flowsvg">
+      <defs>${lanes.map(l => `<path id="fp-${l.key}" d="${pathD(l.y)}" fill="none"/>`).join("")}</defs>
+      ${lanes.map(l => `<path d="${pathD(l.y)}" fill="none" stroke="${l.col}" stroke-opacity=".16"
+        stroke-width="${wgt(l.n).toFixed(1)}" stroke-linecap="round"/>`).join("")}
+
+      <circle cx="${SX}" cy="${SY}" r="30" fill="none" stroke="var(--blue)" stroke-width="1.4" opacity=".55">
+        <animate attributeName="r" values="30;42;30" dur="2.8s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values=".55;0;.55" dur="2.8s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="${SX}" cy="${SY}" r="29" fill="var(--panel)" stroke="var(--blue)" stroke-width="1.5"/>
+      <text x="${SX}" y="${SY - 1}" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink)"
+        font-family="var(--font-display)">FNOL</text>
+      <text x="${SX}" y="${SY + 14}" text-anchor="middle" font-size="9.5" fill="var(--slate)"
+        font-family="var(--font-data)">${total} claims</text>
+
+      ${lanes.map(l => l.n > 0 ? particles(`fp-${l.key}`, l.dot, l.dur, Math.max(2, Math.round(l.n / total * 9))) : "").join("")}
+
+      ${lanes.map(l => `
+        <circle cx="${TX}" cy="${l.y}" r="7.5" fill="${l.dot}"/>
+        <circle cx="${TX}" cy="${l.y}" r="7.5" fill="none" stroke="${l.dot}" stroke-width="1.5" opacity=".5">
+          <animate attributeName="r" values="7.5;13;7.5" dur="2.2s" begin="${l.key === 'L1' ? 0 : l.key === 'L2' ? 0.5 : 1}s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".5;0;.5" dur="2.2s" begin="${l.key === 'L1' ? 0 : l.key === 'L2' ? 0.5 : 1}s" repeatCount="indefinite"/>
+        </circle>
+        <text x="${TX + 20}" y="${l.y - 4}" font-size="13.5" font-weight="700" fill="${l.col}"
+          font-family="var(--font-display)">${l.name}</text>
+        <text x="${TX + 20}" y="${l.y + 12}" font-size="10" fill="var(--slate)">${l.sub}</text>
+        <text x="638" y="${l.y - 4}" font-size="15" font-weight="800" fill="var(--ink)"
+          font-family="var(--font-data)" text-anchor="end">${(l.n / total * 100).toFixed(0)}%</text>
+        <text x="638" y="${l.y + 12}" font-size="9.5" fill="var(--slate)"
+          font-family="var(--font-data)" text-anchor="end">${l.n} claims</text>`).join("")}
     </svg>
-    <div class="note info" style="margin-top:12px"><span>→</span><div>
-      Every dot is a candidate gate, backtested on claims the models never saw.
-      <b>Green is adoptable; red would breach.</b> We ship the ringed point —
-      ${a ? `${(a.touchless * 100).toFixed(1)}% touchless at ${(a.leakage * 100).toFixed(2)}% leakage` : "—"}
-      — not the highest green dot, because a policy tuned to the edge breaches the
-      moment the world shifts. As real labelled history arrives the frontier moves
-      right, and the envelope widens <b>only where a backtest proves it stays safe</b>.
+
+    <div class="note ${leakOk ? "ok" : "bad"}" style="margin-top:6px"><span>${leakOk ? "🛡" : "!"}</span><div>
+      <b>Leakage guardrail:</b> ${(leak * 100).toFixed(2)}% of touchless auto-clears turn out fraudulent —
+      ${leakOk ? "safely under" : "<b>BREACHING</b>"} the ${(ceil * 100).toFixed(1)}% hard ceiling.
+      Effort flows to where risk actually is, and the guardrail holds the line on what may auto-settle.
     </div></div>
   </div></div>`;
 }
