@@ -7,6 +7,18 @@
   font-style:normal;
   font-display:swap;
 }
+/* anime.js type system: DINish (display/UI) + Berkeley Mono (all data/labels) */
+@font-face{
+  font-family:"DINish";
+  src:url("/fonts/DINish-Variable.woff2") format("woff2-variations"),
+      url("/fonts/DINish-Variable.woff2") format("woff2");
+  font-weight:400 700; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:"Berkeley Mono";
+  src:url("/fonts/BerkeleyMono-Regular.woff2") format("woff2");
+  font-weight:400 700; font-style:normal; font-display:swap;
+}
 
 /* ===================== ClaimOS — dark console ===================== */
 /* Design language: near-black canvas, disciplined grey ramp, ONE hot accent,
@@ -22,16 +34,16 @@
   --g-600:#d5e0f0; --g-500:#aab9d2; --g-400:#8090a6; --g-300:#5a6a80;
   --g-200:#3c4c65; --g-150:#28384f; --g-100:#1a2b45; --g-50:#0e2547;
 
-  --blue:#1959A5; --blue-2:#2f74d0; --blue-soft:rgba(25,89,165,.08);
-  --accent:#1959A5;                 /* Bajaj blue — the hot accent (AA on white) */
+  --blue:#1d5fd6; --blue-2:#4d9cff; --blue-soft:rgba(29,95,214,.07);
+  --accent:#1d5fd6;                 /* one vivid blue accent (anime.js "king") */
   --accent-ink:#ffffff;             /* text on an accent fill */
-  --navy:#0b2a5b;                   /* deep navy for text on light */
+  --navy:#12244a;                   /* deep blue for text on light */
 
   /* LIGHT base: white page, navy ink, brand colors darkened for AA on white.
      The sidebar and hero panels (risk dial, workflow wedge, stream) stay navy —
      "white page, sections highlighted in blue". */
-  --ink:#0e2547; --ink-2:#33445c; --slate:#4f5f77; --slate-2:#6b7a92;
-  --canvas:#eef2f8; --panel:#ffffff; --line:#d7e1f0; --line-2:#e8eef7;
+  --ink:#1a2230; --ink-2:#3d4757; --slate:#5b6675; --slate-2:#7c8797;
+  --canvas:#f5f7fb; --panel:#ffffff; --line:#e4e8f0; --line-2:#eef1f7;
   --rail:#081226; --rail-2:#0b1a33; --rail-line:#16305a;
   --rail-text:#a9b8d4; --rail-active:#ffffff;
 
@@ -53,9 +65,9 @@
      ALL DATA = JetBrains Mono. Numbers read as system output, not website copy. */
   /* Switzer carries both display and UI, the way Everett does on sui.io.
      Space Grotesk / Inter remain as fallbacks if the local font 404s. */
-  --font-display:"Montserrat","Switzer","Space Grotesk",system-ui,sans-serif;
-  --font-ui:"Switzer","Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  --font-data:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --font-display:"DINish","Montserrat","Switzer",system-ui,sans-serif;
+  --font-ui:"DINish","Switzer","Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-data:"Berkeley Mono","JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --sans:var(--font-ui);
   --mono:var(--font-data);
   --rail-w:250px;
@@ -774,3 +786,15 @@ input:focus,select:focus,textarea:focus{background:rgba(10,13,18,.78)}
 .note.info{color:#1959A5;border-color:rgba(25,89,165,.28)}
 /* blue accent bar on section headers — "sections highlighted in blue" */
 .card-h{border-bottom:1px solid var(--line-2);box-shadow:inset 3px 0 0 var(--blue)}
+
+/* ===================== anime.js aesthetic layer =====================
+   DINish display, Berkeley Mono data/labels, tight big headings, mono eyebrows. */
+h1,h2,h3,h4{font-weight:700}
+.t-display,.t-display-xl{font-weight:700;letter-spacing:-.025em;line-height:.98}
+.card-h h3{font-family:var(--font-display);font-weight:700;letter-spacing:-.005em;font-size:14.5px}
+/* monospace UI labels — Berkeley Mono, uppercase, tracked (the anime.js eyebrow) */
+.kpi .k,.rail-sec,.eyebrow,.rail-status .t{
+  font-family:var(--font-data);letter-spacing:.14em;text-transform:uppercase}
+.kpi .v{font-family:var(--font-data);letter-spacing:-.02em}
+/* thinner, calmer hairlines */
+.card,.kpi{border-color:var(--line)}

@@ -20,12 +20,15 @@ window.MOTION = (function () {
 
   /* ---- signature easing ---- */
   let EASE = "power3.out";
+  let ENTER = "expo.out";                 // anime.js-style fluid entrance
   if (has("gsap")) {
     if (has("CustomEase")) {
       gsap.registerPlugin(CustomEase);
       try {
         CustomEase.create("sui", "0.645, 0.045, 0.355, 1");
+        CustomEase.create("anime", "0.16, 1, 0.3, 1");  // smooth ease-out, soft settle
         EASE = "sui";
+        ENTER = "anime";
       } catch (e) { /* keep the fallback */ }
     }
     if (has("ScrollTrigger")) gsap.registerPlugin(ScrollTrigger);
@@ -128,10 +131,10 @@ window.MOTION = (function () {
     }
     const o = opts || {};
     gsap.fromTo(list,
-      { y: o.y != null ? o.y : 18, opacity: 0 },
+      { y: o.y != null ? o.y : 30, scale: 0.98, opacity: 0 },
       {
-        y: 0, opacity: 1, duration: 0.72, ease: EASE,
-        stagger: o.stagger != null ? o.stagger : 0.06,
+        y: 0, scale: 1, opacity: 1, duration: 0.9, ease: o.ease || ENTER,
+        stagger: o.stagger != null ? o.stagger : 0.08,
         overwrite: "auto",
         // hard guarantee: whatever happens, end visible
         onComplete: () => list.forEach((n) => {
