@@ -30,8 +30,8 @@
   /* LIGHT base: white page, navy ink, brand colors darkened for AA on white.
      The sidebar and hero panels (risk dial, workflow wedge, stream) stay navy —
      "white page, sections highlighted in blue". */
-  --ink:#0e2547; --ink-2:#37475f; --slate:#5a6a80; --slate-2:#8090a6;
-  --canvas:#f4f7fc; --panel:#ffffff; --line:#dce5f2; --line-2:#eef3fa;
+  --ink:#0e2547; --ink-2:#33445c; --slate:#4f5f77; --slate-2:#6b7a92;
+  --canvas:#eef2f8; --panel:#ffffff; --line:#d7e1f0; --line-2:#e8eef7;
   --rail:#081226; --rail-2:#0b1a33; --rail-line:#16305a;
   --rail-text:#a9b8d4; --rail-active:#ffffff;
 
@@ -41,8 +41,8 @@
   --l3-fg:#c0392b; --l3-bg:rgba(192,57,43,.10); --l3-line:rgba(192,57,43,.30); --l3-dot:#c0392b;
   --good:#1f9d57; --warn:#9a7d16; --bad:#c0392b;
 
-  --shadow:0 1px 2px rgba(16,42,80,.06), 0 8px 24px rgba(16,42,80,.09);
-  --shadow-lg:0 4px 14px rgba(16,42,80,.10), 0 24px 56px rgba(16,42,80,.15);
+  --shadow:0 1px 2px rgba(16,42,80,.08), 0 4px 14px rgba(16,42,80,.10);
+  --shadow-lg:0 6px 20px rgba(16,42,80,.12), 0 20px 44px rgba(16,42,80,.16);
 
   /* motion signature */
   --ease:cubic-bezier(.645,.045,.355,1);
@@ -578,14 +578,16 @@ input[type=range].dial::-moz-range-thumb{width:22px;height:22px;border-radius:50
      · depth is expressed by blur radius + border luminance, not shadow alone
    ========================================================================== */
 :root{
-  --glass-1:rgba(255,255,255,.74);   /* frosted white — near surface */
-  --glass-2:rgba(255,255,255,.84);   /* mid          */
-  --glass-3:rgba(255,255,255,.92);   /* deep         */
-  --glass-brd:rgba(25,89,165,.14);
-  --glass-brd-hi:rgba(25,89,165,.28);
-  --glass-blur:16px;
-  --glass-blur-lg:24px;
-  --lift:0 1px 0 rgba(255,255,255,.7) inset;
+  /* SOLID white surfaces (no frosting) so cards read as real elements on the
+     page, not translucent floating layers. Blur off on the light ground. */
+  --glass-1:#ffffff;
+  --glass-2:#ffffff;
+  --glass-3:#ffffff;
+  --glass-brd:#d7e1f0;
+  --glass-brd-hi:#bcd0ea;
+  --glass-blur:0px;
+  --glass-blur-lg:0px;
+  --lift:none;
 }
 
 /* ---- ambient field: what the glass actually refracts ---- */
@@ -601,7 +603,7 @@ body::before{
   animation:drift 38s ease-in-out infinite alternate;
 }
 body::after{  /* fine grain so the blur has texture instead of flat wash */
-  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.45;
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.22;
   background-image:radial-gradient(rgba(25,89,165,.05) 1px, transparent 1px);
   background-size:3px 3px;
 }
