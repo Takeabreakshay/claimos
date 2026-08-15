@@ -831,3 +831,91 @@ h1,h2,h3,h4{font-weight:700}
   color:var(--slate-2);margin-bottom:11px}
 .aj-h{font-family:var(--font-display);font-weight:700;letter-spacing:-.025em;line-height:1;
   font-size:clamp(26px,3.4vw,40px);color:var(--ink)}
+
+/* ============================================================================
+   TOP HEADER (replaces the sidebar) — hairline, monospace-flavoured, sticky.
+   ============================================================================ */
+.app{display:block;min-height:100vh}                       /* override the old grid */
+.hdr{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:6px;
+  padding:0 24px;height:62px;background:rgba(255,255,255,.82);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);
+  border-bottom:1px solid var(--line)}
+.hdr-brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:16px;flex:none}
+.hdr-mark{width:29px;height:29px;border-radius:8px;display:grid;place-items:center;color:var(--blue);
+  background:var(--blue-soft)}
+.hdr-mark svg{width:18px;height:18px}
+.hdr-word{font-family:var(--font-display);font-weight:700;font-size:17.5px;letter-spacing:-.02em;color:var(--ink)}
+.hdr-nav{display:flex;align-items:center;gap:1px}
+.hdr-nav button{background:transparent;border:0;cursor:pointer;font-family:var(--font-ui);white-space:nowrap;
+  font-size:13.5px;font-weight:600;color:var(--slate);padding:9px 13px;border-radius:8px;
+  display:inline-flex;align-items:center;gap:7px;position:relative;transition:color .15s,background .15s}
+.hdr-nav button:hover{color:var(--ink);background:var(--g-850)}
+.hdr-nav button.on{color:var(--blue)}
+.hdr-nav button.on::after{content:"";position:absolute;left:13px;right:13px;bottom:-1px;height:2px;
+  background:var(--blue);border-radius:2px}
+.hdr-nav .count{font-family:var(--font-data);font-size:10px;font-weight:700;background:var(--blue-soft);
+  color:var(--blue);padding:1px 6px;border-radius:999px}
+.hdr-div{width:1px;height:22px;background:var(--line);margin:0 9px;flex:none}
+.hdr-nav2 button{font-size:13px;color:var(--slate-2)}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:11px;flex:none}
+
+.hdr-status{position:relative;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:999px;
+  border:1px solid var(--line);cursor:default}
+.hdr-dots{display:inline-flex;gap:4px}
+.hdr-dots i{width:7px;height:7px;border-radius:50%}
+.hdr-status-lbl{font-family:var(--font-data);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate-2)}
+.hdr-pop{position:absolute;top:calc(100% + 9px);right:0;min-width:216px;background:var(--panel);
+  border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);padding:13px 15px;
+  opacity:0;visibility:hidden;transform:translateY(-5px);transition:.16s var(--ease);z-index:60}
+.hdr-status:hover .hdr-pop,.hdr-status:focus-within .hdr-pop{opacity:1;visibility:visible;transform:none}
+.hdr-pop-t{font-family:var(--font-data);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--slate-2);margin-bottom:9px}
+.hdr-pop .sysrow{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);padding:4px 0}
+.hdr-pop .sysrow i{width:7px;height:7px;border-radius:50%;flex:none}
+.hdr-pop .v{margin-left:auto;font-family:var(--font-data);font-size:11px;color:var(--slate)}
+
+.hdr-cta{display:inline-flex;align-items:center;gap:7px;text-decoration:none;font-family:var(--font-ui);
+  font-size:13px;font-weight:700;color:#fff;background:var(--blue);padding:9px 16px;border-radius:9px;
+  transition:filter .15s,transform .1s;white-space:nowrap}
+.hdr-cta:hover{filter:brightness(1.08)} .hdr-cta:active{transform:translateY(1px)}
+.hdr-cta-arw{font-size:12px;opacity:.85}
+.hdr-icon{width:37px;height:37px;border-radius:9px;border:1px solid var(--line);background:var(--panel);
+  color:var(--slate);cursor:pointer;display:grid;place-items:center;transition:.15s}
+.hdr-icon:hover{color:var(--blue);border-color:var(--blue-2)} .hdr-icon svg{width:17px;height:17px}
+
+/* no sidebar -> centre the content column */
+.content{max-width:1280px;margin:0 auto}
+
+@media(max-width:1000px){.hdr-nav2,.hdr-div{display:none}.hdr-status-lbl{display:none}}
+@media(max-width:720px){.hdr{padding:0 12px;gap:2px}.hdr-nav button{padding:8px 9px;font-size:12.5px}
+  .hdr-word{display:none}.hdr-status{display:none}}
+
+/* ---- data table: strip the dark-theme glass, make it clean on white ---- */
+.tblwrap{background:transparent !important;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tbl{width:100%;border-collapse:collapse;background:var(--panel)}
+.tbl th{background:var(--g-850) !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  color:var(--slate-2);border-bottom:1px solid var(--line);position:sticky;top:0}
+.tbl td{border-bottom:1px solid var(--line-2)}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover{background:var(--blue-soft) !important}
+
+/* ---- clean lane-throughput bars (replaces the particle flow) ---- */
+.flow2{display:flex;flex-direction:column}
+.flow2-row{display:grid;grid-template-columns:200px 1fr 68px 50px;align-items:center;gap:18px;
+  padding:15px 2px;border-bottom:1px solid var(--line-2)}
+.flow2-row:last-child{border-bottom:0}
+.flow2-lbl{display:flex;align-items:center;gap:12px;min-width:0}
+.flow2-lbl i{width:11px;height:11px;border-radius:3px;flex:none}
+.flow2-name{font-size:14px;font-weight:650;color:var(--ink);letter-spacing:-.01em}
+.flow2-sub{font-size:11px;color:var(--slate);margin-top:2px}
+.flow2-track{height:10px;border-radius:6px;background:var(--g-800);overflow:hidden}
+.flow2-fill{height:100%;border-radius:6px;width:var(--w);animation:flowgrow 1.1s var(--ease-out) both}
+@keyframes flowgrow{from{width:0}}
+.flow2-pct{font-family:var(--font-data);font-size:23px;font-weight:700;letter-spacing:-.03em;
+  text-align:right;color:var(--ink);line-height:1;font-variant-numeric:tabular-nums}
+.flow2-pct span{font-size:12px;color:var(--slate-2);margin-left:2px;font-weight:600}
+.flow2-n{font-family:var(--font-data);font-size:12.5px;color:var(--slate);text-align:right}
+@media(max-width:660px){
+  .flow2-row{grid-template-columns:1fr 58px 42px;gap:8px 12px}
+  .flow2-track{grid-column:1 / -1;order:5;margin-top:2px}
+}
