@@ -919,3 +919,19 @@ h1,h2,h3,h4{font-weight:700}
   .flow2-row{grid-template-columns:1fr 58px 42px;gap:8px 12px}
   .flow2-track{grid-column:1 / -1;order:5;margin-top:2px}
 }
+
+/* ============================================================================
+   CRISP — kill GPU-composited blur so every number and letter is razor-sharp.
+   The 3D perspective + preserve-3d + translateZ hover rasterised card text onto
+   a scaled layer (persistent blur); backdrop-filter and a dark-theme text-shadow
+   fuzzed it further. On the light theme none of that is needed.
+   ============================================================================ */
+.content{perspective:none;perspective-origin:initial}
+.card,.kpi{transform-style:flat}
+.card:hover,.kpi:hover{transform:translateY(-3px)}         /* 2D lift only, no Z */
+.card,.kpi,.wf-stage,.topbar,.note,.wf-mod,.slane,.stream-wrap,.toast div{
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important}
+.hdr{background:#fff;-webkit-backdrop-filter:none !important;backdrop-filter:none !important}
+.tbl th{text-shadow:none !important}
+/* belt-and-suspenders: no stray text-shadow blurs type anywhere in the app */
+.card *,.kpi *,.aj-stat *,.aj-hero *,.hdr *,.tbl *{text-shadow:none}
