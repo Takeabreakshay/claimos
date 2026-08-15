@@ -92,7 +92,7 @@ let _io = null;
 const _seen = (n) => n.classList.add("seen");
 
 function revealAll() {
-  const nodes = [...document.querySelectorAll("#view .card, #view .kpi")]
+  const nodes = [...document.querySelectorAll("#view .card, #view .kpi, #view .aj-stat")]
     .filter(n => !n.dataset.r);
   if (!nodes.length) return;
   nodes.forEach(n => { n.dataset.r = "1"; });
@@ -118,7 +118,7 @@ function revealAll() {
   }));
 
   // headings + primary action get the signature treatment
-  document.querySelectorAll("#view h3").forEach(h => M.revealHeading(h));
+  document.querySelectorAll("#view .aj-display, #view .aj-h, #view h3").forEach(h => M.revealHeading(h));
   document.querySelectorAll("#view .btn.primary").forEach(b => M.magnetic(b));
 
   // headline numbers compute, then lock in — these are values the engine
@@ -171,23 +171,41 @@ async function renderDashboard(el) {
   const colors = { lane1_touchless: "var(--l1-dot)", lane2_assisted: "var(--l2-dot)", lane3_investigative: "var(--l3-dot)", retake: "var(--blue)", coverage_reject: "var(--slate-2)" };
 
   el.innerHTML = `
-    <div class="grid g4">
-      <div class="kpi"><div class="k">Claims in book</div><div class="v num" data-sc="${d.n_claims}">${d.n_claims}</div>
-        <div class="d">${money(d.total_exposure)} claimed exposure</div></div>
-      <div class="kpi ok"><div class="k">Touchless</div><div class="v num" style="color:var(--l1-fg)" data-sc="${pct(d.touchless_share)}">${pct(d.touchless_share)}</div>
-        <div class="d">auto-settled with no human touch</div></div>
-      <div class="kpi ${leakOk ? "ok" : "bad"}"><div class="k">Lane-1 leakage</div>
-        <div class="v num" style="color:${leakOk ? "var(--good)" : "var(--bad)"}" data-sc="${pct(d.leakage_rate, 2)}">${pct(d.leakage_rate, 2)}</div>
-        <div class="d">${leakOk ? "under" : "BREACHING"} the ${pct(d.leakage_ceiling, 1)} hard ceiling</div></div>
-      <div class="kpi"><div class="k">Fraud-flagged</div><div class="v num" style="color:var(--l3-fg)" data-sc="${d.fraud_flagged}">${d.fraud_flagged}</div>
-        <div class="d">${d.settled} settled to date</div></div>
+    <div class="aj-hero">
+      <div class="aj-kicker">ClaimOS · Risk-based claims triage</div>
+      <h1 class="aj-display">Effort flows to<br>where risk is.</h1>
+      <p class="aj-lede">Every motor claim is scored and routed into one of three lanes —
+        <b>touchless</b>, <b>assisted</b>, <b>investigative</b> — by exactly how much automation
+        it deserves. ${d.n_claims} claims in the book, ${pct(d.touchless_share)} settled with no human touch.</p>
     </div>
 
-    ${POP && POP.length ? `<div style="margin-top:18px">${dialCard()}</div>` : ""}
-    ${POP && POP.length ? streamCard() : ""}
-    ${flowCard(d)}
+    <div class="aj-stats">
+      <div class="aj-stat"><div class="aj-stat-k">Claims in book</div>
+        <div class="aj-stat-v num" data-sc="${d.n_claims}">${d.n_claims}</div>
+        <div class="aj-stat-d">${money(d.total_exposure)} exposure</div></div>
+      <div class="aj-stat"><div class="aj-stat-k">Touchless</div>
+        <div class="aj-stat-v num" style="color:var(--l1-fg)" data-sc="${pct(d.touchless_share)}">${pct(d.touchless_share)}</div>
+        <div class="aj-stat-d">auto-settled, no human</div></div>
+      <div class="aj-stat"><div class="aj-stat-k">Lane-1 leakage</div>
+        <div class="aj-stat-v num" style="color:${leakOk ? "var(--good)" : "var(--bad)"}" data-sc="${pct(d.leakage_rate, 2)}">${pct(d.leakage_rate, 2)}</div>
+        <div class="aj-stat-d">${leakOk ? "under" : "BREACHING"} ${pct(d.leakage_ceiling, 1)} ceiling</div></div>
+      <div class="aj-stat"><div class="aj-stat-k">Fraud-flagged</div>
+        <div class="aj-stat-v num" style="color:var(--l3-fg)" data-sc="${d.fraud_flagged}">${d.fraud_flagged}</div>
+        <div class="aj-stat-d">${d.settled} settled to date</div></div>
+    </div>
 
-    <div class="grid g2" style="margin-top:16px">
+    <section class="aj-section">
+      <div class="aj-section-head"><span class="aj-idx">01</span>
+        <div><div class="aj-eyebrow">The engine</div><h2 class="aj-h">Watch the book route itself</h2></div></div>
+      ${flowCard(d)}
+      ${POP && POP.length ? `<div style="margin-top:16px">${dialCard()}</div>` : ""}
+      ${POP && POP.length ? streamCard() : ""}
+    </section>
+
+    <section class="aj-section">
+      <div class="aj-section-head"><span class="aj-idx">02</span>
+        <div><div class="aj-eyebrow">The guardrail</div><h2 class="aj-h">Automation, bounded by safety</h2></div></div>
+    <div class="grid g2">
       <div class="card"><div class="card-h"><h3>Lane distribution</h3><span class="sub">how the book self-sorts</span></div>
         <div class="card-b">
           ${total > 1 || mix.length ? `
@@ -211,9 +229,12 @@ async function renderDashboard(el) {
         </div>
       </div>
     </div>
+    </section>
 
-    <div class="card" style="margin-top:16px">
-      <div class="card-h"><h3>Recent claims</h3><span class="sub">newest first</span></div>
+    <section class="aj-section">
+      <div class="aj-section-head"><span class="aj-idx">03</span>
+        <div><div class="aj-eyebrow">The book</div><h2 class="aj-h">Recent claims</h2></div></div>
+    <div class="card">
       <div class="tblwrap">
         <table class="tbl"><thead><tr>
           <th>Claim</th><th>Type</th><th>Claimed</th><th>Lane</th><th>Fraud</th><th>Confidence</th><th>Status</th>
@@ -227,7 +248,8 @@ async function renderDashboard(el) {
     `<tr><td colspan="7"><div class="empty">No claims yet — open one from <b>New claim</b>.</div></td></tr>`}
         </tbody></table>
       </div>
-    </div>`;
+    </div>
+    </section>`;
 }
 
 /* ---------- QUEUE ---------- */

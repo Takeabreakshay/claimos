@@ -798,3 +798,36 @@ h1,h2,h3,h4{font-weight:700}
 .kpi .v{font-family:var(--font-data);letter-spacing:-.02em}
 /* thinner, calmer hairlines */
 .card,.kpi{border-color:var(--line)}
+
+/* ============================================================================
+   anime.js layout system — oversized DIN headings, Berkeley Mono labels,
+   hairline-divided sections, generous rhythm. White + blue.
+   ============================================================================ */
+.aj-hero{padding:44px 4px 8px;max-width:1120px}
+.aj-kicker{font-family:var(--font-data);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--blue);display:inline-flex;align-items:center;gap:13px;margin-bottom:24px}
+.aj-kicker::before{content:"";width:36px;height:1px;background:var(--blue)}
+.aj-display{font-family:var(--font-display);font-weight:700;letter-spacing:-.035em;line-height:.92;
+  font-size:clamp(42px,7.2vw,88px);color:var(--ink);margin:0 0 24px}
+.aj-lede{font-size:clamp(15px,1.55vw,19px);line-height:1.55;color:var(--slate);max-width:56ch;margin:0}
+.aj-lede b{color:var(--ink);font-weight:700}
+
+.aj-stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1.5px solid var(--ink);
+  border-bottom:1px solid var(--line);margin:48px 0 4px}
+@media(max-width:820px){.aj-stats{grid-template-columns:repeat(2,1fr)}}
+.aj-stat{padding:22px 24px 22px 0;border-right:1px solid var(--line)}
+.aj-stat:nth-child(4n){border-right:0}
+.aj-stat-k{font-family:var(--font-data);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--slate-2)}
+.aj-stat-v{font-family:var(--font-data);font-size:clamp(30px,3.6vw,46px);font-weight:700;letter-spacing:-.03em;
+  line-height:1;margin:14px 0 9px;color:var(--ink);font-variant-numeric:tabular-nums}
+.aj-stat-d{font-size:11.5px;color:var(--slate);line-height:1.4}
+
+.aj-section{padding:54px 0 6px;border-top:1px solid var(--line);margin-top:40px}
+.aj-section:first-of-type{border-top:0}
+.aj-section-head{display:flex;gap:22px;align-items:flex-start;margin-bottom:28px}
+.aj-idx{font-family:var(--font-data);font-size:13px;color:var(--blue);letter-spacing:.06em;padding-top:9px;
+  flex:none}
+.aj-eyebrow{font-family:var(--font-data);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--slate-2);margin-bottom:11px}
+.aj-h{font-family:var(--font-display);font-weight:700;letter-spacing:-.025em;line-height:1;
+  font-size:clamp(26px,3.4vw,40px);color:var(--ink)}
