@@ -269,13 +269,20 @@ async function renderQueue(el) {
         <th>Fraud</th><th>Confidence</th><th>Status</th>
       </tr></thead><tbody id="qbody"></tbody></table></div>
     </div>`;
+  const NEW_MS = 15 * 60 * 1000;   // claims filed in the last 15 min flash as NEW
+  const isNew = (c) => {
+    const t = Date.parse(c.created_at || c.fnol_timestamp || "");
+    return t && (Date.now() - t) < NEW_MS;
+  };
   const draw = () => {
     const f = $("fLane").value;
     const rows = claims.filter(c => f === "(all)" || c.lane === f);
-    $("qbody").innerHTML = rows.map(c => {
+    $("qbody").innerHTML = rows.map((c, i) => {
       const s = c.score || {};
-      return `<tr onclick="openClaim('${c.claim_id}')">
-        <td class="mono">${esc(c.claim_id)}</td><td>${esc(c.claim_type || "—")}</td>
+      const fresh = isNew(c);
+      return `<tr class="${fresh ? "qnew" : ""}${fresh && i === 0 ? " qflash" : ""}" onclick="openClaim('${c.claim_id}')">
+        <td class="mono">${esc(c.claim_id)}${fresh ? '<span class="qbadge">NEW</span>' : ""}</td>
+        <td>${esc(c.claim_type || "—")}</td>
         <td class="num">${money(c.claim_amount)}</td><td>${esc(c.incident_severity || "—")}</td>
         <td>${laneChip(c.lane)}</td>
         <td class="num">${s.p_fraud != null ? pct(s.p_fraud, 0) : "—"}</td>
@@ -285,6 +292,21 @@ async function renderQueue(el) {
   };
   $("fLane").onchange = draw;
   draw();
+
+  // Live transition: while the queue is open, poll so a just-filed claim appears
+  // (and flashes) at the top without a manual refresh.
+  clearInterval(S._qpoll);
+  S._qpoll = setInterval(async () => {
+    if (S.view !== "queue") { clearInterval(S._qpoll); return; }
+    try {
+      const fresh = await api("/api/claims");
+      if (fresh.length !== claims.length ||
+          (fresh[0] && claims[0] && fresh[0].claim_id !== claims[0].claim_id)) {
+        claims.length = 0; claims.push(...fresh);
+        S.claims = claims; $("qcount").textContent = claims.length; draw();
+      }
+    } catch (e) { /* ignore transient */ }
+  }, 6000);
 }
 
 /* ---------- INTAKE ---------- */

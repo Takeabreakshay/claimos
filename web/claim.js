@@ -217,7 +217,12 @@ function stepPhotos(el) {
       <div class="cx-angles" id="angles">
         ${ANGLES.map((a, i) => `<span class="cx-angle ${i < C.photos.length ? "got" : ""}">${i < C.photos.length ? "✓" : "○"} ${esc(a)}</span>`).join("")}
       </div>
-      <div class="cx-drop" id="drop"><b>Tap to add photos</b><br><span style="font-size:12px">or drag &amp; drop · analysed instantly</span></div>
+      <button class="cx-btn primary cx-cam-btn" id="camBtn">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2.5"/><circle cx="12" cy="13" r="3.4"/><path d="M8 6l1.2-2h5.6L16 6"/></svg>
+        Open camera &amp; capture damage
+      </button>
+      <div class="cx-cam-note">A 10-minute guided session opens your camera. Each shot is clarity-checked live — blurry frames won't capture, so there's no rework.</div>
+      <div class="cx-drop" id="drop"><b>or upload existing photos</b><br><span style="font-size:12px">tap / drag &amp; drop · analysed instantly</span></div>
       <input type="file" id="file" accept="image/*" multiple style="display:none">
       <div id="shots">${C.photos.map(photoRow).join("")}</div>
       <div class="cx-actions">
@@ -226,12 +231,154 @@ function stepPhotos(el) {
       </div>
     </div>`;
   const drop = $("drop"), file = $("file");
+  $("camBtn").onclick = openCamera;
   drop.onclick = () => file.click();
   file.onchange = () => uploadPhotos(file.files);
   ["dragover", "dragenter"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
   ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
   drop.addEventListener("drop", e => uploadPhotos(e.dataTransfer.files));
   $("phNext").onclick = () => go("review");
+}
+
+/* =============================== LIVE CAMERA ===============================
+   Opens the device camera, starts a 10-minute capture window, and gates the
+   shutter on a live clarity check (Laplacian-variance sharpness) so a blurry
+   frame will not capture — the customer only submits usable photos, no rework.
+   Captured frames go through the same /photos endpoint (real server vision). */
+let _camStream = null, _camTimer = null, _camRAF = null, _camDeadline = 0, _lastSharp = 0;
+const _camCanvas = document.createElement("canvas");
+const SHARP_MIN = 110;   // below this Laplacian-variance = too blurry to accept
+
+function openCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert("Camera isn't available here. Use ‘upload existing photos’ instead."); return;
+  }
+  const ov = document.createElement("div");
+  ov.className = "cam"; ov.id = "cam";
+  ov.innerHTML = `
+    <div class="cam-top">
+      <div class="cam-timer" id="camTimer">10:00</div>
+      <div class="cam-ttl">Capture the damage</div>
+      <button class="cam-x" id="camX" aria-label="Close camera">✕</button>
+    </div>
+    <div class="cam-stage">
+      <video id="camVid" autoplay playsinline muted></video>
+      <div class="cam-frame"></div>
+    </div>
+    <div class="cam-angles" id="camAngles"></div>
+    <div class="cam-clarity"><span class="cam-clbl">Clarity</span>
+      <div class="cam-meter"><i id="camMeter"></i></div><b id="camPct">—</b></div>
+    <div class="cam-status" id="camStat">Starting camera…</div>
+    <div class="cam-controls"><button class="cam-shot" id="camShot" disabled aria-label="Capture"></button></div>`;
+  document.body.appendChild(ov);
+  $("camX").onclick = closeCamera;
+  $("camShot").onclick = captureFrame;
+  renderCamAngles();
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+    audio: false,
+  }).then(stream => {
+    _camStream = stream;
+    const v = $("camVid"); v.srcObject = stream; v.play().catch(() => {});
+    _camDeadline = Date.now() + 10 * 60 * 1000;
+    tickTimer(); clarityLoop();
+  }).catch(() => {
+    $("camStat").innerHTML = `<span style="color:var(--bad)">Camera access blocked. Allow the camera, or close and use ‘upload existing photos’.</span>`;
+  });
+}
+
+function renderCamAngles() {
+  const got = C.photos.length, box = $("camAngles"); if (!box) return;
+  box.innerHTML = ANGLES.map((a, i) =>
+    `<span class="cam-ang ${i < got ? "got" : ""}">${i < got ? "✓" : (i + 1)} ${esc(a)}</span>`).join("");
+}
+
+function tickTimer() {
+  clearTimeout(_camTimer);
+  const left = Math.max(0, Math.round((_camDeadline - Date.now()) / 1000));
+  const t = $("camTimer");
+  if (t) { t.textContent = `${String(Math.floor(left / 60)).padStart(2, "0")}:${String(left % 60).padStart(2, "0")}`;
+    t.classList.toggle("low", left <= 60); }
+  if (left <= 0) return expireCamera();
+  _camTimer = setTimeout(tickTimer, 1000);
+}
+
+function expireCamera() {
+  cancelAnimationFrame(_camRAF);
+  const shot = $("camShot"); if (shot) shot.disabled = true;
+  const st = $("camStat"); if (st) st.innerHTML = `<span style="color:var(--warn)">⏱ 10-minute window ended.</span>`;
+  const ov = $("cam");
+  if (ov && !$("camRestart")) {
+    const b = document.createElement("button");
+    b.id = "camRestart"; b.className = "cam-restart";
+    b.textContent = C.photos.length ? "Restart capture" : "Restart 10-min capture";
+    b.onclick = () => { closeCamera(); openCamera(); };
+    ov.querySelector(".cam-controls").appendChild(b);
+  }
+}
+
+function sharpness(v) {
+  const w = 300, h = Math.max(1, Math.round((v.videoHeight / v.videoWidth || 0.75) * 300));
+  const c = _camCanvas; c.width = w; c.height = h;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  let d; try { ctx.drawImage(v, 0, 0, w, h); d = ctx.getImageData(0, 0, w, h).data; } catch (e) { return 0; }
+  const g = new Float32Array(w * h);
+  for (let i = 0, p = 0; i < w * h; i++, p += 4) g[i] = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
+  let sum = 0, sum2 = 0, n = 0;
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y * w + x, lap = 4 * g[i] - g[i - 1] - g[i + 1] - g[i - w] - g[i + w];
+    sum += lap; sum2 += lap * lap; n++;
+  }
+  return Math.max(0, sum2 / n - (sum / n) * (sum / n));   // variance of the Laplacian
+}
+
+function clarityLoop() {
+  const v = $("camVid");
+  if (!v || !_camStream || !$("cam")) return;
+  if (v.readyState >= 2) _lastSharp = sharpness(v);
+  const pct = Math.max(0, Math.min(100, Math.round(_lastSharp / (SHARP_MIN * 1.6) * 100)));
+  const sharp = _lastSharp >= SHARP_MIN, live = Date.now() < _camDeadline;
+  const meter = $("camMeter"), pctEl = $("camPct"), stat = $("camStat"), shot = $("camShot");
+  if (meter) { meter.style.width = pct + "%";
+    meter.style.background = sharp ? "var(--good)" : (pct > 55 ? "var(--warn)" : "var(--bad)"); }
+  if (pctEl) pctEl.textContent = pct + "%";
+  if (shot && live) shot.disabled = !sharp;
+  if (shot) shot.classList.toggle("ready", sharp && live);
+  if (stat && live) stat.innerHTML = sharp
+    ? `<span style="color:var(--good)">✓ Sharp — tap the shutter</span>`
+    : `Hold steady — too blurry to capture`;
+  _camRAF = requestAnimationFrame(() => setTimeout(clarityLoop, 170));
+}
+
+async function captureFrame() {
+  const v = $("camVid"); if (!v) return;
+  if (_lastSharp < SHARP_MIN) { const s = $("camStat"); if (s) s.innerHTML = `<span style="color:var(--bad)">Too blurry — hold steady</span>`; return; }
+  const w = v.videoWidth || 1280, h = v.videoHeight || 960;
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  c.getContext("2d").drawImage(v, 0, 0, w, h);
+  const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.92));
+  const shot = $("camShot"); if (shot) shot.disabled = true;
+  const stat = $("camStat"); if (stat) stat.innerHTML = `<span class="cx-spin"></span> Verifying photo…`;
+  const before = C.photos.length;
+  try { await uploadPhotos([new File([blob], `camera-${before + 1}.jpg`, { type: "image/jpeg" })]); }
+  catch (e) { if (stat) stat.innerHTML = `<span style="color:var(--bad)">Couldn't verify — try again</span>`; return; }
+  renderCamAngles();
+  if (stat) stat.innerHTML = C.photos.length > before
+    ? `<span style="color:var(--good)">✓ Photo added (${C.photos.length}/${ANGLES.length})</span>`
+    : `<span style="color:var(--warn)">Server flagged that shot — retake</span>`;
+  if (C.photos.length >= ANGLES.length && !$("camDone")) {
+    const b = document.createElement("button");
+    b.id = "camDone"; b.className = "cam-done"; b.textContent = "Done — review my claim";
+    b.onclick = () => { closeCamera(); go("review"); };
+    $("cam").querySelector(".cam-controls").appendChild(b);
+  }
+}
+
+function closeCamera() {
+  clearTimeout(_camTimer); cancelAnimationFrame(_camRAF);
+  if (_camStream) { _camStream.getTracks().forEach(t => t.stop()); _camStream = null; }
+  const ov = $("cam"); if (ov) ov.remove();
+  if (C.step === "photos") stepPhotos(app());
 }
 
 function photoRow(p) {

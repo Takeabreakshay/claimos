@@ -1036,3 +1036,15 @@ input:focus, select:focus, textarea:focus{ border-color:var(--blue) !important;
 .dial-thr span{ background:var(--g-850); border-color:var(--line); color:var(--ink-2) }
 .wf-formula span{ background:var(--blue-soft); border-color:var(--line); color:var(--ink-2) }
 .wf-formula span.hot{ background:var(--blue); border-color:var(--blue); color:#fff }
+
+/* ---- queue: freshly-filed claim flashes NEW at the top ---- */
+.tbl tr.qnew{background:var(--blue-soft)}
+.tbl tr.qnew td:first-child{box-shadow:inset 3px 0 0 var(--blue)}
+.qbadge{display:inline-block;margin-left:8px;font-family:var(--font-data);font-size:9.5px;font-weight:700;
+  letter-spacing:.1em;color:#fff;background:var(--blue);padding:2px 7px;border-radius:999px;vertical-align:middle}
+.tbl tr.qflash{animation:qflash 2.4s var(--ease-out) 1}
+@keyframes qflash{
+  0%{background:color-mix(in srgb,var(--blue) 34%,transparent)}
+  30%{background:color-mix(in srgb,var(--blue) 22%,transparent)}
+  100%{background:var(--blue-soft)}
+}
