@@ -1,0 +1,22 @@
+name: keep-warm
+# Pings the Render backend every ~12 min so it never crosses the 15-min idle
+# spin-down and stays awake (no cold starts). Free. Public repo = unlimited
+# Actions minutes; on a private repo this uses a little of the monthly quota.
+on:
+  schedule:
+    - cron: "*/12 * * * *"     # every 12 minutes
+  workflow_dispatch:            # lets you trigger it manually too
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake / keep the backend warm
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 90 \
+              https://claimos.onrender.com/api/health)
+            if [ "$code" = "200" ]; then echo "warm ($code)"; exit 0; fi
+            echo "attempt $i -> $code, retrying"; sleep 8
+          done
+          echo "backend did not return 200 (may still be waking)"

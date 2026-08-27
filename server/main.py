@@ -35,6 +35,22 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+def _warm() -> None:
+    """Pre-load the trained models in the background so the first scoring request
+    after a boot/wake is instant, not a cold model load. Runs off-thread so the
+    health check (used by the host to mark the service live) responds immediately."""
+    import threading
+
+    def _load() -> None:
+        try:
+            wf.models()          # load + cache LightGBM cost/fraud/escalation + calibrators
+        except Exception:
+            pass                 # scoring will lazy-load on first use if this fails
+
+    threading.Thread(target=_load, daemon=True).start()
+
+
 # --------------------------------------------------------------------------- #
 # Models
 # --------------------------------------------------------------------------- #
