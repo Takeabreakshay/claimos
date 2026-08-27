@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "claimos-web",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "uvicorn", "server.main:app", "--host", "127.0.0.1", "--port", "8600"],
+      "port": 8600
+    },
+    {
       "name": "claimos-streamlit-demo",
       "runtimeExecutable": ".venv/Scripts/streamlit.exe",
       "runtimeArgs": ["run", "demo/app.py", "--server.port", "8501", "--server.headless", "true"],

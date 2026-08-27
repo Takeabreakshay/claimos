@@ -720,6 +720,7 @@ def _guess_doc_type(up: str, declared: str) -> str:
 # Engine 1 — LOCAL (no key)
 # --------------------------------------------------------------------------- #
 _rapid = None
+_NVIDIA_OCR_DEAD = False  # set once the hosted Nemotron function 404s in this process
 
 
 def _local_ocr(data: bytes) -> OcrResult:
@@ -735,7 +736,14 @@ def _local_ocr(data: bytes) -> OcrResult:
 
             _rapid = RapidOCR()
 
-        img = np.asarray(Image.open(io.BytesIO(data)).convert("RGB"))
+        pil = Image.open(io.BytesIO(data)).convert("RGB")
+        # Downscale big scans / phone photos before OCR: RapidOCR on a 2000px+
+        # image is 10-40x slower with no accuracy gain on document text.
+        longest = max(pil.size)
+        if longest > 1600:
+            s = 1600 / longest
+            pil = pil.resize((int(pil.width * s), int(pil.height * s)), Image.LANCZOS)
+        img = np.asarray(pil)
         res, _ = _rapid(img)
         if not res:
             return OcrResult("local:rapidocr", "", {}, 0.0, "no text detected")
@@ -849,7 +857,14 @@ def run_ocr(data: bytes, doc_type: str = "other", prefer: str | None = None) -> 
         order = [prefer.lower()]
     else:
         order = []
-        if os.getenv("NVIDIA_OCR_KEY"):
+        # NVIDIA_OCR_DISABLED lets us skip the hosted Nemotron function when it is
+        # not provisioned for the account (returns 404) — the local RapidOCR engine
+        # is then the primary, avoiding a wasted round-trip on every document.
+        _disabled = str(os.getenv("NVIDIA_OCR_DISABLED", "")).lower() in ("1", "true", "yes")
+        # Auto circuit-breaker: once the hosted function has 404'd this process,
+        # stop trying it — every subsequent doc goes straight to local (self-heals
+        # in production even without the env flag set).
+        if os.getenv("NVIDIA_OCR_KEY") and not _disabled and not _NVIDIA_OCR_DEAD:
             order.append("nvidia")
         if os.getenv("LLM_API_KEY"):
             order.append("llm")
@@ -859,6 +874,9 @@ def run_ocr(data: bytes, doc_type: str = "other", prefer: str | None = None) -> 
     for engine in order:
         if engine == "nvidia":
             res = _nvidia_ocr(data, doc_type)
+            if res.error and ("404" in res.error or "Not found" in res.error
+                              or "Not Found" in res.error):
+                globals()["_NVIDIA_OCR_DEAD"] = True  # don't retry a missing function
         elif engine == "llm":
             res = _llm_ocr(data, doc_type)
         else:

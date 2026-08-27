@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile  # noqa: E402
+from fastapi.concurrency import run_in_threadpool  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import FileResponse, JSONResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
@@ -131,7 +132,10 @@ def health() -> dict[str, Any]:
         "supabase_configured": bool(os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_SERVICE_KEY")),
         "models_loaded": models_ok,
         "models_error": models_err,
-        "ocr_engine": "nemotron-ocr-v2" if os.getenv("NVIDIA_OCR_KEY") else "local:rapidocr",
+        "ocr_engine": ("nemotron-ocr-v2"
+                       if os.getenv("NVIDIA_OCR_KEY")
+                       and str(os.getenv("NVIDIA_OCR_DISABLED", "")).lower() not in ("1", "true", "yes")
+                       else "local:rapidocr"),
         "llm": bool(os.getenv("NVIDIA_LLM_KEY")),
         "llm_model": os.getenv("NVIDIA_LLM_MODEL", ""),
         "rails_live": os.getenv("RAILS_LIVE", "false") == "true",
@@ -184,7 +188,8 @@ async def upload_photo(claim_id: str, file: UploadFile = File(...),
                        angle: str = Form("wide")) -> dict[str, Any]:
     data = await file.read()
     try:
-        res = wf.add_photo(claim_id, file.filename or "photo.jpg", data, angle)
+        res = await run_in_threadpool(
+            wf.add_photo, claim_id, file.filename or "photo.jpg", data, angle)
     except Exception as exc:
         raise HTTPException(400, f"photo analysis failed: {exc}") from exc
     return {
@@ -211,7 +216,8 @@ async def upload_document(claim_id: str, file: UploadFile = File(...),
                           doc_type: str = Form("other")) -> dict[str, Any]:
     data = await file.read()
     try:
-        res = wf.add_document(claim_id, file.filename or "doc", data, doc_type)
+        res = await run_in_threadpool(
+            wf.add_document, claim_id, file.filename or "doc", data, doc_type)
     except Exception as exc:
         raise HTTPException(400, f"OCR failed: {exc}") from exc
     return {
