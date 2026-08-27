@@ -257,6 +257,37 @@ class Store:
             return None
         return sorted(rows, key=lambda r: r.get("scored_at", ""), reverse=True)[0]
 
+    def latest_scores(self, claim_ids: list[str]) -> dict[str, dict[str, Any]]:
+        """Latest score for many claims in ONE query (avoids N+1 on list views)."""
+        if not claim_ids:
+            return {}
+        if self.mode == "supabase":
+            res = (self._sb.table("claim_scores").select("*")
+                   .in_("claim_id", claim_ids).execute())
+            rows = res.data or []
+        else:
+            con = self._lcon()
+            qs = ",".join("?" * len(claim_ids))
+            rows = [json.loads(r[0]) for r in con.execute(
+                f"select data from claim_scores where claim_id in ({qs})",
+                claim_ids).fetchall()]
+            con.close()
+        latest: dict[str, dict[str, Any]] = {}
+        for r in rows:
+            cid = r.get("claim_id")
+            if not cid:
+                continue
+            cur = latest.get(cid)
+            if cur is None or r.get("scored_at", "") > cur.get("scored_at", ""):
+                latest[cid] = r
+        # in-process overlay (Supabase column-stripping guard) wins when present
+        for cid in claim_ids:
+            ov = self._full_children.get(("claim_scores", cid))
+            if ov:
+                latest[cid] = sorted(ov, key=lambda r: r.get("scored_at", ""),
+                                     reverse=True)[0]
+        return latest
+
     # ---------------- photo-hash corpus (cross-claim reuse detection) --------
     def known_phashes(self, exclude_claim: str | None = None) -> list[tuple[str, str]]:
         """[(phash, claim_id)] for every photo already in the system."""

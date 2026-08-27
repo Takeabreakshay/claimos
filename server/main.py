@@ -154,11 +154,9 @@ def nvidia_health() -> dict[str, Any]:
 @app.get("/api/claims")
 def list_claims(limit: int = 200) -> list[dict[str, Any]]:
     store = get_store()
-    out = []
-    for c in store.list_claims(limit=limit):
-        sc = store.latest_score(c["claim_id"]) or {}
-        out.append({**c, "score": sc})
-    return out
+    claims = store.list_claims(limit=limit)
+    scores = store.latest_scores([c["claim_id"] for c in claims])  # one query, no N+1
+    return [{**c, "score": scores.get(c["claim_id"], {})} for c in claims]
 
 
 @app.post("/api/claims")
