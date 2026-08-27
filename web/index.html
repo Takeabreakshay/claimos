@@ -7,13 +7,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css?v=23" />
+<link rel="stylesheet" href="/styles.css?v=24" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>" />
 </head>
 <body>
 <div class="app">
   <!-- ============================ HEADER ============================ -->
   <header class="hdr" id="hdr">
+    <button class="hdr-burger" id="burger" aria-label="Menu" aria-expanded="false">
+      <svg class="ic-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <svg class="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
     <a class="hdr-brand" href="/" title="ClaimOS">
       <span class="hdr-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3v6c0 4.5-3.2 8.3-8 11-4.8-2.7-8-6.5-8-11V5l8-3z" fill="currentColor"/><path d="M8.5 12.2l2.4 2.4 4.6-5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <span class="hdr-word">ClaimOS</span>
@@ -64,6 +68,6 @@
 <script src="/js/ScrambleTextPlugin.min.js"></script>
 <script src="/js/CustomEase.min.js"></script>
 <script src="/motion.js?v=15"></script>
-<script src="/app.js?v=21"></script>
+<script src="/app.js?v=22"></script>
 </body>
 </html>

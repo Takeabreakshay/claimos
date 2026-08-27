@@ -935,3 +935,73 @@ h1,h2,h3,h4{font-weight:700}
 .tbl th{text-shadow:none !important}
 /* belt-and-suspenders: no stray text-shadow blurs type anywhere in the app */
 .card *,.kpi *,.aj-stat *,.aj-hero *,.hdr *,.tbl *{text-shadow:none}
+
+/* ============================================================================
+   MOBILE — the organization console on a phone. Hamburger drawer nav, stacked
+   layouts, touch-sized targets, tighter rhythm. Customer app is already mobile.
+   ============================================================================ */
+.hdr-burger{display:none}
+.ic-close{display:none}
+
+@media (max-width:860px){
+  /* --- header collapses to: [burger] [brand] .......... [cta] [avatar] --- */
+  .hdr{flex-wrap:wrap; height:58px; overflow:hidden; padding:0 14px; gap:10px}
+  .hdr.menu-open{height:auto; overflow:visible; padding-bottom:10px}
+  .hdr-burger{display:grid; place-items:center; width:40px; height:40px; order:0;
+    border:1px solid var(--line); border-radius:9px; background:var(--panel);
+    color:var(--ink); cursor:pointer; flex:none}
+  .hdr-burger svg{width:20px; height:20px}
+  .hdr.menu-open .ic-open{display:none}
+  .hdr.menu-open .ic-close{display:block}
+  .hdr-brand{order:1; margin-right:0}
+  .hdr-right{order:2; margin-left:auto; gap:8px}
+  .hdr-nav, .hdr-nav2{order:5; width:100%; display:none}
+  .hdr.menu-open .hdr-nav, .hdr.menu-open .hdr-nav2{
+    display:flex; flex-direction:column; gap:1px; margin-top:6px;
+    border-top:1px solid var(--line-2); padding-top:8px}
+  .hdr.menu-open .hdr-nav button, .hdr.menu-open .hdr-nav2 button{
+    width:100%; justify-content:flex-start; min-height:48px; padding:12px 12px;
+    font-size:15.5px; border-radius:9px; color:var(--ink)}
+  .hdr.menu-open .hdr-nav button.on, .hdr.menu-open .hdr-nav2 button.on{
+    background:var(--blue-soft); color:var(--blue)}
+  .hdr.menu-open .hdr-nav button.on::after, .hdr.menu-open .hdr-nav2 button.on::after{display:none}
+  .hdr.menu-open .hdr-nav2{margin-top:2px; padding-top:8px}
+  .hdr.menu-open .hdr-nav2::before{content:"Active claim"; font-family:var(--font-data);
+    font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--slate-2);
+    padding:6px 12px 4px}
+  .hdr-div{display:none}
+  .hdr-status{display:none}
+  .hdr-icon{display:none}                 /* refresh lives in the menu context */
+  .hdr-cta{padding:9px 13px; font-size:12.5px}
+  .hdr-cta .hdr-cta-arw{display:none}
+
+  /* --- content rhythm --- */
+  .content{padding:16px 14px 48px}
+  .grid{gap:12px}
+  .aj-hero{padding:26px 2px 4px}
+  .aj-stats{margin:26px 0 4px}
+  .aj-stat{padding:16px 14px 16px 0}
+  .aj-section{padding:34px 0 4px; margin-top:26px}
+  .aj-section-head{gap:12px; margin-bottom:18px}
+  .aj-idx{padding-top:5px}
+  .card-b{padding:15px}
+  .card-h{padding:13px 15px}
+}
+
+/* very small phones — reclaim width */
+@media (max-width:420px){
+  .hdr-word{display:none}                 /* keep just the mark */
+  .avatar{display:none}
+  .aj-stats{grid-template-columns:1fr 1fr}
+  .flow2-name{font-size:13px}
+}
+
+/* stack every 2/3-col content grid on phones (decision, evidence, etc.) */
+@media (max-width:720px){
+  .grid.g2, .grid.g3, .grid.g4{grid-template-columns:1fr}
+  .mods{grid-template-columns:1fr}
+  .mod{grid-template-columns:auto 1fr auto}
+  /* wide tables scroll horizontally inside their own container */
+  .tblwrap{-webkit-overflow-scrolling:touch}
+  .tbl th, .tbl td{white-space:nowrap}
+}

@@ -1614,8 +1614,27 @@ window.settleClaim = settleClaim;
 window.scoreClaim = scoreClaim;
 
 /* ------------------------------ BOOT ------------------------------ */
+const closeMenu = () => {
+  const h = $("hdr"); if (!h) return;
+  h.classList.remove("menu-open");
+  const b = $("burger"); if (b) b.setAttribute("aria-expanded", "false");
+};
 document.querySelectorAll("#nav button, #nav2 button")
-  .forEach(b => b.onclick = () => go(b.dataset.v));
+  .forEach(b => b.onclick = () => { go(b.dataset.v); closeMenu(); });
 $("refresh").onclick = () => { loadHealth(); render(); };
+
+// mobile hamburger: toggle the nav drawer
+const _burger = $("burger");
+if (_burger) _burger.onclick = () => {
+  const h = $("hdr");
+  const open = h.classList.toggle("menu-open");
+  _burger.setAttribute("aria-expanded", open ? "true" : "false");
+};
+// tapping outside the open drawer closes it
+document.addEventListener("click", (e) => {
+  const h = $("hdr");
+  if (h && h.classList.contains("menu-open") && !h.contains(e.target)) closeMenu();
+});
+
 loadHealth();
 go("dashboard");
