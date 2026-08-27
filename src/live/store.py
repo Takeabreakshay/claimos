@@ -58,24 +58,37 @@ class Store:
         self._full_children: dict[tuple[str, str], list[dict[str, Any]]] = {}
 
         if self.mode == "supabase":
-            try:
-                from supabase import create_client
+            # Retry the startup probe: a transient DNS/network blip during a cold
+            # start (common on Render free tier) must NOT pin the whole process to
+            # local storage for its lifetime. A schema error won't self-heal, so we
+            # stop retrying on that immediately.
+            attempts = int(os.getenv("SUPABASE_CONNECT_ATTEMPTS", "4"))
+            last_msg = ""
+            for i in range(attempts):
+                try:
+                    from supabase import create_client
 
-                self._sb = create_client(self.url, self.key)
-                # Credentials can be valid while the schema was never applied.
-                # Probe once here so we degrade cleanly instead of 500-ing every
-                # request later with PGRST205.
-                self._sb.table("claims").select("claim_id").limit(1).execute()
-            except Exception as exc:
-                msg = str(exc)
-                if "PGRST205" in msg or "schema cache" in msg:
-                    self.init_error = (
-                        "Supabase reachable but the schema is missing — run "
-                        "supabase/schema.sql in the SQL editor, then restart."
-                    )
-                else:
-                    self.init_error = f"Supabase unavailable: {msg[:200]}"
-                self.mode = "local"
+                    self._sb = create_client(self.url, self.key)
+                    # Credentials can be valid while the schema was never applied.
+                    # Probe so we degrade cleanly instead of 500-ing later (PGRST205).
+                    self._sb.table("claims").select("claim_id").limit(1).execute()
+                    self.init_error = None
+                    break
+                except Exception as exc:
+                    last_msg = str(exc)
+                    if "PGRST205" in last_msg or "schema cache" in last_msg:
+                        self.init_error = (
+                            "Supabase reachable but the schema is missing — run "
+                            "supabase/schema.sql in the SQL editor, then restart."
+                        )
+                        self.mode = "local"
+                        break
+                    self.init_error = f"Supabase unavailable: {last_msg[:200]}"
+                    if i < attempts - 1:
+                        import time
+                        time.sleep(1.5 * (i + 1))   # 1.5s, 3s, 4.5s backoff
+            else:
+                self.mode = "local"                 # exhausted retries -> local
 
         if self.mode == "local":
             self._init_local()
