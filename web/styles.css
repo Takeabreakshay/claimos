@@ -891,7 +891,8 @@ h1,h2,h3,h4{font-weight:700}
   .hdr-word{display:none}.hdr-status{display:none}}
 
 /* ---- data table: strip the dark-theme glass, make it clean on white ---- */
-.tblwrap{background:transparent !important;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tblwrap{background:transparent !important;border:1px solid var(--line);border-radius:12px;
+  overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch}
 .tbl{width:100%;border-collapse:collapse;background:var(--panel)}
 .tbl th{background:var(--g-850) !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;
   color:var(--slate-2);border-bottom:1px solid var(--line);position:sticky;top:0}
@@ -1005,3 +1006,33 @@ h1,h2,h3,h4{font-weight:700}
   .tblwrap{-webkit-overflow-scrolling:touch}
   .tbl th, .tbl td{white-space:nowrap}
 }
+
+/* ============================================================================
+   FIX — remove leftover dark boxes; keep the whole app on the light theme.
+   (form inputs were rgba(10,13,18); the risk dial + workflow wedge were navy)
+   ============================================================================ */
+/* form controls: clean white, dark text, blue focus */
+input[type=text], input[type=number], input[type=date], input[type=email],
+input[type=tel], input[type=search], select, textarea{
+  background:var(--panel) !important; border:1px solid var(--line) !important;
+  color:var(--ink) !important;
+}
+input::placeholder, textarea::placeholder{ color:var(--slate-2) }
+input:focus, select:focus, textarea:focus{ border-color:var(--blue) !important;
+  box-shadow:0 0 0 3px var(--blue-soft) }
+
+/* risk dial + wedge become light cards (were dark navy panels) */
+.dial-card, .wf-wedge{
+  background:var(--panel) !important; border:1px solid var(--line) !important;
+  box-shadow:var(--shadow);
+}
+.dial-card::before, .wf-wedge::before{ display:none !important }
+.dial-card.clamped{ border-color:color-mix(in srgb, var(--bad) 45%, transparent) !important }
+/* their white/blue-on-dark text -> dark on the light panel */
+.dial-head h3, .strip .sv, .wf-wedge h3, .wf-anchor b, .wf-score{ color:var(--ink) }
+.dial-head .sub, .dial-track .end, .strip .sd{ color:var(--slate) }
+.strip .sk2{ color:var(--slate-2) }
+.strip .s{ border-left-color:var(--line) }
+.dial-thr span{ background:var(--g-850); border-color:var(--line); color:var(--ink-2) }
+.wf-formula span{ background:var(--blue-soft); border-color:var(--line); color:var(--ink-2) }
+.wf-formula span.hot{ background:var(--blue); border-color:var(--blue); color:#fff }
