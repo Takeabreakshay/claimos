@@ -237,3 +237,17 @@ body.cx::before{
   font-family:var(--font-ui);cursor:pointer;width:100%;max-width:360px}
 .cam-restart{background:rgba(255,255,255,.14);color:#fff}
 .cam-done{background:var(--good);color:#04140a}
+
+/* ============================================================================
+   MOBILE POLISH — safe-area insets (notch / home indicator) + tactile feedback.
+   Keeps the customer filing flow feeling like a native phone app.
+   ============================================================================ */
+.cx-bar{padding-top:calc(16px + env(safe-area-inset-top))}
+.cx-wrap{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+.cx-btn{-webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  transition:transform .12s var(--ease-out), filter .2s ease, background .2s ease}
+.cx-btn:active{transform:scale(.97)}
+.cx-btn.primary:active{filter:brightness(.95)}
+a,button,.seg,.cx-card{-webkit-tap-highlight-color:transparent}
+a,button{touch-action:manipulation}   /* remove the 300ms tap delay */
+@media (prefers-reduced-motion:reduce){.cx-btn{transition:none}}

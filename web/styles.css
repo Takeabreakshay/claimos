@@ -1049,3 +1049,78 @@ input:focus, select:focus, textarea:focus{ border-color:var(--blue) !important;
   30%{background:color-mix(in srgb,var(--blue) 22%,transparent)}
   100%{background:var(--blue-soft)}
 }
+
+/* ============================================================================
+   MOBILE APP SHELL — fixed bottom tab bar, safe-area insets, tactile feedback,
+   gesture-smooth tables. Turns the console into a native-feeling phone app.
+   Hidden entirely on desktop (>860px).
+   ============================================================================ */
+.mnav{display:none}
+
+@media (max-width:860px){
+  /* clear the fixed bar + the iOS home indicator */
+  .content{padding-bottom:calc(90px + env(safe-area-inset-bottom))}
+  .toast{bottom:calc(80px + env(safe-area-inset-bottom))}
+
+  .mnav{
+    display:grid; grid-template-columns:repeat(4,1fr); align-items:stretch;
+    position:fixed; left:0; right:0; bottom:0; z-index:80;
+    background:rgba(255,255,255,.86);
+    -webkit-backdrop-filter:saturate(1.6) blur(16px); backdrop-filter:saturate(1.6) blur(16px);
+    border-top:1px solid var(--line);
+    padding:7px 8px calc(7px + env(safe-area-inset-bottom));
+    box-shadow:0 -10px 28px rgba(16,42,80,.09);
+  }
+  .mnav button{
+    position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:3px; background:none; border:0; cursor:pointer; color:var(--slate-2);
+    padding:7px 4px 5px; border-radius:14px; min-height:54px;
+    font-family:var(--font-ui); font-size:10.5px; font-weight:600; letter-spacing:.01em;
+    -webkit-tap-highlight-color:transparent;
+    transition:color .22s var(--ease-out), transform .12s var(--ease-out);
+  }
+  .mnav button svg{
+    width:23px; height:23px; fill:none; stroke:currentColor; stroke-width:2;
+    stroke-linecap:round; stroke-linejoin:round;
+    transition:transform .26s var(--ease-out); position:relative; z-index:1;
+  }
+  /* active pill glides behind the icon */
+  .mnav button::before{
+    content:""; position:absolute; top:5px; width:52px; height:31px; border-radius:11px;
+    background:var(--blue-soft); opacity:0; transform:scale(.6);
+    transition:opacity .22s var(--ease-out), transform .22s var(--ease-out); z-index:0;
+  }
+  .mnav button.on{color:var(--blue)}
+  .mnav button.on::before{opacity:1; transform:scale(1)}
+  .mnav button.on svg{transform:translateY(-1px) scale(1.08)}
+  .mnav button:active{transform:scale(.86)}
+  .mnav .m-new{color:var(--blue); font-weight:700}
+  .mnav .m-new svg{stroke-width:2.4}
+  .mnav-count{
+    position:absolute; top:2px; left:calc(50% + 7px); min-width:16px; height:16px; padding:0 4px;
+    border-radius:999px; background:var(--l3-dot); color:#fff; font-family:var(--font-data);
+    font-size:9.5px; font-weight:700; display:none; align-items:center; justify-content:center;
+    box-shadow:0 0 0 2px var(--panel);
+  }
+  .mnav-count.show{display:flex}
+
+  /* tactile feedback across the whole app */
+  button,.btn,.card,.kpi,tr[onclick]{-webkit-tap-highlight-color:transparent}
+  .btn:active,.hdr-cta:active{transform:scale(.97)}
+  .card:active{transform:scale(.99)}
+  .tbl tbody tr:active{background:var(--blue-soft) !important}
+  a,button{touch-action:manipulation}   /* kill the 300ms tap delay */
+
+  /* wide tables: momentum + a soft right-edge fade that says "swipe me" */
+  .tblwrap{position:relative; scroll-snap-type:x proximity}
+  .tblwrap::after{
+    content:""; position:absolute; top:1px; right:1px; bottom:1px; width:26px; pointer-events:none;
+    border-radius:0 12px 12px 0;
+    background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.92));
+  }
+}
+
+/* honour reduced-motion for the new bar */
+@media (max-width:860px) and (prefers-reduced-motion:reduce){
+  .mnav button, .mnav button svg, .mnav button::before{transition:none}
+}

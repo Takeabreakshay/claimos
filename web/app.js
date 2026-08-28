@@ -72,9 +72,15 @@ const TITLES = {
   decision: ["Decision", "The intelligence layer behind the routing call"],
   workflow: ["How it works", "One claim, seven stages — running on the live engine"],
 };
+/* keep the header + mobile-tab queue badges in sync */
+function setQCount(n) {
+  const a = $("qcount"); if (a) a.textContent = n;
+  const b = $("mqcount");
+  if (b) { b.textContent = n; b.classList.toggle("show", Number(n) > 0); }
+}
 function go(v) {
   S.view = v;
-  document.querySelectorAll("#nav button, #nav2 button")
+  document.querySelectorAll("#nav button, #nav2 button, #mnav button")
     .forEach(b => b.classList.toggle("on", b.dataset.v === v));
   const pt = $("pageTitle"); if (pt) pt.textContent = TITLES[v][0];
   const ps = $("pageSub"); if (ps) ps.textContent = TITLES[v][1];
@@ -164,7 +170,7 @@ async function renderDashboard(el) {
   const d = await api("/api/dashboard");
   await loadPop();
   await loadEnvelope();
-  $("qcount").textContent = d.n_claims;
+  setQCount(d.n_claims);
   const leakOk = d.leakage_rate <= d.leakage_ceiling;
   const mix = Object.entries(d.lane_mix || {});
   const total = mix.reduce((a, [, v]) => a + v, 0) || 1;
@@ -256,7 +262,7 @@ async function renderDashboard(el) {
 async function renderQueue(el) {
   const claims = await api("/api/claims");
   S.claims = claims;
-  $("qcount").textContent = claims.length;
+  setQCount(claims.length);
   const lanes = ["(all)", ...new Set(claims.map(c => c.lane).filter(Boolean))];
   el.innerHTML = `
     <div class="card">
@@ -303,7 +309,7 @@ async function renderQueue(el) {
       if (fresh.length !== claims.length ||
           (fresh[0] && claims[0] && fresh[0].claim_id !== claims[0].claim_id)) {
         claims.length = 0; claims.push(...fresh);
-        S.claims = claims; $("qcount").textContent = claims.length; draw();
+        S.claims = claims; setQCount(claims.length); draw();
       }
     } catch (e) { /* ignore transient */ }
   }, 6000);
@@ -1641,7 +1647,7 @@ const closeMenu = () => {
   h.classList.remove("menu-open");
   const b = $("burger"); if (b) b.setAttribute("aria-expanded", "false");
 };
-document.querySelectorAll("#nav button, #nav2 button")
+document.querySelectorAll("#nav button, #nav2 button, #mnav button")
   .forEach(b => b.onclick = () => { go(b.dataset.v); closeMenu(); });
 $("refresh").onclick = () => { loadHealth(); render(); };
 

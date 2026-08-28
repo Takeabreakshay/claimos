@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>ClaimOS — Claims Operations</title>
 <link rel="preload" href="/fonts/IBMPlexSans-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/styles.css?v=26" />
+<link rel="stylesheet" href="/styles.css?v=27" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>" />
 </head>
 <body>
@@ -55,6 +55,26 @@
   </header>
 
   <main class="content" id="view"></main>
+
+  <!-- ===================== MOBILE BOTTOM TAB BAR ===================== -->
+  <nav class="mnav" id="mnav" aria-label="Primary">
+    <button data-v="dashboard" class="on" aria-label="Dashboard">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span>Home</span>
+    </button>
+    <button data-v="queue" aria-label="Queue">
+      <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      <span>Queue</span><i class="mnav-count" id="mqcount"></i>
+    </button>
+    <button data-v="intake" class="m-new" aria-label="New claim">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      <span>New</span>
+    </button>
+    <button data-v="workflow" aria-label="How it works">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.2 9a2.8 2.8 0 0 1 5.4 1c0 1.8-2.6 2.2-2.6 4"/><path d="M12 17h.01"/></svg>
+      <span>Guide</span>
+    </button>
+  </nav>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -67,6 +87,6 @@
 <script src="/js/ScrambleTextPlugin.min.js"></script>
 <script src="/js/CustomEase.min.js"></script>
 <script src="/motion.js?v=15"></script>
-<script src="/app.js?v=23"></script>
+<script src="/app.js?v=24"></script>
 </body>
 </html>
