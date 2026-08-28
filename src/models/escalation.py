@@ -1,4 +1,4 @@
-"""Escalation (jumper/sleeper) classifier — LightGBM binary (CLAUDE.md §7, LOGIC §3.3).
+"""Escalation (jumper/sleeper) classifier - LightGBM binary (CLAUDE.md §7, LOGIC §3.3).
 
 Objective: binary log-loss on ``escalated_at_90d``. Uses ONLY FNOL-visible
 features (no leakage of the hidden latent signals that generated the label), so

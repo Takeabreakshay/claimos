@@ -1,5 +1,5 @@
 # =============================================================================
-# ClaimOS — coverage matrix  (LOGIC §2, user-supplied 2026-07-23)
+# ClaimOS - coverage matrix  (LOGIC §2, user-supplied 2026-07-23)
 # -----------------------------------------------------------------------------
 # Deductibles, NCB, add-ons, and the settlement waterfall. Drives the live
 # coverage engine's 4-state decision (CLEAR / FLAG / HARD_DECLINE / LEGAL_WEAK)
@@ -7,9 +7,9 @@
 #
 # Provenance:
 #   [SOURCED]  compulsory excess grid · NCB slab · owner-driver PA ₹15L ·
-#              total-loss at 75% IDV — IRDAI Motor tariff / Master Circular.
+#              total-loss at 75% IDV - IRDAI Motor tariff / Master Circular.
 #   [DEFAULT]  add-on eligibility ages/caps, invoice-variance tolerance,
-#              voluntary-excess options offered — Bajaj's exact wording governs.
+#              voluntary-excess options offered - Bajaj's exact wording governs.
 # =============================================================================
 
 # --- 2.1 Deductibles ---------------------------------------------------------

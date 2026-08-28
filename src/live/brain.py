@@ -1,4 +1,4 @@
-"""THE BRAIN — inference-time cognitive stack (BRAIN_DECISION_ENGINE.md).
+"""THE BRAIN - inference-time cognitive stack (BRAIN_DECISION_ENGINE.md).
 
 Takes a brand-new, never-seen claim, analyses it *and itself*, and decides how to
 move forward. Eight levels, each with its own decision and its own exits:
@@ -14,7 +14,7 @@ move forward. Eight levels, each with its own decision and its own exits:
 
 The invariant that makes autonomy safe: **abstention over error**. Whenever
 confidence is low, evidence is thin, or the claim is unlike anything seen in
-training, the brain routes to a human instead of guessing — and logs the claim as
+training, the brain routes to a human instead of guessing - and logs the claim as
 high-value training data.
 """
 
@@ -83,7 +83,7 @@ def perceive(claim: dict, photos: list, docs: list) -> LevelResult:
     if not photos:
         asks.append("upload at least one damage photo")
     elif not usable_photos:
-        asks.append("re-take the damage photo — the one supplied is too blurred to assess")
+        asks.append("re-take the damage photo - the one supplied is too blurred to assess")
     if claim.get("fir_required") and not claim.get("fir_filed"):
         asks.append("upload the FIR (required for this claim type)")
 
@@ -103,7 +103,7 @@ def perceive(claim: dict, photos: list, docs: list) -> LevelResult:
 # L1 · VERIFY
 # --------------------------------------------------------------------------- #
 def verify(claim: dict, rails: dict, graph: dict) -> LevelResult:
-    """Trust nothing declared — cross-check it against the rails and the graph."""
+    """Trust nothing declared - cross-check it against the rails and the graph."""
     hard, soft = [], []
 
     if str(claim.get("policy_status", "active")) == "lapsed":
@@ -162,7 +162,7 @@ def assess(scored: dict) -> LevelResult:
 
 
 # --------------------------------------------------------------------------- #
-# L3 · METACOGNITION  — the brain analysing itself
+# L3 · METACOGNITION  - the brain analysing itself
 # --------------------------------------------------------------------------- #
 def novelty_score(features: pd.DataFrame, models: dict) -> dict[str, Any]:
     """How unlike the training distribution is this claim?
@@ -174,7 +174,7 @@ def novelty_score(features: pd.DataFrame, models: dict) -> dict[str, Any]:
     anything above 0.6 as novel, which abstained on perfectly ordinary claims and
     would have silently eaten the touchless share.)
 
-    If the artifact is absent we say so rather than returning a comforting zero —
+    If the artifact is absent we say so rather than returning a comforting zero -
     claiming familiarity we cannot verify would defeat this layer entirely.
     """
     det = models.get("ood_detector")
@@ -215,15 +215,15 @@ def metacognition(scored: dict, nov: dict, thresholds: dict) -> LevelResult:
         + (f" [{nov['status']}]" if nov.get("status") != "ok" else ""),
     ]
     if evidence_gap:
-        reasons.append(f"below the {floor:.2f} confidence floor -> not entitled to decide")
+        reasons.append(f"below the {floor:.2f} confidence floor, not entitled to decide")
     if unfamiliar:
-        reasons.append("more unusual than 99% of training data -> abstain, hand to a human")
+        reasons.append("more unusual than 99% of training data; abstain, hand to a human")
     if entitled and confidence < float(l1["min_confidence"]):
         reasons.append("confident enough to decide, but not enough to auto-settle")
 
     return LevelResult(
         "L3 · METACOGNITION", "Am I confident, do I have enough, and is this familiar?",
-        "proceed" if entitled else ("request evidence" if evidence_gap else "abstain -> human"),
+        "proceed" if entitled else ("request evidence" if evidence_gap else "abstain, hand to a human"),
         {"confidence": round(confidence, 3), "confidence_floor": floor,
          "novelty": nov.get("display"), "novelty_raw": nov.get("raw"),
          "novelty_threshold": nov.get("threshold"), "novelty_status": nov.get("status"),
@@ -260,7 +260,7 @@ def think(claim_id: str, models: dict | None = None) -> BrainTrace:
     l0 = perceive(claim, photos, docs)
     trace.levels.append(l0)
 
-    # ---- L1 (needs rails + graph even if L0 wants evidence — the ring may be the reason)
+    # ---- L1 (needs rails + graph even if L0 wants evidence - the ring may be the reason)
     mrow = _to_model_row(claim)
     links = _entity_links(store, claim)
     mrow.update({k: v for k, v in links.items() if not k.startswith("_")})
@@ -313,10 +313,10 @@ def think(claim_id: str, models: dict | None = None) -> BrainTrace:
         trace.outcome_reason = "; ".join(l1.detail["hard_mismatches"][:3])
     elif l3.exit == "REQUEST_EVIDENCE":
         trace.outcome = "ASK FOR MORE"
-        trace.outcome_reason = "confidence below the floor — the brain is not entitled to decide"
+        trace.outcome_reason = "confidence below the floor - the brain is not entitled to decide"
     elif l3.exit == "HUMAN":
         trace.outcome = "ASSIST A HUMAN"
-        trace.outcome_reason = "claim is unlike anything seen in training — abstaining rather than guessing"
+        trace.outcome_reason = "claim is unlike anything seen in training - abstaining rather than guessing"
     else:
         lane = decision.outcome
         trace.outcome = {"lane1_touchless": "AUTO-SETTLE",

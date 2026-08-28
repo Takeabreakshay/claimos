@@ -1,4 +1,4 @@
-"""Mocked policy-master lookup — the customer-facing "read-through to the core
+"""Mocked policy-master lookup - the customer-facing "read-through to the core
 policy DB" rail (CLAUDE.md §2 rule: production rails are MOCKED behind a clean
 interface). Deterministic: a policy number always resolves to the same vehicle +
 coverage profile, so the customer app can show a real-feeling policy card and the
@@ -41,7 +41,7 @@ _CITY = [("Mumbai", "metro"), ("Delhi", "metro"), ("Bengaluru", "metro"),
 
 
 def _h(policy_id: str, salt: str, mod: int) -> int:
-    """Deterministic small int from the policy id + a salt (no RNG — reproducible)."""
+    """Deterministic small int from the policy id + a salt (no RNG - reproducible)."""
     d = hashlib.sha256(f"{policy_id}|{salt}".encode()).hexdigest()
     return int(d[:8], 16) % mod
 

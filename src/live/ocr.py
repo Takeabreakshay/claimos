@@ -1,8 +1,8 @@
 """LIVE document OCR + field extraction.
 
 Two engines, auto-selected:
-  1. LOCAL  (default, ZERO keys) — RapidOCR/ONNX runs on-device.
-  2. LLM VISION (optional LLM_API_KEY) — materially better on messy Indian
+  1. LOCAL  (default, ZERO keys) - RapidOCR/ONNX runs on-device.
+  2. LLM VISION (optional LLM_API_KEY) - materially better on messy Indian
      RC/DL scans, and can also read damage severity from a photo.
 
 Extracted fields feed the real workflow: registration number is cross-checked
@@ -83,7 +83,7 @@ def extract_fields(text: str, doc_type: str = "other") -> dict[str, Any]:
     schema (LOGIC §6): typed fields, a ``validations`` sub-dict of failed
     field-format checks, a ``cross_checks`` list, and ``quality_gates`` applied to
     every doc. Cross-checks needing external rails (VAHAN/DigiLocker/etc.) or the
-    claim record are documented with status ``todo`` — never executed here.
+    claim record are documented with status ``todo`` - never executed here.
     """
     up = (text or "").upper()
     out: dict[str, Any] = {}
@@ -287,7 +287,7 @@ def _quality_gates(out: dict, required: list[str]) -> dict[str, Any]:
     return {
         "field_confidence": {
             "status": "todo",
-            "note": "flag any field with confidence < 0.85 for human verification "
+            "note": "flag any field with confidence under 0.85 for human verification "
                     "(per-field confidence not available from regex OCR)",
         },
         "missing_required": missing,
@@ -298,13 +298,13 @@ def _quality_gates(out: dict, required: list[str]) -> dict[str, Any]:
         },
         "document_date_vs_claim_date": {
             "status": "todo",
-            "note": "hard flag if document_date > claim_date (needs claim_date)",
+            "note": "hard flag if document_date after claim_date (needs claim_date)",
         },
     }
 
 
 # --------------------------------------------------------------------------- #
-# Per-document-type extractors — each returns
+# Per-document-type extractors - each returns
 #   (fields, validations, cross_checks, required_fields)
 # --------------------------------------------------------------------------- #
 def _extract_rc_copy(up: str):
@@ -398,14 +398,14 @@ def _extract_driving_licence(up: str):
 
     cross = [
         {"check": "valid_on_incident_date", "status": "todo",
-         "note": "valid_from <= incident_date <= valid_till (needs incident date)"},
+         "note": "incident_date within valid_from and valid_till (needs incident date)"},
         {"check": "class_covers_vehicle", "status": "todo",
          "note": "authorised class must cover claimed vehicle; LMV driving HMV = "
                  "hard decline"},
         {"check": "digilocker_verification", "status": "todo",
          "note": "verify DL authenticity via DigiLocker rail"},
         {"check": "age_minimum", "status": "todo",
-         "note": "age >= 18 (>= 20 for commercial) from date_of_birth"},
+         "note": "age at least 18 (20 for commercial) from date_of_birth"},
     ]
     required = ["dl_number", "valid_till"]
     return f, validations, cross, required
@@ -468,7 +468,7 @@ def _extract_policy_copy(up: str):
 
     cross = [
         {"check": "period_covers_incident", "status": "todo",
-         "note": "period_from <= incident_date <= period_to (needs incident date)"},
+         "note": "incident_date within period_from and period_to (needs incident date)"},
         {"check": "product_type_vs_claim_type", "status": "todo",
          "note": "product_type must permit the claim_type (needs claim record)"},
         {"check": "add_ons_settlement_waterfall", "status": "todo",
@@ -524,7 +524,7 @@ def _extract_fir(up: str):
             "check": "fir_reporting_delay",
             "status": "fail" if gap > 7 else "pass",
             "note": f"fir_date - incident_date = {gap} days "
-                    f"({'>' if gap > 7 else '<='} 7-day threshold)",
+                    f"({'over' if gap > 7 else 'within'} 7-day threshold)",
         })
     else:
         cross.append({"check": "fir_reporting_delay", "status": "todo",
@@ -535,11 +535,11 @@ def _extract_fir(up: str):
                           "(needs claim record)"})
     if f["injuries_reported"]["reported"]:
         cross.append({"check": "injuries_force_lane3", "status": "fail",
-                      "note": "injuries reported -> forces Lane 3 (investigative)"})
+                      "note": "injuries reported, forces Lane 3 (investigative)"})
     dui = [s for s in sections if s in ("279", "304A", "337", "338", "185", "184")]
     if dui or "DRUNK" in up or "INTOXICAT" in up:
         cross.append({"check": "dui_rash_sections", "status": "fail",
-                      "note": f"rash/DUI sections {dui or 'flagged'} -> coverage "
+                      "note": f"rash/DUI sections {dui or 'flagged'}, coverage "
                               "implications (driver exclusion)"})
     required = ["fir_number", "fir_date", "incident_date"]
     return f, validations, cross, required
@@ -617,7 +617,7 @@ def _extract_final_bill(up: str):
 
     cross: list[dict] = []
     cross.append({"check": "invoice_vs_estimate_variance", "status": "todo",
-                  "note": "total_invoice vs total_estimate variance > 15% -> "
+                  "note": "total_invoice vs total_estimate variance over 15%, "
                           "re-approval (needs estimate)"})
     cross.append({"check": "line_item_diff_vs_estimate", "status": "todo",
                   "note": "diff invoice line items against approved estimate"})
@@ -717,7 +717,7 @@ def _guess_doc_type(up: str, declared: str) -> str:
 
 
 # --------------------------------------------------------------------------- #
-# Engine 1 — LOCAL (no key)
+# Engine 1 - LOCAL (no key)
 # --------------------------------------------------------------------------- #
 _rapid = None
 _NVIDIA_OCR_DEAD = False  # set once the hosted Nemotron function 404s in this process
@@ -761,7 +761,7 @@ def _local_ocr(data: bytes) -> OcrResult:
 
 
 # --------------------------------------------------------------------------- #
-# Engine 2 — LLM VISION (optional key, best quality)
+# Engine 2 - LLM VISION (optional key, best quality)
 # --------------------------------------------------------------------------- #
 def _llm_ocr(data: bytes, doc_type: str) -> OcrResult:
     import base64
@@ -858,11 +858,11 @@ def run_ocr(data: bytes, doc_type: str = "other", prefer: str | None = None) -> 
     else:
         order = []
         # NVIDIA_OCR_DISABLED lets us skip the hosted Nemotron function when it is
-        # not provisioned for the account (returns 404) — the local RapidOCR engine
+        # not provisioned for the account (returns 404) - the local RapidOCR engine
         # is then the primary, avoiding a wasted round-trip on every document.
         _disabled = str(os.getenv("NVIDIA_OCR_DISABLED", "")).lower() in ("1", "true", "yes")
         # Auto circuit-breaker: once the hosted function has 404'd this process,
-        # stop trying it — every subsequent doc goes straight to local (self-heals
+        # stop trying it - every subsequent doc goes straight to local (self-heals
         # in production even without the env flag set).
         if os.getenv("NVIDIA_OCR_KEY") and not _disabled and not _NVIDIA_OCR_DEAD:
             order.append("nvidia")
@@ -893,7 +893,7 @@ def run_ocr(data: bytes, doc_type: str = "other", prefer: str | None = None) -> 
 def llm_severity(data: bytes) -> dict[str, Any]:
     """Optional: read damage severity from a photo with the vision LLM.
 
-    Returns {} when no key — severity then stays operator-declared (v1 behaviour
+    Returns {} when no key - severity then stays operator-declared (v1 behaviour
     per CLAUDE.md §3 rule 10: no CV unless explicitly added).
     """
     import base64

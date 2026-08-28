@@ -1,4 +1,4 @@
-"""Fraud classifier — LightGBM binary + graph features (CLAUDE.md §7, LOGIC §3.2).
+"""Fraud classifier - LightGBM binary + graph features (CLAUDE.md §7, LOGIC §3.2).
 
 Objective: binary log-loss. Uses observable fields + rails + graph features +
 the claim-vs-predicted-cost ratio. Raw score is CALIBRATED (calibration.py)

@@ -1,18 +1,18 @@
-"""Phase 1 — synthetic claim generator (CLAUDE.md §5, LOGIC_AND_FORMULAS.md §1).
+"""Phase 1 - synthetic claim generator (CLAUDE.md §5, LOGIC_AND_FORMULAS.md §1).
 
 Generates N calibrated-synthetic motor claims with FNOL fields, correlated-but-
 noisy fraud signals, collusion-ring structure, and ground-truth target labels.
 
 Design guarantees (CLAUDE.md §3):
-  * 100% synthetic — names/plates via Faker, clearly fake (rule 1).
+  * 100% synthetic - names/plates via Faker, clearly fake (rule 1).
   * Every random draw seeds off ``constants.SEED``; two runs are identical (rule 4).
-  * No magic numbers — all parameters come from ``config/distributions.yaml`` and
+  * No magic numbers - all parameters come from ``config/distributions.yaml`` and
     are logged in ``ASSUMPTIONS.md`` (rule 5).
 
 Draw order follows LOGIC_AND_FORMULAS.md §1 (later draws depend on earlier). One
 deviation from the doc's section numbering, made explicit here: ``is_fraud`` is
 drawn immediately after claim type (it depends only on type) so the fraud-lifted
-signals in §1.3 can be conditioned on it — this is what the §1.3 math requires.
+signals in §1.3 can be conditioned on it - this is what the §1.3 math requires.
 
 Entry point: ``poetry run claimos-generate``.
 """
@@ -137,7 +137,7 @@ def generate_claims(n: int | None = None, seed: int = SEED) -> pd.DataFrame:
         ),
     )
 
-    # ----- is_fraud (depends only on type; drawn early — see module docstring) -
+    # ----- is_fraud (depends only on type; drawn early - see module docstring) -
     fbr = cfg["fraud_base_rate"]
     fraud_p = np.select(
         [claim_type == ClaimType.OD.value, claim_type == ClaimType.TP.value],

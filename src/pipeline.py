@@ -1,4 +1,4 @@
-"""Orchestrator — generate -> train -> (route -> evaluate).
+"""Orchestrator - generate -> train -> (route -> evaluate).
 
 Phase 3 scope: train the cost / fraud / escalation models, calibrate the two
 classifiers, build graph features, save artifacts to ``models/`` and a metrics
@@ -99,7 +99,7 @@ def train_and_save_models(df: pd.DataFrame | None = None, save: bool = True) -> 
 
     # ----- out-of-distribution detector (BRAIN L3 metacognition) -------------
     # Lets the brain answer "is this claim familiar?" at inference. Without this
-    # it would score a never-seen claim with false confidence — the exact failure
+    # it would score a never-seen claim with false confidence - the exact failure
     # the abstention invariant exists to prevent.
     from sklearn.ensemble import IsolationForest
 
@@ -195,7 +195,7 @@ def score_frame(df: pd.DataFrame, models: dict | None = None,
     coverage, graph risk. The per-claim inputs the triage engine consumes.
 
     ``graph_df`` lets a caller supply PRE-COMPUTED graph features. The live
-    workflow does this because collusion is a property of the whole book — a
+    workflow does this because collusion is a property of the whole book - a
     single-row frame would always look isolated (component_size 1).
     """
     if models is None:

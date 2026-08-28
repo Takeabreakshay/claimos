@@ -1,7 +1,7 @@
 /* ---- IBM Plex superfamily (SIL OFL, self-hosted) ----------------------------
    ONE designed system: Plex Sans for all UI/body/headings, Plex Mono for every
    computed value (claim IDs, confidence, lane tags, reason codes, timestamps,
-   KPI numbers). Shared proportions read as engineered + institutional — the
+   KPI numbers). Shared proportions read as engineered + institutional - the
    register a decisioning platform wants. Ships the rupee glyph + tabular figs. */
 @font-face{
   font-family:"IBM Plex Sans";
@@ -18,34 +18,34 @@
 @font-face{font-family:"IBM Plex Mono";src:url("/fonts/IBMPlexMono-700.woff2") format("woff2");
   font-weight:700;font-style:normal;font-display:swap}
 
-/* ===================== ClaimOS — dark console ===================== */
+/* ===================== ClaimOS - dark console ===================== */
 /* Design language: near-black canvas, disciplined grey ramp, ONE hot accent,
-   confident type, precise easing. Density kept at operator level — this is an
+   confident type, precise easing. Density kept at operator level - this is an
    instrument, not a marketing page. */
 :root{
-  /* ClaimOS · Bajaj theme — deep navy ground, Bajaj-blue accent, brand semantics.
+  /* ClaimOS · Bajaj theme - deep navy ground, Bajaj-blue accent, brand semantics.
      Derived from ClaimOS_Bajaj.thmx: accent1 #1959A5, dk2 #0B2A5B, lt2 #EAF1FA,
      green #2E8B57, gold #D9A21B, red #C0392B (brightened for a dark ground). */
   /* grey ramp (dark navy -> light) */
-  /* light theme: ramp inverted — LOW numbers = light surfaces, HIGH = dark text */
+  /* light theme: ramp inverted - LOW numbers = light surfaces, HIGH = dark text */
   --g-900:#ffffff; --g-850:#f5f8fd; --g-800:#eef3fa; --g-700:#e4ebf6;
   --g-600:#d5e0f0; --g-500:#aab9d2; --g-400:#8090a6; --g-300:#5a6a80;
   --g-200:#3c4c65; --g-150:#28384f; --g-100:#1a2b45; --g-50:#0e2547;
 
   --blue:#1959A5; --blue-2:#4d9cff; --blue-soft:rgba(25,89,165,.07);
-  --accent:#1959A5;                 /* Bajaj Blue — accent, links, active states */
+  --accent:#1959A5;                 /* Bajaj Blue - accent, links, active states */
   --accent-ink:#ffffff;             /* text on an accent fill */
   --navy:#12244a;                   /* deep blue for text on light */
 
   /* LIGHT base: white page, navy ink, brand colors darkened for AA on white.
-     The sidebar and hero panels (risk dial, workflow wedge, stream) stay navy —
+     The sidebar and hero panels (risk dial, workflow wedge, stream) stay navy -
      "white page, sections highlighted in blue". */
   --ink:#1B2430; --ink-2:#3d4757; --slate:#5b6675; --slate-2:#7c8797;
   --canvas:#f5f7fb; --panel:#ffffff; --line:#e4e8f0; --line-2:#eef1f7;
   --rail:#081226; --rail-2:#0b1a33; --rail-line:#16305a;
   --rail-text:#a9b8d4; --rail-active:#ffffff;
 
-  /* lane semantics — Bajaj green/gold/red, darkened for legibility on white */
+  /* lane semantics - Bajaj green/gold/red, darkened for legibility on white */
   --l1-fg:#1f9d57; --l1-bg:rgba(46,139,87,.12); --l1-line:rgba(46,139,87,.32); --l1-dot:#2e8b57;
   --l2-fg:#9a7d16; --l2-bg:rgba(217,162,27,.14); --l2-line:rgba(217,162,27,.36); --l2-dot:#d9a21b;
   --l3-fg:#c0392b; --l3-bg:rgba(192,57,43,.10); --l3-line:rgba(192,57,43,.30); --l3-dot:#c0392b;
@@ -61,11 +61,14 @@
   --r:12px; --r-sm:9px;
   /* Type system: IBM Plex superfamily. Plex Sans = all UI/body/headings;
      Plex Mono = every computed value (claim IDs, confidence, lanes, reason
-     codes, timestamps, KPI numbers) — so a computed decision reads as machine
+     codes, timestamps, KPI numbers) - so a computed decision reads as machine
      output, not decoration. System fonts fall back if a local face 404s. */
   --font-display:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --font-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  --font-data:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  /* data role kept as a variable so tabular-nums still target it - but it now
+     resolves to Plex Sans (no monospace, no slashed zero). Numbers stay aligned
+     via font-variant-numeric:tabular-nums, applied wherever --font-data is used. */
+  --font-data:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --sans:var(--font-ui);
   --mono:var(--font-data);
   --rail-w:250px;
@@ -88,7 +91,7 @@
 table,.tbl,.tbl td,.tbl th,.kpi,.aj-stat,.aj-stats,.mod,.wf-row,.sla,.qbadge{
   font-variant-numeric:tabular-nums lining-nums}
 *{box-sizing:border-box}
-/* NOTE: no `height:100%` here. Lenis needs the document to grow naturally —
+/* NOTE: no `height:100%` here. Lenis needs the document to grow naturally -
    a fixed height pins the scroll container and smooth scrolling silently dies. */
 html,body{margin:0;padding:0;min-height:100%}
 
@@ -340,7 +343,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue);
 .card:hover,.kpi:hover{transform:translateY(-2px);border-color:var(--g-500)}
 .chip,.lane{transition:all .3s var(--ease)}
 
-/* accent hairline that wakes up on hover — the one flourish */
+/* accent hairline that wakes up on hover - the one flourish */
 .kpi{position:relative;overflow:hidden}
 .kpi::after{content:"";position:absolute;left:0;right:0;top:0;height:1px;
   background:linear-gradient(90deg,transparent,var(--blue),transparent);
@@ -353,7 +356,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue);
 .rise.seen{opacity:1;transform:none;
   transition:opacity .7s var(--ease-soft),transform .7s var(--ease-soft)}
 
-/* rail nav — sharper active state on dark */
+/* rail nav - sharper active state on dark */
 .nav button.on{background:rgba(41,141,255,.14)}
 .nav button.on::before{background:var(--blue);box-shadow:0 0 12px rgba(41,141,255,.7)}
 
@@ -385,7 +388,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue);
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
-/* ===================== WORKFLOW — the pipeline showcase ===================== */
+/* ===================== WORKFLOW - the pipeline showcase ===================== */
 .wf{max-width:1180px;margin:0 auto;position:relative}
 .wf-head{text-align:center;margin-bottom:30px}
 .wf-head h2{font-size:clamp(26px,3.4vw,40px);letter-spacing:-.03em;margin-bottom:10px}
@@ -587,7 +590,7 @@ input[type=range].dial::-moz-range-thumb{width:22px;height:22px;border-radius:50
    Rules that keep it usable rather than merely pretty:
      · glass goes on SURFACES, never on dense data rows (blur + digits = mush)
      · text sits on a raised opacity floor so contrast stays AA
-     · backdrop-filter is costly — major panels only, never per-row/per-dot
+     · backdrop-filter is costly - major panels only, never per-row/per-dot
      · depth is expressed by blur radius + border luminance, not shadow alone
    ========================================================================== */
 :root{
@@ -655,7 +658,7 @@ body::after{  /* fine grain so the blur has texture instead of flat wash */
   border:1px solid var(--glass-brd-hi);
 }
 
-/* the wedge sits deepest — heaviest glass, brightest edge */
+/* the wedge sits deepest - heaviest glass, brightest edge */
 .wf-wedge{
   background:linear-gradient(135deg, rgba(18,34,62,.62), rgba(12,20,38,.72));
   -webkit-backdrop-filter:blur(var(--glass-blur-lg)) saturate(170%);
@@ -682,7 +685,7 @@ body::after{  /* fine grain so the blur has texture instead of flat wash */
   content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
   background:linear-gradient(135deg, rgba(255,255,255,.07), transparent 42%);
 }
-/* KPI accent hairline already exists — keep it above the specular sheen */
+/* KPI accent hairline already exists - keep it above the specular sheen */
 .kpi::after{z-index:1}
 
 /* depth tiers: things further back read softer */
@@ -710,7 +713,7 @@ input:focus,select:focus,textarea:focus{background:rgba(10,13,18,.78)}
   body::before{animation:none}
   .card:hover,.kpi:hover{transform:none}
 }
-/* Mobile: blur is the most expensive thing on a phone GPU — dial it back. */
+/* Mobile: blur is the most expensive thing on a phone GPU - dial it back. */
 @media(max-width:820px){
   :root{--glass-blur:10px;--glass-blur-lg:14px}
   .card:hover,.kpi:hover{transform:translate3d(0,-2px,0)}
@@ -763,11 +766,11 @@ input:focus,select:focus,textarea:focus{background:rgba(10,13,18,.78)}
   .flowsvg animate,.flowsvg animateMotion{display:none}
 }
 
-/* ===================== LIGHT THEME — hero panels & fixes =====================
+/* ===================== LIGHT THEME - hero panels & fixes =====================
    White page, navy sidebar, and a few feature panels kept navy so they read as
    "sections highlighted in blue". Appended last so these win the cascade. */
 .rail{background:linear-gradient(180deg,#0b1f3d,#081327)}
-/* Only the risk dial stays navy (its text is hardcoded light) — the signature
+/* Only the risk dial stays navy (its text is hardcoded light) - the signature
    "section highlighted in blue". The wedge (.wf-wedge) keeps its own dark rule. */
 .dial-card{
   background:linear-gradient(140deg,#0d1f3d,#0a1730 60%,#0e1c34) !important;
@@ -781,11 +784,11 @@ input:focus,select:focus,textarea:focus{background:rgba(10,13,18,.78)}
   box-shadow:var(--shadow);
 }
 .card:hover,.kpi:hover{box-shadow:var(--shadow-lg)}
-/* workflow modules → faint blue tile on white */
+/* workflow modules - faint blue tile on white */
 .wf-mod{background:rgba(25,89,165,.05);border-color:var(--line)}
 /* info note legible on the light ground */
 .note.info{color:#1959A5;border-color:rgba(25,89,165,.28)}
-/* blue accent bar on section headers — "sections highlighted in blue" */
+/* blue accent bar on section headers - "sections highlighted in blue" */
 .card-h{border-bottom:1px solid var(--line-2);box-shadow:inset 3px 0 0 var(--blue)}
 
 /* ===================== anime.js aesthetic layer =====================
@@ -793,7 +796,7 @@ input:focus,select:focus,textarea:focus{background:rgba(10,13,18,.78)}
 h1,h2,h3,h4{font-weight:700}
 .t-display,.t-display-xl{font-weight:700;letter-spacing:-.025em;line-height:.98}
 .card-h h3{font-family:var(--font-display);font-weight:700;letter-spacing:-.005em;font-size:14.5px}
-/* monospace UI labels — Berkeley Mono, uppercase, tracked (the anime.js eyebrow) */
+/* monospace UI labels - Berkeley Mono, uppercase, tracked (the anime.js eyebrow) */
 .kpi .k,.rail-sec,.eyebrow,.rail-status .t{
   font-family:var(--font-data);letter-spacing:.14em;text-transform:uppercase}
 .kpi .v{font-family:var(--font-data);letter-spacing:-.02em}
@@ -801,7 +804,7 @@ h1,h2,h3,h4{font-weight:700}
 .card,.kpi{border-color:var(--line)}
 
 /* ============================================================================
-   anime.js layout system — oversized DIN headings, Berkeley Mono labels,
+   anime.js layout system - oversized DIN headings, Berkeley Mono labels,
    hairline-divided sections, generous rhythm. White + blue.
    ============================================================================ */
 .aj-hero{padding:44px 4px 8px;max-width:1120px}
@@ -834,7 +837,7 @@ h1,h2,h3,h4{font-weight:700}
   font-size:clamp(26px,3.4vw,40px);color:var(--ink)}
 
 /* ============================================================================
-   TOP HEADER (replaces the sidebar) — hairline, monospace-flavoured, sticky.
+   TOP HEADER (replaces the sidebar) - hairline, monospace-flavoured, sticky.
    ============================================================================ */
 .app{display:block;min-height:100vh}                       /* override the old grid */
 .hdr{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:6px;
@@ -923,7 +926,7 @@ h1,h2,h3,h4{font-weight:700}
 }
 
 /* ============================================================================
-   CRISP — kill GPU-composited blur so every number and letter is razor-sharp.
+   CRISP - kill GPU-composited blur so every number and letter is razor-sharp.
    The 3D perspective + preserve-3d + translateZ hover rasterised card text onto
    a scaled layer (persistent blur); backdrop-filter and a dark-theme text-shadow
    fuzzed it further. On the light theme none of that is needed.
@@ -939,7 +942,7 @@ h1,h2,h3,h4{font-weight:700}
 .card *,.kpi *,.aj-stat *,.aj-hero *,.hdr *,.tbl *{text-shadow:none}
 
 /* ============================================================================
-   MOBILE — the organization console on a phone. Hamburger drawer nav, stacked
+   MOBILE - the organization console on a phone. Hamburger drawer nav, stacked
    layouts, touch-sized targets, tighter rhythm. Customer app is already mobile.
    ============================================================================ */
 .hdr-burger{display:none}
@@ -990,7 +993,7 @@ h1,h2,h3,h4{font-weight:700}
   .card-h{padding:13px 15px}
 }
 
-/* very small phones — reclaim width */
+/* very small phones - reclaim width */
 @media (max-width:420px){
   .hdr-word{display:none}                 /* keep just the mark */
   .avatar{display:none}
@@ -1009,7 +1012,7 @@ h1,h2,h3,h4{font-weight:700}
 }
 
 /* ============================================================================
-   FIX — remove leftover dark boxes; keep the whole app on the light theme.
+   FIX - remove leftover dark boxes; keep the whole app on the light theme.
    (form inputs were rgba(10,13,18); the risk dial + workflow wedge were navy)
    ============================================================================ */
 /* form controls: clean white, dark text, blue focus */
@@ -1051,7 +1054,7 @@ input:focus, select:focus, textarea:focus{ border-color:var(--blue) !important;
 }
 
 /* ============================================================================
-   MOBILE APP SHELL — fixed bottom tab bar, safe-area insets, tactile feedback,
+   MOBILE APP SHELL - fixed bottom tab bar, safe-area insets, tactile feedback,
    gesture-smooth tables. Turns the console into a native-feeling phone app.
    Hidden entirely on desktop (>860px).
    ============================================================================ */

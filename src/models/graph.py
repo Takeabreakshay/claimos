@@ -1,4 +1,4 @@
-"""Collusion-ring detection — networkx (CLAUDE.md §7, LOGIC §3.5).
+"""Collusion-ring detection - networkx (CLAUDE.md §7, LOGIC §3.5).
 
 Builds a claim graph linking claims that share a high-risk entity, then derives
 per-claim graph features and flags dense components as rings.

@@ -1,11 +1,11 @@
-"""ClaimOS — global constants, paths, and enums.
+"""ClaimOS - global constants, paths, and enums.
 
 Single home for the reproducibility seed, filesystem paths, and the fixed
 vocabulary (lanes, claim types, severities, ...) referenced across the build.
 
 RULES this file exists to enforce (see CLAUDE.md §3):
   * SEED = 42 everywhere. Every random draw in the project seeds off this.
-  * Lanes / claim types / severities are FIXED by CLAUDE.md §1 — do not rename
+  * Lanes / claim types / severities are FIXED by CLAUDE.md §1 - do not rename
     or invent new ones here.
   * No magic numbers in logic files: distributions live in
     ``config/distributions.yaml`` and thresholds in ``config/thresholds.yaml``.
@@ -26,7 +26,7 @@ import yaml
 SEED: int = 42
 
 # --------------------------------------------------------------------------- #
-# Paths — resolved relative to the repo root so commands work from anywhere.
+# Paths - resolved relative to the repo root so commands work from anywhere.
 # repo root = parent of the ``src`` package directory.
 # --------------------------------------------------------------------------- #
 SRC_DIR: Path = Path(__file__).resolve().parent
@@ -48,7 +48,7 @@ SAMPLE_CSV: Path = SYNTH_DIR / "sample_100.csv"
 
 
 # --------------------------------------------------------------------------- #
-# Fixed vocabulary (CLAUDE.md §1 — DO NOT rename / reinvent)
+# Fixed vocabulary (CLAUDE.md §1 - DO NOT rename / reinvent)
 # --------------------------------------------------------------------------- #
 class Lane(str, Enum):
     """The three execution lanes (CLAUDE.md §1.1)."""
@@ -106,7 +106,7 @@ class SurveyorVerdict(str, Enum):
 
 
 # --------------------------------------------------------------------------- #
-# Config loaders — the ONLY sanctioned way to pull tunables into logic files.
+# Config loaders - the ONLY sanctioned way to pull tunables into logic files.
 # --------------------------------------------------------------------------- #
 def _load_yaml(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as fh:

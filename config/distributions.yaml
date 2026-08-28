@@ -1,5 +1,5 @@
 # =============================================================================
-# ClaimOS — synthetic data distributions  (Phase 1, see CLAUDE.md §5)
+# ClaimOS - synthetic data distributions  (Phase 1, see CLAUDE.md §5)
 # -----------------------------------------------------------------------------
 # TAGS:
 #   [SOURCED]     = from IRDAI AR 2024-25 / 2024 Master Circular / IIB / PwC (CLAUDE.md §2). Do not change.
@@ -32,7 +32,7 @@ acceptance:
   sub_50k_share: [0.55, 0.68]  # share of ALL claims with amount < ₹50,000 must land here
 
 # --- Fraud (ground-truth labels) --------------------------------------------
-fraud_base_rate:               # [ASSUMPTION, anchored to §2: 10–15% overall, TP much higher]
+fraud_base_rate:               # [ASSUMPTION, anchored to §2: 10-15% overall, TP much higher]
   OD: 0.08
   TP: 0.20
   theft_total: 0.15
@@ -40,10 +40,10 @@ fraud_type_given_fraud:        # [SOURCED §2: ~70% document falsification]
   document_falsification: 0.70
   staged_or_inflated: 0.20
   other: 0.10
-# Keep fraud LEARNABLE BUT NOT TRIVIAL: target fraud ROC-AUC ~0.80–0.90, not 0.99.
+# Keep fraud LEARNABLE BUT NOT TRIVIAL: target fraud ROC-AUC ~0.80-0.90, not 0.99.
 fraud_signal_lift:             # [ASSUMPTION] how much fraud shifts these signals (probabilities)
   non_network_garage: 0.35     # reduced 2026-07-19 (was 0.55) to land fraud AUC in 0.80-0.90 band
-  intimation_gt_48h: 0.30      # reduced (was 0.40) — see ASSUMPTIONS.md
+  intimation_gt_48h: 0.30      # reduced (was 0.40) - see ASSUMPTIONS.md
   modification_undeclared: 0.30  # reduced (was 0.35)
   photo_reuse_flag: 0.20       # reduced (was 0.30)
 
@@ -55,13 +55,13 @@ severity_mix:                  # [ASSUMPTION]; theft_total is always 'total'
 policy_status:                 # [ASSUMPTION]; lapsed -> coverage reject
   active: 0.93
   lapsed: 0.07
-garage_type:                   # [ASSUMPTION]; non_network -> reimbursement route (+15–30d TAT)
+garage_type:                   # [ASSUMPTION]; non_network -> reimbursement route (+15-30d TAT)
   network: 0.65
   non_network: 0.35
 
 intimation:                    # the "delayed intimation" trap
   within_48h_share: 0.85       # [ASSUMPTION]
-  late_reason_valid_share: 0.40  # [SOURCED-behaviour §2/§7: SC rulings — late alone ≠ valid reject]
+  late_reason_valid_share: 0.40  # [SOURCED-behaviour §2/§7: SC rulings - late alone ≠ valid reject]
 
 driver:
   valid_license: 0.95          # [ASSUMPTION]
@@ -84,7 +84,7 @@ escalation:                    # [SOURCED §2: spike ~90 days]; label = escalate
   window_days: 90              # [SOURCED]
   # Concentrate escalations in claims that look benign at FNOL (low amount,
   # minor/moderate) but carry latent signals (TP linkage, ambiguous liability,
-  # injury hint). Target escalation ROC-AUC ~0.70 — hard to see at FNOL by design.
+  # injury hint). Target escalation ROC-AUC ~0.70 - hard to see at FNOL by design.
 
 # --- Collusion rings (for the graph model) ----------------------------------
 rings:                         # [ASSUMPTION]
@@ -94,7 +94,7 @@ rings:                         # [ASSUMPTION]
   # Legit claims get sparse random linkage; rings reuse a few garages/surveyors/accounts.
   # Graph model must recover >= 80% of seeded rings.
 
-# --- TAT ceilings (SOURCED — IRDAI 2024 Master Circular) --------------------
+# --- TAT ceilings (SOURCED - IRDAI 2024 Master Circular) --------------------
 tat_ceilings:                  # [SOURCED §2] used by the TAT simulation, do not change
   surveyor_appointment_hours: 24
   survey_report_days: 15
@@ -103,7 +103,7 @@ tat_ceilings:                  # [SOURCED §2] used by the TAT simulation, do no
   cashless_days: [1, 7]
 
 # =============================================================================
-# ADDED IN PHASE 1 — parameters required by LOGIC_AND_FORMULAS.md that were not
+# ADDED IN PHASE 1 - parameters required by LOGIC_AND_FORMULAS.md that were not
 # present in the originally provided config. Nothing above this line is changed;
 # these blocks are purely additive. Every entry is [ASSUMPTION] and logged in
 # ASSUMPTIONS.md (2026-07-19). See LOGIC_AND_FORMULAS.md §1.3-1.8 for the math.
@@ -111,7 +111,7 @@ tat_ceilings:                  # [SOURCED §2] used by the TAT simulation, do no
 
 # --- Fraud-signal genuine marginals: q_s = P(signal=1 | NOT fraud) (§1.3) ----
 # Fraud lifts each signal by fraud_signal_lift (above); q_s is the clean-claim
-# baseline. Overall marginals sit slightly above q_s by ~fraud_share*lift — that
+# baseline. Overall marginals sit slightly above q_s by ~fraud_share*lift - that
 # upward drift IS the learnable fraud correlation (these marginals are not gated).
 fraud_signal_base:             # [ASSUMPTION]
   non_network_garage: 0.35     # matches garage_type.non_network baseline
@@ -150,7 +150,7 @@ escalation_model:              # [ASSUMPTION]
 
 # --- Surveyor verdict / settlement / override labels (§1.6) ------------------
 surveyor:                      # [ASSUMPTION]
-  fraud_reject_prob: 0.60      # P(reject | fraud) — surveyor catches most, not all
+  fraud_reject_prob: 0.60      # P(reject | fraud) - surveyor catches most, not all
   partial_base: 0.05           # base P(partial verdict)
   partial_age_slope: 0.02      # + per vehicle_age year (depreciation/consumables dispute)
   partial_max: 0.45
@@ -158,7 +158,7 @@ surveyor:                      # [ASSUMPTION]
   settlement_true_noise: [0.90, 1.05]      # U(a,b) on true_repair_cost -> settlement basis
   depreciation_age_slope: 0.04             # depreciation fraction per vehicle_age year
   depreciation_max: 0.50
-  human_override_rate: 0.10    # Bern(p) — feeds the future feedback loop
+  human_override_rate: 0.10    # Bern(p) - feeds the future feedback loop
 
 # --- Graph entity wiring (§1.7) ----------------------------------------------
 # Genuine (non-ring) claims get UNIQUE entities (sparse linkage) so the graph
@@ -193,14 +193,14 @@ model_params:                  # [ASSUMPTION]
                                   # capped by the auto-tighten guardrail.
   escalation_in_confidence: false # 2026-07-23: escalation RISK is already gated separately
                                   # (lane1.max_escalation_prob). Keeping c_esc inside the
-                                  # confidence min double-counted it — a claim the escalation
+                                  # confidence min double-counted it - a claim the escalation
                                   # model was merely UNSURE about (p_esc~0.5 -> c_esc~0) had its
                                   # confidence crushed even with confidently-low fraud, capping
                                   # touchless at ~5%. Fraud is the auto-clear safety signal;
                                   # escalation risk stays governed by its own gate.
 
 # =============================================================================
-# reference_data  —  REAL published values (Apify-sourced, see REFERENCE_DATA.md)
+# reference_data  -  REAL published values (Apify-sourced, see REFERENCE_DATA.md)
 # [SOURCED] IRDAI / Indian Motor Tariff / insurer wordings. Real grids & lists used
 # verbatim for settlement realism and category vocabularies. Do not invent alternatives.
 # =============================================================================

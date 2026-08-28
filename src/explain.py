@@ -1,4 +1,4 @@
-"""Phase 5 — explainability (CLAUDE.md §3 rule 9, §8, LOGIC §Explainability).
+"""Phase 5 - explainability (CLAUDE.md §3 rule 9, §8, LOGIC §Explainability).
 
 Every routed claim returns a structured, non-empty explanation:
   * lane + why (the thresholds/triggers that fired, from triage)
@@ -155,7 +155,7 @@ class Explainer:
         if legal:
             parts.append(
                 "Legal-check flag: late intimation with a valid reason is NOT auto-rejected "
-                "(SC rulings) — a human confirms the decision."
+                "(SC rulings) - a human confirms the decision."
             )
         if fraud_drivers:
             parts.append("Top fraud signals: " + ", ".join(f"{k}" for k, _ in fraud_drivers) + ".")

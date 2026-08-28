@@ -1,4 +1,4 @@
-"""Repair-cost estimator — LightGBM quantile regression (CLAUDE.md §7, LOGIC §3.1).
+"""Repair-cost estimator - LightGBM quantile regression (CLAUDE.md §7, LOGIC §3.1).
 
 Three boosters at tau in {0.10, 0.50, 0.90} trained with the pinball loss. P50 is
 the point estimate; P10/P90 the uncertainty band (sorted so P10<=P50<=P90).

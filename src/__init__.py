@@ -1,4 +1,4 @@
-"""ClaimOS — risk-triage decision layer for motor-insurance claims.
+"""ClaimOS - risk-triage decision layer for motor-insurance claims.
 
 See CLAUDE.md for the full build brief and RULES (the source of truth).
 """

@@ -1,11 +1,11 @@
-"""Coverage / eligibility engine — deterministic rules (CLAUDE.md §7, LOGIC §3.4).
+"""Coverage / eligibility engine - deterministic rules (CLAUDE.md §7, LOGIC §3.4).
 
 Pure boolean logic (no ML), unit-tested. Precedence (LOGIC §3.4):
   policy_lapsed -> driver_ineligible -> fir_missing -> undeclared_modification.
 
 CRUCIAL fairness rule (SOURCED, SC rulings): late intimation ALONE is NOT a valid
 reject. When intimation is late but ``intimation_reason_valid``, we raise a
-``legal_weak_reject_flag`` — the claim is routed to a human (Lane 2), never
+``legal_weak_reject_flag`` - the claim is routed to a human (Lane 2), never
 auto-rejected on that ground. This is the appeal-rate win (CLAUDE.md §7/§8).
 """
 
@@ -108,7 +108,7 @@ def coverage_frame(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # =========================================================================== #
-# LIVE coverage matrix (LOGIC §2) — deductibles, NCB, add-ons, waterfall, and
+# LIVE coverage matrix (LOGIC §2) - deductibles, NCB, add-ons, waterfall, and
 # the 4-state decision. Used by the live workflow; the batch pipeline above is
 # left untouched so the eval gates stay reproducible.
 # =========================================================================== #
@@ -271,7 +271,7 @@ def coverage_state(claim: Mapping[str, Any]) -> dict[str, Any]:
     incident = _parse_date(claim.get("incident_date"))
 
     # -- HARD DECLINE checks --------------------------------------------------
-    # Policy in force ON THE INCIDENT DATE (not the filing date — a common
+    # Policy in force ON THE INCIDENT DATE (not the filing date - a common
     # wrongful-rejection trap runs it the other way).
     pf, pt = _parse_date(claim.get("period_from")), _parse_date(claim.get("period_to"))
     if str(claim.get("policy_status", "active")).lower() == "lapsed":
@@ -311,7 +311,7 @@ def coverage_state(claim: Mapping[str, Any]) -> dict[str, Any]:
         _get(claim, "intimation_delay_hours", 0)) > cfg["intimation_late_hours"]
     if late and int(_get(claim, "intimation_reason_valid", 1)) == 1:
         legal_weak.append("late_intimation_valid_reason")
-    # Undeclared mod causally UNRELATED to the damage → not a lawful decline.
+    # Undeclared mod causally UNRELATED to the damage - not a lawful decline.
     if int(_get(claim, "modification_undeclared", 0)) == 1 and not bool(
             claim.get("modification_related_to_damage")):
         legal_weak.append("undeclared_mod_no_nexus_to_loss")

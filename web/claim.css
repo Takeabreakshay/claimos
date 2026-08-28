@@ -1,7 +1,7 @@
 /* =============================================================================
-   ClaimOS — customer self-service app (deliverable #7). Mobile-first, friendly,
+   ClaimOS - customer self-service app (deliverable #7). Mobile-first, friendly,
    glassmorphic. Shares the Switzer type + token system from styles.css but wears
-   a lighter, single-column chrome — this is the policyholder's phone, not the
+   a lighter, single-column chrome - this is the policyholder's phone, not the
    operator's console.
    ============================================================================= */
 body.cx{
@@ -49,7 +49,7 @@ body.cx::before{
 .cx-card{
   background:var(--panel);
   border:1px solid var(--line); border-radius:18px; padding:22px;
-  /* solid card, no backdrop blur — keeps text crystal-clear */
+  /* solid card, no backdrop blur - keeps text crystal-clear */
   box-shadow:var(--shadow); animation:cxrise .5s var(--ease-out) both;
 }
 @keyframes cxrise{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:none}}
@@ -239,7 +239,7 @@ body.cx::before{
 .cam-done{background:var(--good);color:#04140a}
 
 /* ============================================================================
-   MOBILE POLISH — safe-area insets (notch / home indicator) + tactile feedback.
+   MOBILE POLISH - safe-area insets (notch / home indicator) + tactile feedback.
    Keeps the customer filing flow feeling like a native phone app.
    ============================================================================ */
 .cx-bar{padding-top:calc(16px + env(safe-area-inset-top))}

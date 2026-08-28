@@ -1,5 +1,5 @@
 # =============================================================================
-# ClaimOS — parts + labour rate card  (LOGIC §1, user-supplied 2026-07-23)
+# ClaimOS - parts + labour rate card  (LOGIC §1, user-supplied 2026-07-23)
 # -----------------------------------------------------------------------------
 # Deterministic repair-cost estimator. Turns a set of damaged parts (from the
 # vision model or the garage estimate line-items) into a P10/P50/P90 rupee band.
@@ -7,7 +7,7 @@
 # Provenance:
 #   [SOURCED]  paint depreciation 50% on material · consumables 5-10% of subtotal
 #              (IRDAI Motor tariff / Master Circular depreciation grid).
-#   [DEFAULT]  every price, multiplier, and labour figure below — supplied by the
+#   [DEFAULT]  every price, multiplier, and labour figure below - supplied by the
 #              domain brief, calibrated to the Indian aftermarket, tune on Bajaj
 #              data. Logged in ASSUMPTIONS.md (2026-07-23).
 #

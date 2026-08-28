@@ -1,4 +1,4 @@
-"""ClaimOS live layer — real, working implementations of the components that do
+"""ClaimOS live layer - real, working implementations of the components that do
 NOT require regulator-gated credentials.
 
   vision.py    photo quality / blur / perceptual-hash reuse / EXIF   (no key)
@@ -7,5 +7,5 @@ NOT require regulator-gated credentials.
   workflow.py  the live claim state machine that ties it together
 
 The four regulator-gated rails (VAHAN, DigiLocker, IIB PRISM/QUEST) remain in
-``src/rails.py`` behind ``# PRODUCTION:`` swap points — see .env.example.
+``src/rails.py`` behind ``# PRODUCTION:`` swap points - see .env.example.
 """

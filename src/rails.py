@@ -1,4 +1,4 @@
-"""Phase 2 — MOCKED external rails (CLAUDE.md §3 rule 2, §10 Phase 2, §12).
+"""Phase 2 - MOCKED external rails (CLAUDE.md §3 rule 2, §10 Phase 2, §12).
 
 Every production integration is mocked here behind a clean, typed interface with
 a ``# PRODUCTION:`` swap comment marking exactly where the real API drops in. The
@@ -10,12 +10,12 @@ Rail -> production system (CLAUDE.md §12):
   * get_claim_history() -> core policy / claims DB (prior claims & fraud flags)
   * get_prism_score()   -> IIB PRISM (risk score) + IIB QUEST (fraud flag)
 
-Determinism (rule 4): each rail is **keyed by the claim** — a stable per-claim
+Determinism (rule 4): each rail is **keyed by the claim** - a stable per-claim
 seed derived from ``claim_id`` (SHA-256, salted per rail) drives a local RNG, so
 the same claim always yields the same rail output, whether called one-off in the
 demo or in bulk over the whole frame. Because this is synthetic, the mocks use
 the ground-truth fields (``is_fraud`` etc.) to inject *realistic but noisy*
-correlation — the stand-in for the true state a real rail would return. The noise
+correlation - the stand-in for the true state a real rail would return. The noise
 is deliberate: it keeps fraud learnable-not-trivial (CLAUDE.md §5.2).
 """
 
@@ -46,7 +46,7 @@ _LICENSE_CLASSES = ("LMV", "LMV-TR", "MCWG")
 # Seeding helpers
 # --------------------------------------------------------------------------- #
 def _claim_rng(claim_id: str, salt: int, base: int) -> np.random.Generator:
-    """Stable per-claim, per-rail RNG (SHA-256 keyed — not Python's salted hash)."""
+    """Stable per-claim, per-rail RNG (SHA-256 keyed - not Python's salted hash)."""
     digest = hashlib.sha256(f"{base}:{salt}:{claim_id}".encode()).hexdigest()
     return np.random.default_rng(int(digest[:16], 16))
 
@@ -183,7 +183,7 @@ def get_prism_score(claim: Mapping[str, Any], base: int = SEED) -> PrismScore:
     is_ring = int(_get(claim, "is_ring_claim", 0))
 
     # FNOL-available risk score: correlated with fraud/ring but noisy (no future-label
-    # leakage — escalation outcome is NOT used here). Kept deliberately noisy so the
+    # leakage - escalation outcome is NOT used here). Kept deliberately noisy so the
     # fraud model lands ~0.80-0.90 AUC, not ~0.99.
     logit = -1.0 + 0.7 * is_fraud + 0.7 * is_ring + 1.5 * rng.standard_normal()
     prism_score = float(1.0 / (1.0 + np.exp(-logit)))

@@ -5,7 +5,7 @@
      - Lenis          momentum scrolling, everything eases instead of snapping
      - SplitText      headings reveal character by character
      - ScrollTrigger  sections animate as they enter the viewport
-     - ScrambleText   numbers "compute" then lock in — which is literally what
+     - ScrambleText   numbers "compute" then lock in - which is literally what
                       our decision engine does, so it earns its place here
      - CustomEase     the site's signature curve
 
@@ -39,7 +39,7 @@ window.MOTION = (function () {
   /* ---- Lenis smooth scroll ----
      Lenis is driven by requestAnimationFrame. rAF is throttled or paused in
      background/unfocused tabs and some embedded browsers, and a dead loop means
-     the page simply will not scroll — the worst possible failure. So we watchdog
+     the page simply will not scroll - the worst possible failure. So we watchdog
      the loop and, if it isn't ticking, tear Lenis down and hand scrolling back to
      the browser with native CSS smoothing. Degraded feel beats a frozen page. */
   let lenis = null;
@@ -102,7 +102,7 @@ window.MOTION = (function () {
 
   /* ---- numbers compute, then lock ----
      Scrambles through glyphs and resolves to the real value. Only for values
-     the engine actually produced — never used to fake a computation. */
+     the engine actually produced - never used to fake a computation. */
   function scramble(el, finalText, opts) {
     if (!el) return;
     const text = String(finalText);
@@ -187,7 +187,7 @@ window.MOTION = (function () {
   function sweep() {
     clearInterval(_sweepTimer);
     let ticks = 0;
-    // let layout settle first — this is what the original bug tripped over
+    // let layout settle first - this is what the original bug tripped over
     requestAnimationFrame(() => requestAnimationFrame(sweepOnce));
     _sweepTimer = setInterval(() => {
       sweepOnce();

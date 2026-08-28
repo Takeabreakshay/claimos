@@ -1,9 +1,9 @@
 # =============================================================================
-# ClaimOS — routing thresholds  (Phase 4 · the wedge · see CLAUDE.md §6)
+# ClaimOS - routing thresholds  (Phase 4 · the wedge · see CLAUDE.md §6)
 # -----------------------------------------------------------------------------
 # These are TUNABLE. The pipeline may auto-tighten Lane 1 if leakage exceeds the
-# ceiling in config below — but it must never loosen past a leaky point silently.
-# The ₹50,000 max_claim_amount is the IRDAI surveyor-mandate ANCHOR — do not
+# ceiling in config below - but it must never loosen past a leaky point silently.
+# The ₹50,000 max_claim_amount is the IRDAI surveyor-mandate ANCHOR - do not
 # change it without flagging in ASSUMPTIONS.md and the deck.
 # =============================================================================
 
@@ -20,7 +20,7 @@ evidence_gap:
 lane1_touchless:                   # ALL must hold to auto-settle
   max_claim_amount: 50000          # [ANCHOR] IRDAI surveyor-mandate seam
   max_fraud_prob: 0.07             # tightened 0.10 -> 0.07 on 2026-07-20 per the Bajaj
-                                   # feature brief. Measured cost: ZERO — the sweep in
+                                   # feature brief. Measured cost: ZERO - the sweep in
                                    # reports/threshold_sweep.json shows identical touchless
                                    # (25.11%) and leakage (1.195%) anywhere in 0.06-0.10,
                                    # because calibrated fraud scores are bimodal.
@@ -42,7 +42,7 @@ lane3_investigative:               # ANY trigger routes here
   min_escalation_prob: 0.50
   tp_with_injury: true
 
-# lane2_assisted has no thresholds — it is the default catch-all.
+# lane2_assisted has no thresholds - it is the default catch-all.
 
 # --- Guardrail: Lane-1 leakage ceiling (the make-or-break metric) -----------
 guardrails:

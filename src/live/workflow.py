@@ -1,4 +1,4 @@
-"""LIVE claim workflow — the company-perspective state machine.
+"""LIVE claim workflow - the company-perspective state machine.
 
   intake -> evidence -> verifying -> scored -> (retake | lane1/2/3 | coverage_reject)
                                             -> decision -> settled
@@ -25,7 +25,7 @@ from src.pipeline import load_models, score_frame
 from src.rails import enrich_claim
 from src.triage import RETAKE, RouteDecision, route_claim
 
-# Lane strictness order for the "escalate-only" ladder — a signal may make a
+# Lane strictness order for the "escalate-only" ladder - a signal may make a
 # routing decision STRICTER, never looser (leakage-first, CLAUDE.md §3 rule 8).
 _LANE_ORDER = {
     RETAKE: 0, Lane.TOUCHLESS.value: 1, Lane.ASSISTED.value: 2,
@@ -151,7 +151,7 @@ def create_claim(intake: dict[str, Any], actor: str = "OFFICER") -> str:
 
 
 # --------------------------------------------------------------------------- #
-# 2. EVIDENCE — photos (live vision) and documents (live OCR)
+# 2. EVIDENCE - photos (live vision) and documents (live OCR)
 # --------------------------------------------------------------------------- #
 def add_photo(claim_id: str, filename: str, data: bytes,
               angle_label: str | None = None) -> dict[str, Any]:
@@ -166,7 +166,7 @@ def add_photo(claim_id: str, filename: str, data: bytes,
     matched_claim = next((c for k, c in known if k == matched), None) if matched else None
 
     # AI DAMAGE ASSESSMENT (PS deliverable #3). Read severity + parts straight
-    # from the pixels with the vision model. Only attempt it on a usable photo —
+    # from the pixels with the vision model. Only attempt it on a usable photo -
     # assessing a blurred frame is worse than admitting we can't. Degrades to {}
     # (severity stays operator-declared) if no vision key / model is available.
     damage: dict[str, Any] = {}
@@ -219,7 +219,7 @@ def add_photo(claim_id: str, filename: str, data: bytes,
         patch["cv_severity"] = worst
         declared = str(claim.get("incident_severity") if (claim := st.get_claim(claim_id)) else "")
         patch["cv_severity_mismatch"] = bool(declared and declared != worst)
-    # Union of damaged parts across photos + the min vision confidence — the
+    # Union of damaged parts across photos + the min vision confidence - the
     # scorer turns these into a line-item estimate (LOGIC §1) and applies the
     # value-tiered confidence floor (LOGIC §5).
     parts_union: list[str] = []
@@ -287,7 +287,7 @@ def _to_model_row(claim: dict[str, Any]) -> dict[str, Any]:
         "customer_id": claim.get("customer_id") or "CUST",
         "garage_id": claim.get("garage_id") or f"GAR-{claim['claim_id']}",
         "surveyor_id": claim.get("surveyor_id") or f"SUR-{claim['claim_id']}",
-        # graph link entities — must exist as columns for the graph feature builder
+        # graph link entities - must exist as columns for the graph feature builder
         "bank_account": claim.get("bank_account") or f"AC-{claim['claim_id']}",
         "phone": claim.get("phone") or f"PH-{claim['claim_id']}",
         "claim_type": claim.get("claim_type") or "OD",
@@ -349,7 +349,7 @@ def score_and_route(claim_id: str, actor: str = "SYSTEM") -> dict[str, Any]:
         scored["model_confidence"] = min(float(scored["model_confidence"]), 0.30)
 
     # ------------------------------------------------------------------ #
-    # LINE-ITEM REPAIR ESTIMATE (LOGIC §1) — deterministic rate-card cost
+    # LINE-ITEM REPAIR ESTIMATE (LOGIC §1) - deterministic rate-card cost
     # from the vision-detected parts. Stacks with the GBT: it is a strong
     # cost prior, and the divergence claim-vs-estimate is a padding signal.
     # ------------------------------------------------------------------ #
@@ -367,7 +367,7 @@ def score_and_route(claim_id: str, actor: str = "SYSTEM") -> dict[str, Any]:
         if li and li["n_parts"] else None)
 
     # ------------------------------------------------------------------ #
-    # DAMAGE-MISMATCH HARD RULES (LOGIC §4) — vision severity vs declared.
+    # DAMAGE-MISMATCH HARD RULES (LOGIC §4) - vision severity vs declared.
     # May bump p_fraud BEFORE routing so the fraud gate sees it.
     # ------------------------------------------------------------------ #
     mm = _damage_mismatch(claim)
@@ -375,7 +375,7 @@ def score_and_route(claim_id: str, actor: str = "SYSTEM") -> dict[str, Any]:
         scored["p_fraud"] = min(1.0, float(scored["p_fraud"]) + mm["fraud_bump"])
 
     # ------------------------------------------------------------------ #
-    # COVERAGE MATRIX v2 (LOGIC §2) is authoritative in the live path — it is
+    # COVERAGE MATRIX v2 (LOGIC §2) is authoritative in the live path - it is
     # richer than the batch coverage (in-force-on-incident-date, cover-type,
     # usage class, engine-peril, 4 states). Map its verdict onto the routing
     # inputs so route_claim produces the right base outcome, then the batch
@@ -396,13 +396,13 @@ def score_and_route(claim_id: str, actor: str = "SYSTEM") -> dict[str, Any]:
     decision = route_claim(rec)
 
     # ------------------------------------------------------------------ #
-    # ESCALATE-ONLY LADDER — every hard signal can make routing stricter,
+    # ESCALATE-ONLY LADDER - every hard signal can make routing stricter,
     # never looser. Collect (min_lane, reason) and apply the strictest.
     # ------------------------------------------------------------------ #
     escalations: list[tuple[str, str]] = []
     if li and li.get("escalate_min_lane"):
         why = "airbag deployed" if li["has_airbag"] else "structural damage"
-        escalations.append((li["escalate_min_lane"], f"{why} -> never touchless"))
+        escalations.append((li["escalate_min_lane"], f"{why}, never touchless"))
     if li and li.get("total_loss_trigger"):
         escalations.append((Lane.INVESTIGATIVE.value,
                             "total-loss trigger (engine/gearbox rebuild)"))
@@ -415,14 +415,14 @@ def score_and_route(claim_id: str, actor: str = "SYSTEM") -> dict[str, Any]:
                             "non-network garage with above-estimate claim"))
     for min_lane, why in mm.get("escalations", []):
         escalations.append((min_lane, why))
-    # Vision confidence floor (LOGIC §5) — an untrusted damage read can't be
+    # Vision confidence floor (LOGIC §5) - an untrusted damage read can't be
     # the basis of a touchless settlement.
     vf = _vision_floor_block(claim, mrow)
     if vf:
         escalations.append((Lane.ASSISTED.value, vf))
 
     # Coverage-state reason, made readable in the reason chain (routing already
-    # reflects it via the mapped inputs above — a hard decline can't be loosened).
+    # reflects it via the mapped inputs above - a hard decline can't be loosened).
     if cstate["state"] != cov.STATE_CLEAR and decision.outcome != "coverage_reject":
         tag = {cov.STATE_FLAG: "coverage_flag", cov.STATE_LEGAL_WEAK: "legal_weak",
                cov.STATE_HARD_DECLINE: "coverage_hard_decline"}[cstate["state"]]
@@ -507,7 +507,7 @@ def _apply_escalations(decision: "RouteDecision",
 
 
 def _damage_mismatch(claim: dict[str, Any]) -> dict[str, Any]:
-    """Vision-vs-declared severity delta → hard routing rules (LOGIC §4)."""
+    """Vision-vs-declared severity delta - hard routing rules (LOGIC §4)."""
     thr = constants.load_thresholds().get("damage_mismatch", {})
     rank = thr.get("severity_rank", {"minor": 0, "moderate": 1, "severe": 2, "total": 3})
     tol_conf = float(thr.get("silent_tolerance_confidence", 0.75))
@@ -532,7 +532,7 @@ def _damage_mismatch(claim: dict[str, Any]) -> dict[str, Any]:
                                 f"damage worse than declared (vision {claim['cv_severity']})"))
     elif delta == -1:
         escalations.append((Lane.ASSISTED.value,
-                            f"declared worse than visible damage — possible inflation"))
+                            f"declared worse than visible damage - possible inflation"))
     elif delta <= -2:
         fraud_bump = bump
         escalations.append((Lane.INVESTIGATIVE.value,
@@ -564,7 +564,7 @@ def _vision_floor_block(claim: dict[str, Any], mrow: dict[str, Any]) -> str | No
     if (mrow.get("garage_type") or "").lower() == "non_network":
         floor += float(thr.get("non_network_confidence_penalty", 0.0))
     if float(conf) < floor:
-        return f"vision confidence {float(conf):.2f} < floor {floor:.2f} for Rs {int(amt):,}"
+        return f"vision confidence {float(conf):.2f} below floor {floor:.2f} for Rs {int(amt):,}"
     return None
 
 

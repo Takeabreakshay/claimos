@@ -1,13 +1,13 @@
-"""Parts + labour rate card — deterministic repair-cost estimator (LOGIC §1).
+"""Parts + labour rate card - deterministic repair-cost estimator (LOGIC §1).
 
 Turns a set of damaged parts (from the vision model or a garage estimate) into a
 P10/P50/P90 rupee band via the §1.4 assembly formula, plus the signals the triage
 engine needs downstream:
 
-  * ``line_item_estimate``      — a strong cost prior / feature (LOGIC §1.5)
-  * ``has_structural`` / ``has_airbag`` — hard severity escalators (LOGIC §1.5, §5)
-  * ``total_loss_trigger``      — engine/gearbox rebuild → total-loss check (§2.4)
-  * per-part depreciation       — handed to the settlement waterfall (§2.4), NOT
+  * ``line_item_estimate``      - a strong cost prior / feature (LOGIC §1.5)
+  * ``has_structural`` / ``has_airbag`` - hard severity escalators (LOGIC §1.5, §5)
+  * ``total_loss_trigger``      - engine/gearbox rebuild - total-loss check (§2.4)
+  * per-part depreciation       - handed to the settlement waterfall (§2.4), NOT
                                   subtracted here (the estimate is gross repair cost)
 
 Everything is config-driven from ``config/rate_card.yaml`` (Rule 5). Free-text part
@@ -35,9 +35,9 @@ def _card() -> dict[str, Any]:
 
 
 # --------------------------------------------------------------------------- #
-# Part-name normalisation — map free text to a canonical rate-card key.
+# Part-name normalisation - map free text to a canonical rate-card key.
 # --------------------------------------------------------------------------- #
-# Synonyms/aliases → canonical key. Matched by longest-alias-first substring so
+# Synonyms/aliases - canonical key. Matched by longest-alias-first substring so
 # "rear bumper" beats "bumper". Side words (left/right/front/rear/each) are kept
 # only where they disambiguate a real key (front vs rear bumper/door/fender).
 _ALIASES: dict[str, str] = {
@@ -170,10 +170,10 @@ def estimate(
     is_ev: bool = False,
     is_import: bool = False,
 ) -> dict[str, Any]:
-    """Deterministic line-item repair estimate → P10/P50/P90 (gross, no dep).
+    """Deterministic line-item repair estimate - P10/P50/P90 (gross, no dep).
 
     Depreciation is computed per part and returned for the settlement waterfall
-    (§2.4) but NOT subtracted here — the estimate is the gross repair cost the
+    (§2.4) but NOT subtracted here - the estimate is the gross repair cost the
     garage charges.
     """
     c = _card()
@@ -227,7 +227,7 @@ def estimate(
             "structural": bool(p.get("structural")), "airbag": bool(p.get("airbag")),
         })
 
-    # Paint (per panel) — material + booth labour; 50% dep on material only.
+    # Paint (per panel) - material + booth labour; 50% dep on material only.
     pt = c["paint"]
     paint_mat = _mid(pt["material_per_panel"]) * seg_mult * region_mult
     paint_lab = float(pt["labour_hrs_per_panel"]) * labour_rate

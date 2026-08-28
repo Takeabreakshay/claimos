@@ -1,14 +1,14 @@
-"""Phase 3 — feature engineering from raw claim + rails (CLAUDE.md §7, LOGIC §3).
+"""Phase 3 - feature engineering from raw claim + rails (CLAUDE.md §7, LOGIC §3).
 
 One source of truth for the model feature matrices, used identically in training
 (pipeline) and inference (triage / demo). Three per-model feature sets, each
 built to avoid label leakage:
 
-  * cost_features       — vehicle/claim attributes; EXCLUDES ``claim_amount`` and
+  * cost_features       - vehicle/claim attributes; EXCLUDES ``claim_amount`` and
                           every label (LOGIC §1.1/§3.1: cost model must not see the
                           claimed figure, else the inflation gap leaks).
-  * fraud_features      — observable fields + rails + graph + cost-derived ratios.
-  * escalation_features — FNOL-visible only; EXCLUDES the hidden latent signals
+  * fraud_features      - observable fields + rails + graph + cost-derived ratios.
+  * escalation_features - FNOL-visible only; EXCLUDES the hidden latent signals
                           (tp_linkage / ambiguous_liability / injury_hint) that
                           generated the label (LOGIC §3.3), so AUC stays ~0.70.
 
@@ -66,7 +66,7 @@ def cost_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def escalation_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Escalation features — FNOL-visible only, no hidden latent signals."""
+    """Escalation features - FNOL-visible only, no hidden latent signals."""
     out = _common_engineered(df)
     out["claim_amount"] = df["claim_amount"].astype(float)
     out["claim_to_idv_ratio"] = (df["claim_amount"] / df["idv"]).astype(float)
@@ -82,7 +82,7 @@ def fraud_features(
     graph_df: pd.DataFrame,
     cost_pred: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Fraud features — observable fields + rails + graph + cost-derived ratios."""
+    """Fraud features - observable fields + rails + graph + cost-derived ratios."""
     out = _common_engineered(df)
     out["claim_amount"] = df["claim_amount"].astype(float)
     out["claim_to_idv_ratio"] = (df["claim_amount"] / df["idv"]).astype(float)

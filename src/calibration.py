@@ -1,4 +1,4 @@
-"""Phase 3 — calibration layer (CLAUDE.md §3 rule 7, §7, LOGIC §3.6).
+"""Phase 3 - calibration layer (CLAUDE.md §3 rule 7, §7, LOGIC §3.6).
 
 Turns raw classifier scores into TRUSTWORTHY probabilities on a held-out split.
 Routing must consume calibrated probabilities, never raw scores (rule 7).

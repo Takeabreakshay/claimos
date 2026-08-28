@@ -1,5 +1,5 @@
 /* =============================================================================
-   ClaimOS — customer self-service claim journey (deliverable #7).
+   ClaimOS - customer self-service claim journey (deliverable #7).
    A guided FNOL that runs on the SAME live engine as the insurer console:
    policy lookup -> incident -> photos (live vision) -> submit -> instant triage.
    The outcome is shown in the customer's language, including the "advise-withdraw"
@@ -124,7 +124,7 @@ function showPolicy(p) {
       <div class="cx-kv"><span class="k">Cover valid till</span><span class="v">${esc((p.period_to || "").slice(0, 10))}</span></div>
     </div>
     <div class="cx-badges">${badges}</div>`;
-  const b = $("findBtn"); b.textContent = "This is my car — continue"; b.onclick = () => go("incident");
+  const b = $("findBtn"); b.textContent = "This is my car - continue"; b.onclick = () => go("incident");
 }
 
 /* ============================ STEP 2 · INCIDENT ============================ */
@@ -221,7 +221,7 @@ function stepPhotos(el) {
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2.5"/><circle cx="12" cy="13" r="3.4"/><path d="M8 6l1.2-2h5.6L16 6"/></svg>
         Open camera &amp; capture damage
       </button>
-      <div class="cx-cam-note">A 10-minute guided session opens your camera. Each shot is clarity-checked live — blurry frames won't capture, so there's no rework.</div>
+      <div class="cx-cam-note">A 10-minute guided session opens your camera. Each shot is clarity-checked live - blurry frames won't capture, so there's no rework.</div>
       <div class="cx-drop" id="drop"><b>or upload existing photos</b><br><span style="font-size:12px">tap / drag &amp; drop · analysed instantly</span></div>
       <input type="file" id="file" accept="image/*" multiple style="display:none">
       <div id="shots">${C.photos.map(photoRow).join("")}</div>
@@ -243,7 +243,7 @@ function stepPhotos(el) {
 /* =============================== LIVE CAMERA ===============================
    Opens the device camera, starts a 10-minute capture window, and gates the
    shutter on a live clarity check (Laplacian-variance sharpness) so a blurry
-   frame will not capture — the customer only submits usable photos, no rework.
+   frame will not capture - the customer only submits usable photos, no rework.
    Captured frames go through the same /photos endpoint (real server vision). */
 let _camStream = null, _camTimer = null, _camRAF = null, _camDeadline = 0, _lastSharp = 0;
 const _camCanvas = document.createElement("canvas");
@@ -267,7 +267,7 @@ function openCamera() {
     </div>
     <div class="cam-angles" id="camAngles"></div>
     <div class="cam-clarity"><span class="cam-clbl">Clarity</span>
-      <div class="cam-meter"><i id="camMeter"></i></div><b id="camPct">—</b></div>
+      <div class="cam-meter"><i id="camMeter"></i></div><b id="camPct">-</b></div>
     <div class="cam-status" id="camStat">Starting camera…</div>
     <div class="cam-controls"><button class="cam-shot" id="camShot" disabled aria-label="Capture"></button></div>`;
   document.body.appendChild(ov);
@@ -345,14 +345,14 @@ function clarityLoop() {
   if (shot && live) shot.disabled = !sharp;
   if (shot) shot.classList.toggle("ready", sharp && live);
   if (stat && live) stat.innerHTML = sharp
-    ? `<span style="color:var(--good)">✓ Sharp — tap the shutter</span>`
-    : `Hold steady — too blurry to capture`;
+    ? `<span style="color:var(--good)">✓ Sharp - tap the shutter</span>`
+    : `Hold steady - too blurry to capture`;
   _camRAF = requestAnimationFrame(() => setTimeout(clarityLoop, 170));
 }
 
 async function captureFrame() {
   const v = $("camVid"); if (!v) return;
-  if (_lastSharp < SHARP_MIN) { const s = $("camStat"); if (s) s.innerHTML = `<span style="color:var(--bad)">Too blurry — hold steady</span>`; return; }
+  if (_lastSharp < SHARP_MIN) { const s = $("camStat"); if (s) s.innerHTML = `<span style="color:var(--bad)">Too blurry - hold steady</span>`; return; }
   const w = v.videoWidth || 1280, h = v.videoHeight || 960;
   const c = document.createElement("canvas"); c.width = w; c.height = h;
   c.getContext("2d").drawImage(v, 0, 0, w, h);
@@ -361,14 +361,14 @@ async function captureFrame() {
   const stat = $("camStat"); if (stat) stat.innerHTML = `<span class="cx-spin"></span> Verifying photo…`;
   const before = C.photos.length;
   try { await uploadPhotos([new File([blob], `camera-${before + 1}.jpg`, { type: "image/jpeg" })]); }
-  catch (e) { if (stat) stat.innerHTML = `<span style="color:var(--bad)">Couldn't verify — try again</span>`; return; }
+  catch (e) { if (stat) stat.innerHTML = `<span style="color:var(--bad)">Couldn't verify - try again</span>`; return; }
   renderCamAngles();
   if (stat) stat.innerHTML = C.photos.length > before
     ? `<span style="color:var(--good)">✓ Photo added (${C.photos.length}/${ANGLES.length})</span>`
-    : `<span style="color:var(--warn)">Server flagged that shot — retake</span>`;
+    : `<span style="color:var(--warn)">Server flagged that shot - retake</span>`;
   if (C.photos.length >= ANGLES.length && !$("camDone")) {
     const b = document.createElement("button");
-    b.id = "camDone"; b.className = "cam-done"; b.textContent = "Done — review my claim";
+    b.id = "camDone"; b.className = "cam-done"; b.textContent = "Done - review my claim";
     b.onclick = () => { closeCamera(); go("review"); };
     $("cam").querySelector(".cam-controls").appendChild(b);
   }
@@ -384,7 +384,7 @@ function closeCamera() {
 function photoRow(p) {
   const dmg = p.damage && p.damage.severity
     ? `AI sees: <b>${esc(p.damage.severity)}</b>${p.damage.damaged_parts?.length ? " · " + esc(p.damage.damaged_parts.slice(0, 3).join(", ")) : ""}`
-    : (p.is_blurry ? "Blurry — a retake would help" : "Analysed");
+    : (p.is_blurry ? "Blurry - a retake would help" : "Analysed");
   const q = Math.round((p.quality_score || 0) * 100);
   return `<div class="cx-photo">
     <img class="th" src="${p.thumb || ""}" alt="">
@@ -412,7 +412,7 @@ async function uploadPhotos(files) {
       r.thumb = thumb;
       C.photos.push(r);
     } catch (e) {
-      pending.querySelector(".pm").innerHTML = `<span style="color:var(--bad)">Couldn't analyse — try another photo</span>`;
+      pending.querySelector(".pm").innerHTML = `<span style="color:var(--bad)">Couldn't analyse - try another photo</span>`;
       continue;
     }
     stepPhotos(app());  // re-render to refresh angle checklist + next button
@@ -435,7 +435,7 @@ function stepReview(el) {
       <div style="margin-top:14px">
         <div class="cx-kv"><span class="k">Vehicle</span><span class="v">${esc(p.make)} ${esc(p.model)}</span></div>
         <div class="cx-kv"><span class="k">Incident</span><span class="v">${esc(inc.t)}</span></div>
-        <div class="cx-kv"><span class="k">Severity</span><span class="v">${esc(I.severity || "—")}</span></div>
+        <div class="cx-kv"><span class="k">Severity</span><span class="v">${esc(I.severity || "-")}</span></div>
         <div class="cx-kv"><span class="k">Date</span><span class="v">${esc(I.date)}</span></div>
         <div class="cx-kv"><span class="k">Photos</span><span class="v">${C.photos.length}</span></div>
         ${I.amount ? `<div class="cx-kv"><span class="k">Your estimate</span><span class="v">${money(I.amount)}</span></div>` : ""}
@@ -481,7 +481,7 @@ function stepResult(el) {
   const sett = s.settlement || {};
   const aw = sett.advise_withdraw || {};
 
-  // The advise-withdraw moment takes priority — unless the customer already chose.
+  // The advise-withdraw moment takes priority - unless the customer already chose.
   if (aw.advise_withdraw && C.withdrawChoice === null) return adviseWithdraw(el, s, aw);
   if (C.withdrawChoice === "withdraw") return withdrawn(el, aw);
 
@@ -507,7 +507,7 @@ function laneView(lane, s, sett) {
   const isLegalWeak = s.coverage_state === "LEGAL_WEAK" || s.legal_weak_reject_flag;
   switch (lane) {
     case "lane1_touchless":
-      return { tone: "ok", icon: "✓", title: "Approved — instantly",
+      return { tone: "ok", icon: "✓", title: "Approved - instantly",
         body: "Your claim cleared our automated checks. No surveyor visit, no waiting.",
         payout: sett.net_payable, eta: "Paid to your registered account within minutes" };
     case "retake":
@@ -517,10 +517,10 @@ function laneView(lane, s, sett) {
           <div style="margin-top:12px"><button class="cx-btn" onclick="CX.go('photos')">Add better photos</button></div>` };
     case "coverage_reject":
       if (isLegalWeak) return { tone: "look", icon: "⚖", title: "Under review",
-        body: "There's a technicality on your policy, but the law is on your side here — so a specialist will review it personally rather than auto-decline. We'll be in touch." };
+        body: "There's a technicality on your policy, but the law is on your side here - so a specialist will review it personally rather than auto-decline. We'll be in touch." };
       return { tone: "stop", icon: "✕", title: "This isn't covered",
         body: declineReason(covReason),
-        extra: `<div class="cx-note"><span class="s">↩</span><div>If you believe this is a mistake, you can request a human review — every decision is appealable.</div></div>` };
+        extra: `<div class="cx-note"><span class="s">↩</span><div>If you believe this is a mistake, you can request a human review - every decision is appealable.</div></div>` };
     case "lane3_investigative":
       return { tone: "look", icon: "🔍", title: "We need a closer look",
         body: "Given the details, a surveyor will assess your vehicle before we settle. This protects honest customers from fraud and keeps premiums fair.",
@@ -528,7 +528,7 @@ function laneView(lane, s, sett) {
     case "lane2_assisted":
     default:
       return { tone: "wait", icon: "⏳", title: "Your claim is in review",
-        body: "We've prepared your file — a claims officer will confirm the settlement shortly. Everything's on track.",
+        body: "We've prepared your file - a claims officer will confirm the settlement shortly. Everything's on track.",
         eta: "Expected decision within 1 working day" };
   }
 }
@@ -561,13 +561,13 @@ function adviseWithdraw(el, s, aw) {
   el.innerHTML = `
     <div class="cx-card">
       <div class="cx-hero wait"><div class="mark">💡</div>
-        <h2>You can claim — but you might not want to</h2>
+        <h2>You can claim - but you might not want to</h2>
         <p>We ran the numbers so you don't lose out. Here's the honest picture.</p></div>
       <div class="cx-advise">
         <div class="h">💰 Claiming this could cost you money</div>
         <p>${isNcb
-          ? `This claim would pay about <b>${money(payout)}</b>, but making it resets your No-Claim Bonus — costing you roughly <b>${money(aw.ncb_loss)}</b> in higher premium next year. Net, you'd be <b>${money(Math.abs(aw.net_benefit))} worse off</b> by claiming.`
-          : `The assessed repair is at or below your policy deductible, so this claim would pay out <b>₹0</b> — but it would still reset your No-Claim Bonus.`}</p>
+          ? `This claim would pay about <b>${money(payout)}</b>, but making it resets your No-Claim Bonus - costing you roughly <b>${money(aw.ncb_loss)}</b> in higher premium next year. Net, you'd be <b>${money(Math.abs(aw.net_benefit))} worse off</b> by claiming.`
+          : `The assessed repair is at or below your policy deductible, so this claim would pay out <b>₹0</b> - but it would still reset your No-Claim Bonus.`}</p>
       </div>
       <div class="cx-note ok"><span class="s">✓</span><div>Skip this claim and your No-Claim Bonus stays intact for next year's renewal.</div></div>
       <div class="cx-actions">
@@ -582,7 +582,7 @@ function adviseWithdraw(el, s, aw) {
 function withdrawn(el, aw) {
   const saved = Number(aw.ncb_loss) > 0
     ? `You saved roughly <b>${money(aw.ncb_loss)}</b> on next year's premium.`
-    : `You've kept your claim-free record intact — that's a bigger No-Claim Bonus at renewal.`;
+    : `You've kept your claim-free record intact - that's a bigger No-Claim Bonus at renewal.`;
   el.innerHTML = `
     <div class="cx-card">
       <div class="cx-hero ok"><div class="mark">🛡️</div>

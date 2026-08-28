@@ -3,9 +3,9 @@
 
 const S = { view: "dashboard", claimId: null, claim: null, actor: "officer.demo", claims: [] };
 const $ = (id) => document.getElementById(id);
-const money = (n) => (n === null || n === undefined || n === "") ? "—"
+const money = (n) => (n === null || n === undefined || n === "") ? "-"
   : "₹" + Math.round(Number(n)).toLocaleString("en-IN");
-const pct = (x, d = 1) => (x === null || x === undefined) ? "—" : (Number(x) * 100).toFixed(d) + "%";
+const pct = (x, d = 1) => (x === null || x === undefined) ? "-" : (Number(x) * 100).toFixed(d) + "%";
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const LANE = {
@@ -59,7 +59,7 @@ async function loadHealth() {
     set("s-models", "v-models", h.models_loaded, h.models_loaded ? "ready" : "missing");
     set("s-ocr", "v-ocr", h.ocr_engine.startsWith("nemotron"), h.ocr_engine.replace("nvidia/", ""));
     set("s-llm", "v-llm", h.llm, h.llm ? (h.llm_model.split("/").pop() || "on") : "templates");
-    if (!h.models_loaded) toast("Models not loaded — run: poetry run claimos-pipeline", 7000);
+    if (!h.models_loaded) toast("Models not loaded - run: poetry run claimos-pipeline", 7000);
   } catch (e) { toast("API unreachable: " + e.message, 6000); }
 }
 
@@ -70,7 +70,7 @@ const TITLES = {
   intake: ["New claim", "First Notice of Loss"],
   evidence: ["Evidence & OCR", "Live photo analysis and document extraction"],
   decision: ["Decision", "The intelligence layer behind the routing call"],
-  workflow: ["How it works", "One claim, seven stages — running on the live engine"],
+  workflow: ["How it works", "One claim, seven stages - running on the live engine"],
 };
 /* keep the header + mobile-tab queue badges in sync */
 function setQCount(n) {
@@ -84,12 +84,12 @@ function go(v) {
     .forEach(b => b.classList.toggle("on", b.dataset.v === v));
   const pt = $("pageTitle"); if (pt) pt.textContent = TITLES[v][0];
   const ps = $("pageSub"); if (ps) ps.textContent = TITLES[v][1];
-  document.title = "ClaimOS — " + (TITLES[v] ? TITLES[v][0] : "Claims Operations");
+  document.title = "ClaimOS - " + (TITLES[v] ? TITLES[v][0] : "Claims Operations");
   render();
 }
 
 /* ------------------------------ VIEWS ------------------------------ */
-/* Scroll reveal — cards rise as they enter view.
+/* Scroll reveal - cards rise as they enter view.
    FAIL-SAFE BY DESIGN: content must never stay hidden. Anything already in the
    viewport reveals on the next frame, an observer handles below-the-fold, and a
    backstop timer reveals everything regardless. If any of that misbehaves the
@@ -109,7 +109,7 @@ function revealAll() {
     return;
   }
 
-  // Measure AFTER layout settles — measuring straight after innerHTML reports
+  // Measure AFTER layout settles - measuring straight after innerHTML reports
   // zero-height boxes and misclassifies everything as below-the-fold, which
   // parks the whole view at opacity 0.
   requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -127,18 +127,18 @@ function revealAll() {
   document.querySelectorAll("#view .aj-display, #view .aj-h, #view h3").forEach(h => M.revealHeading(h));
   document.querySelectorAll("#view .btn.primary").forEach(b => M.magnetic(b));
 
-  // headline numbers compute, then lock in — these are values the engine
+  // headline numbers compute, then lock in - these are values the engine
   // already produced; the animation reveals them, it never invents them.
   document.querySelectorAll("#view [data-sc]").forEach((n, i) => {
     const final = n.getAttribute("data-sc");
     setTimeout(() => M.scramble(n, final), 120 + i * 70);
   });
 
-  // hard backstop — motion must never hide content
+  // hard backstop - motion must never hide content
   setTimeout(() => nodes.forEach(n => M.show ? M.show(n) : null), 2200);
 }
 
-/* Skeleton loaders — the brief forbids bare spinners. */
+/* Skeleton loaders - the brief forbids bare spinners. */
 function skeleton(kind = "page") {
   if (kind === "kpis") return `<div class="grid g4">${"<div class='sk sk-kpi'></div>".repeat(4)}</div>`;
   return `<div class="grid g4">${"<div class='sk sk-kpi'></div>".repeat(4)}</div>
@@ -180,8 +180,8 @@ async function renderDashboard(el) {
     <div class="aj-hero">
       <div class="aj-kicker">ClaimOS · Risk-based claims triage</div>
       <h1 class="aj-display">Effort flows to<br>where risk is.</h1>
-      <p class="aj-lede">Every motor claim is scored and routed into one of three lanes —
-        <b>touchless</b>, <b>assisted</b>, <b>investigative</b> — by exactly how much automation
+      <p class="aj-lede">Every motor claim is scored and routed into one of three lanes -
+        <b>touchless</b>, <b>assisted</b>, <b>investigative</b> - by exactly how much automation
         it deserves. ${d.n_claims} claims in the book, ${pct(d.touchless_share)} settled with no human touch.</p>
     </div>
 
@@ -246,12 +246,12 @@ async function renderDashboard(el) {
           <th>Claim</th><th>Type</th><th>Claimed</th><th>Lane</th><th>Fraud</th><th>Confidence</th><th>Status</th>
         </tr></thead><tbody>
         ${(d.recent || []).map(r => `<tr onclick="openClaim('${r.claim_id}')">
-          <td class="mono">${esc(r.claim_id)}</td><td>${esc(r.claim_type || "—")}</td>
+          <td class="mono">${esc(r.claim_id)}</td><td>${esc(r.claim_type || "-")}</td>
           <td class="num">${money(r.claim_amount)}</td><td>${laneChip(r.lane)}</td>
-          <td class="num">${r.p_fraud != null ? pct(r.p_fraud, 0) : "—"}</td>
-          <td>${r.confidence != null ? `<div class="bar"><i style="width:${Math.round(r.confidence * 100)}%"></i></div>` : "—"}</td>
-          <td>${esc(r.status || "—")}</td></tr>`).join("") ||
-    `<tr><td colspan="7"><div class="empty">No claims yet — open one from <b>New claim</b>.</div></td></tr>`}
+          <td class="num">${r.p_fraud != null ? pct(r.p_fraud, 0) : "-"}</td>
+          <td>${r.confidence != null ? `<div class="bar"><i style="width:${Math.round(r.confidence * 100)}%"></i></div>` : "-"}</td>
+          <td>${esc(r.status || "-")}</td></tr>`).join("") ||
+    `<tr><td colspan="7"><div class="empty">No claims yet - open one from <b>New claim</b>.</div></td></tr>`}
         </tbody></table>
       </div>
     </div>
@@ -288,12 +288,12 @@ async function renderQueue(el) {
       const fresh = isNew(c);
       return `<tr class="${fresh ? "qnew" : ""}${fresh && i === 0 ? " qflash" : ""}" onclick="openClaim('${c.claim_id}')">
         <td class="mono">${esc(c.claim_id)}${fresh ? '<span class="qbadge">NEW</span>' : ""}</td>
-        <td>${esc(c.claim_type || "—")}</td>
-        <td class="num">${money(c.claim_amount)}</td><td>${esc(c.incident_severity || "—")}</td>
+        <td>${esc(c.claim_type || "-")}</td>
+        <td class="num">${money(c.claim_amount)}</td><td>${esc(c.incident_severity || "-")}</td>
         <td>${laneChip(c.lane)}</td>
-        <td class="num">${s.p_fraud != null ? pct(s.p_fraud, 0) : "—"}</td>
-        <td>${s.model_confidence != null ? `<div class="bar"><i style="width:${Math.round(s.model_confidence * 100)}%"></i></div>` : "—"}</td>
-        <td>${esc(c.status || "—")}</td></tr>`;
+        <td class="num">${s.p_fraud != null ? pct(s.p_fraud, 0) : "-"}</td>
+        <td>${s.model_confidence != null ? `<div class="bar"><i style="width:${Math.round(s.model_confidence * 100)}%"></i></div>` : "-"}</td>
+        <td>${esc(c.status || "-")}</td></tr>`;
     }).join("") || `<tr><td colspan="8"><div class="empty">Nothing in this lane.</div></td></tr>`;
   };
   $("fLane").onchange = draw;
@@ -405,7 +405,7 @@ async function renderEvidence(el) {
       <div class="kpi"><div class="k">Status</div><div class="v" style="font-size:20px">${esc(c.status)}</div><div class="d">${laneChip(c.lane)}</div></div>
     </div>
 
-    ${c.cv_severity ? `<div class="note ${c.cv_severity_mismatch ? "warn" : "ok"}" style="margin-bottom:16px"><span>◈</span><div><b>AI damage assessment:</b> photos read as <b>${esc(c.cv_severity)}</b>; operator declared <b>${esc(c.incident_severity)}</b>. ${c.cv_severity_mismatch ? "Severity mismatch — surfaced to the officer, not auto-actioned." : "Consistent with the declaration."}</div></div>` : ""}
+    ${c.cv_severity ? `<div class="note ${c.cv_severity_mismatch ? "warn" : "ok"}" style="margin-bottom:16px"><span>◈</span><div><b>AI damage assessment:</b> photos read as <b>${esc(c.cv_severity)}</b>; operator declared <b>${esc(c.incident_severity)}</b>. ${c.cv_severity_mismatch ? "Severity mismatch - surfaced to the officer, not auto-actioned." : "Consistent with the declaration."}</div></div>` : ""}
 
     <div class="grid g2">
       <div class="card"><div class="card-h"><h3>Damage photos</h3><span class="sub">quality · blur · EXIF · reuse</span></div>
@@ -419,7 +419,7 @@ async function renderEvidence(el) {
           <div class="thumbs" id="pthumbs">
             ${(d.photos || []).map(p => `<div class="thumb"><div class="meta">
               <div class="q">quality ${(p.quality_score || 0).toFixed(2)}</div>
-              <div style="color:var(--slate)">${p.is_blurry ? "blurry ⚠" : "sharp ✓"} · ${p.width}×${p.height}</div>
+              <div style="color:var(--slate)">${p.is_blurry ? "blurry ⚠" : "sharp ✓"} · ${p.width}x${p.height}</div>
               ${p.cv_severity ? `<div style="color:var(--accent)">AI: ${esc(p.cv_severity)}</div>` : ""}
             </div></div>`).join("")}
           </div>
@@ -445,7 +445,7 @@ async function renderEvidence(el) {
     </div>
 
     <div style="margin-top:16px;display:flex;gap:10px">
-      <button class="btn primary" id="scoreBtn">Score &amp; route this claim →</button>
+      <button class="btn primary" id="scoreBtn">Score &amp; route this claim</button>
       <button class="btn" onclick="go('decision')">Open decision view</button>
     </div>`;
 
@@ -482,16 +482,16 @@ async function uploadPhotos(files) {
       if (r.reuse_verdict === "reused")
         verdict = `<div class="note bad"><span>!</span><div><b>Photo reuse detected.</b> Matches claim <b class="mono">${esc(r.matched_claim)}</b> (hash distance ${r.reuse_distance}). Fraud signal set on this claim.</div></div>`;
       else if (r.reuse_verdict === "similar")
-        verdict = `<div class="note warn"><span>~</span><div>Near-duplicate of <b class="mono">${esc(r.matched_claim)}</b> (distance ${r.reuse_distance}) — flagged for human review.</div></div>`;
-      else verdict = `<div class="note ok"><span>✓</span><div>Unique image — no reuse found.</div></div>`;
+        verdict = `<div class="note warn"><span>~</span><div>Near-duplicate of <b class="mono">${esc(r.matched_claim)}</b> (distance ${r.reuse_distance}) - flagged for human review.</div></div>`;
+      else verdict = `<div class="note ok"><span>✓</span><div>Unique image - no reuse found.</div></div>`;
       const dmg = r.damage || {};
       const dmgTone = dmg.severity === "total" || dmg.severity === "severe" ? "bad"
                     : dmg.severity === "moderate" ? "warn" : "ok";
       const dmgCard = dmg.severity
-        ? `<div class="note ${dmgTone}"><span>◈</span><div><b>AI damage read:</b> ${esc(dmg.severity)}${dmg.damaged_parts && dmg.damaged_parts.length ? ` — ${esc(dmg.damaged_parts.join(", "))}` : ""} <span style="color:var(--slate)">· vision model, conf ${(Number(dmg.confidence) || 0).toFixed(2)}</span></div></div>`
+        ? `<div class="note ${dmgTone}"><span>◈</span><div><b>AI damage read:</b> ${esc(dmg.severity)}${dmg.damaged_parts && dmg.damaged_parts.length ? ` - ${esc(dmg.damaged_parts.join(", "))}` : ""} <span style="color:var(--slate)">· vision model, conf ${(Number(dmg.confidence) || 0).toFixed(2)}</span></div></div>`
         : "";
       cards.push(`<div style="margin-bottom:10px">
-        <div style="font-size:13px;font-weight:600">${esc(r.filename)} — quality <b>${r.quality_score.toFixed(2)}</b>
+        <div style="font-size:13px;font-weight:600">${esc(r.filename)} - quality <b>${r.quality_score.toFixed(2)}</b>
           ${r.is_blurry ? '<span style="color:var(--bad)">· blurry, retake advised</span>' : '<span style="color:var(--good)">· sharp</span>'}</div>
         <div class="bar" style="margin:6px 0"><i style="width:${Math.round(r.quality_score * 100)}%"></i></div>
         ${r.exif.timestamp ? `<div style="font-size:11px;color:var(--slate)">EXIF ${esc(r.exif.timestamp)}${r.exif.lat ? ` · GPS ${r.exif.lat.toFixed(4)}, ${r.exif.lng.toFixed(4)}` : ""}</div>` : ""}
@@ -523,7 +523,7 @@ async function uploadDoc(files) {
       </div></div>
       ${fields.length ? `<div style="margin-top:10px"><div class="eyebrow" style="margin-bottom:4px">Extracted fields</div>
         ${fields.map(([k, v]) => `<div class="kv"><span class="k">${esc(k)}</span><span class="v mono">${esc(v)}</span></div>`).join("")}</div>` : ""}
-      ${r.applied && Object.keys(r.applied).length ? `<div class="note info" style="margin-top:10px"><span>→</span><div>Applied to claim: <b>${esc(JSON.stringify(r.applied))}</b></div></div>` : ""}
+      ${r.applied && Object.keys(r.applied).length ? `<div class="note info" style="margin-top:10px"><span>•</span><div>Applied to claim: <b>${esc(JSON.stringify(r.applied))}</b></div></div>` : ""}
       ${r.text ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;color:var(--slate)">Raw OCR text</summary>
         <pre style="white-space:pre-wrap;font-size:11px;background:var(--canvas);padding:10px;border-radius:8px;margin-top:6px;max-height:220px;overflow:auto">${esc(r.text)}</pre></details>` : ""}`;
     toast("OCR complete");
@@ -550,7 +550,7 @@ function reconAndSettlementCards(c, s) {
   // ----- Coverage state chip -----
   const covMap = {
     CLEAR: ["ok", "Coverage clear"], FLAG: ["warn", "Coverage flagged"],
-    LEGAL_WEAK: ["warn", "Legal-weak — human review"], HARD_DECLINE: ["bad", "Hard decline"],
+    LEGAL_WEAK: ["warn", "Legal-weak - human review"], HARD_DECLINE: ["bad", "Hard decline"],
   };
   const cov = covState ? covMap[covState] || ["", covState] : null;
   const covChip = cov ? `<span class="pill ${cov[0]}">${cov[1]}</span>` : "";
@@ -567,15 +567,15 @@ function reconAndSettlementCards(c, s) {
         <span class="sub">rate-card line-item vs model vs claimed</span></div>
       <div class="card-b">
         <div class="kv"><span class="k">Line-item estimate (rate card)</span><span class="v num">${money(li)}</span></div>
-        <div class="t-caption" style="margin:-4px 0 8px">P10–P90 ${money(s.line_item_p10)} – ${money(s.line_item_p90)} · deterministic parts + labour</div>
+        <div class="t-caption" style="margin:-4px 0 8px">P10-P90 ${money(s.line_item_p10)} - ${money(s.line_item_p90)} · deterministic parts + labour</div>
         <div class="kv"><span class="k">Model estimate (GBT P50)</span><span class="v num">${money(gbt)}</span></div>
         <div class="kv"><span class="k">Claimed</span><span class="v num">${money(claimed)}</span></div>
         ${ratio != null ? `<div class="note ${ratioTone}" style="margin-top:10px"><span>${ratio > 1.3 ? "!" : "✓"}</span>
-          <div>Claimed is <b>${ratio.toFixed(2)}×</b> the line-item estimate.
-          ${ratio > 1.8 ? "Beyond 1.8× → investigative (inflation flag)."
-            : ratio > 1.3 ? "Beyond 1.3× → officer review." : "Reconciles with the parts list."}</div></div>` : ""}
+          <div>Claimed is <b>${ratio.toFixed(2)}x</b> the line-item estimate.
+          ${ratio > 1.8 ? "Beyond 1.8x: investigative (inflation flag)."
+            : ratio > 1.3 ? "Beyond 1.3x: officer review." : "Reconciles with the parts list."}</div></div>` : ""}
         ${s.has_airbag || s.has_structural ? `<div class="note warn" style="margin-top:10px"><span>◈</span>
-          <div><b>${s.has_airbag ? "Airbag deployed" : "Structural damage"}.</b> Hard escalator — never touchless.</div></div>` : ""}
+          <div><b>${s.has_airbag ? "Airbag deployed" : "Structural damage"}.</b> Hard escalator - never touchless.</div></div>` : ""}
       </div></div>` : "";
 
   // ----- Settlement waterfall card -----
@@ -583,12 +583,12 @@ function reconAndSettlementCards(c, s) {
   const steps = (sett && sett.steps) || [];
   const settleCard = sett ? `
     <div class="card"><div class="card-h"><h3>Settlement waterfall</h3>
-        <span class="sub">${sett.is_total_loss ? "total-loss branch" : "assessed → net payable"}</span></div>
+        <span class="sub">${sett.is_total_loss ? "total-loss branch" : "assessed to net payable"}</span></div>
       <div class="card-b">
         ${aw && aw.advise_withdraw ? `<div class="note warn" style="margin-bottom:12px"><span>♡</span>
           <div><b>Advise the customer to withdraw.</b> ${aw.reason === "ncb_loss_exceeds_payout"
-            ? `The NCB lost next year (${money(aw.ncb_loss)}) exceeds the payout — net benefit ${money(aw.net_benefit)}.`
-            : "The assessed cost is at or below the deductible — nothing is payable."}
+            ? `The NCB lost next year (${money(aw.ncb_loss)}) exceeds the payout - net benefit ${money(aw.net_benefit)}.`
+            : "The assessed cost is at or below the deductible - nothing is payable."}
           Catching this at FNOL protects their NCB and saves the file.</div></div>` : ""}
         <div class="wf-fall">
           ${steps.map(st => `<div class="wf-fall-row ${st.amount < 0 ? "neg" : ""}">
@@ -638,19 +638,19 @@ async function renderDecision(el) {
       <b>Legal check.</b> Late intimation with a valid reason is <b>not</b> a lawful ground for rejection
       (Supreme Court rulings). This claim is routed to a human instead of being declined.</div></div>` : ""}
     ${Number(s.ring_risk) > 0.5 ? `<div class="note bad" style="margin-bottom:16px"><span>!</span><div>
-      <b>Collusion signal.</b> Ring risk ${Number(s.ring_risk).toFixed(2)} — this claim shares entities with
+      <b>Collusion signal.</b> Ring risk ${Number(s.ring_risk).toFixed(2)} - this claim shares entities with
       ${(s.component_size || 1) - 1} other claim(s) in the book.</div></div>` : ""}
     ${ratio && ratio > 1.25 ? `<div class="note warn" style="margin-bottom:16px"><span>~</span><div>
-      Claimed amount is <b>${ratio.toFixed(2)}×</b> the predicted repair cost — possible inflation.</div></div>` : ""}
-    ${(() => { const dr = (s.lane_reasons || []).find(r => String(r).startsWith("duplicate_claim")); return dr ? `<div class="note bad" style="margin-bottom:16px"><span>⧉</span><div><b>Duplicate claim detected.</b> ${esc(String(dr).replace("duplicate_claim:", ""))} — force-routed to investigation regardless of value.</div></div>` : ""; })()}
-    ${c.cv_severity_mismatch ? `<div class="note warn" style="margin-bottom:16px"><span>◈</span><div><b>Damage mismatch.</b> Photos read as <b>${esc(c.cv_severity)}</b> but the claim was declared <b>${esc(c.incident_severity)}</b> — the officer sees both before deciding.</div></div>` : ""}
+      Claimed amount is <b>${ratio.toFixed(2)}x</b> the predicted repair cost - possible inflation.</div></div>` : ""}
+    ${(() => { const dr = (s.lane_reasons || []).find(r => String(r).startsWith("duplicate_claim")); return dr ? `<div class="note bad" style="margin-bottom:16px"><span>⧉</span><div><b>Duplicate claim detected.</b> ${esc(String(dr).replace("duplicate_claim:", ""))} - force-routed to investigation regardless of value.</div></div>` : ""; })()}
+    ${c.cv_severity_mismatch ? `<div class="note warn" style="margin-bottom:16px"><span>◈</span><div><b>Damage mismatch.</b> Photos read as <b>${esc(c.cv_severity)}</b> but the claim was declared <b>${esc(c.incident_severity)}</b> - the officer sees both before deciding.</div></div>` : ""}
 
     <div class="grid g2">
       <div class="card"><div class="card-h"><h3>Intelligence layer</h3><span class="sub">every module, with its confidence</span></div>
         <div class="card-b"><div class="mods">
           <div class="mod"><div class="name">Cost</div>
             <div><div class="val num">${money(s.cost_p50)}</div>
-              <div class="why">P10–P90 band ${money(s.cost_p10)} – ${money(s.cost_p90)}${ratio ? ` · claimed ${ratio.toFixed(2)}×` : ""}</div></div>
+              <div class="why">P10-P90 band ${money(s.cost_p10)} - ${money(s.cost_p90)}${ratio ? ` · claimed ${ratio.toFixed(2)}x` : ""}</div></div>
             ${confChip(s.c_cost, "cost")}</div>
           <div class="mod"><div class="name">Fraud</div>
             <div><div class="val num">${pct(s.p_fraud, 1)}</div>
@@ -661,7 +661,7 @@ async function renderDecision(el) {
               <div class="why">jumper/sleeper risk at 90 days</div></div>
             ${confChip(cert(s.p_escalation))}</div>
           <div class="mod"><div class="name">Coverage</div>
-            <div><div class="val">${esc(s.coverage_clear || "—")}</div>
+            <div><div class="val">${esc(s.coverage_clear || "-")}</div>
               <div class="why">${esc(s.coverage_reason || "no rule hits")}</div></div>
             <span class="chip hi"><i></i>rule</span></div>
           <div class="mod"><div class="name">Confidence</div>
@@ -699,7 +699,7 @@ async function renderDecision(el) {
 
     ${reconAndSettlementCards(c, s)}
 
-    <div class="card" style="margin-top:16px"><div class="card-h"><h3>The brain — self-assessment</h3>
+    <div class="card" style="margin-top:16px"><div class="card-h"><h3>The brain - self-assessment</h3>
       <span class="sub">does it consider itself entitled to decide this claim?</span></div>
       <div class="card-b" id="brainBox">
         <div class="sk sk-line"></div><div class="sk sk-line"></div><div class="sk sk-line"></div>
@@ -716,7 +716,7 @@ async function renderDecision(el) {
           <div class="kv"><span class="k">Component size</span><span class="v num">${s.component_size || 1}</span></div>
           <div class="t-caption" style="margin-top:10px">
             ${Number(s.ring_risk) > 0.5
-      ? "This claim sits inside a dense cluster of claims funnelling through the same entities — the pattern a single-claim review cannot see."
+      ? "This claim sits inside a dense cluster of claims funnelling through the same entities - the pattern a single-claim review cannot see."
       : "This claim shares no meaningful entity linkage. Genuine claims sit alone in the graph."}
           </div>
         </div>
@@ -779,7 +779,7 @@ async function override() {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ action: "override", actor: S.actor, override_reason: why, to_lane: $("ovLane").value }),
     });
-    toast("Override logged as training data — high priority (the brain learns most "
+    toast("Override logged as training data - high priority (the brain learns most "
       + "from claims a human disagreed with)", 5200);
     render();
   } catch (e) { toast("Failed: " + e.message, 6000); }
@@ -866,7 +866,7 @@ function safeMax(pop) {
   if (_safeMax !== null) return _safeMax;
   // A breach only counts once Lane 1 is large enough for the rate to mean
   // something. With 3 claims in Lane 1 a single fraud reads as 33% leakage and
-  // would pin the dial at zero — measuring noise, not risk.
+  // would pin the dial at zero - measuring noise, not risk.
   let sMax = 1.0;
   for (let s = 0; s <= 1.0001; s += 0.02) {
     const m = recompute(pop, s);
@@ -879,7 +879,7 @@ function safeMax(pop) {
   return sMax;
 }
 
-/* Counters tween rather than snap — but the TRUE value is written first, so a
+/* Counters tween rather than snap - but the TRUE value is written first, so a
    stalled rAF can only cost the animation, never the number. */
 function tweenNum(el, to, fmt) {
   if (!el) return;
@@ -932,11 +932,11 @@ function onDial(sRequested) {
   if (g) {
     g.classList.toggle("hot", clamped);
     g.innerHTML = clamped
-      ? `<span>⚠</span><div><b>Auto-tightened — holding leakage under 1.5%.</b>
+      ? `<span>⚠</span><div><b>Auto-tightened - holding leakage under 1.5%.</b>
          You asked for more automation; the guardrail refused. Touchless stops climbing
          here because the next claim it would auto-settle is one it cannot vouch for.</div>`
       : `<span>✓</span><div><b>Within the safety envelope.</b>
-         Leakage ${(m.leakage * 100).toFixed(2)}% of the ${(CEILING * 100).toFixed(1)}% ceiling —
+         Leakage ${(m.leakage * 100).toFixed(2)}% of the ${(CEILING * 100).toFixed(1)}% ceiling -
          automation is earned, not forced.</div>`;
   }
 }
@@ -946,7 +946,7 @@ function dialCard() {
   <div class="dial-card" id="dialCard">
     <div class="dial-head">
       <h3>Risk appetite</h3>
-      <span class="sub">drag to re-triage all ${POP ? POP.length : 200} claims live —
+      <span class="sub">drag to re-triage all ${POP ? POP.length : 200} claims live -
         the guardrail will stop you</span>
     </div>
     <div class="dial-track">
@@ -957,13 +957,13 @@ function dialCard() {
     <div class="dial-thr" id="dThr"></div>
     <div class="dial-bar" id="dBar"></div>
     <div class="strip">
-      <div class="s"><div class="sk2">Touchless</div><div class="sv" id="dTouch">—</div>
+      <div class="s"><div class="sk2">Touchless</div><div class="sv" id="dTouch">-</div>
         <div class="sd">auto-settled, no human</div></div>
       <div class="s leak" id="dLeakWrap"><div class="sk2">Lane-1 leakage</div>
-        <div class="sv" id="dLeak">—</div><div class="sd">ceiling 1.50%</div></div>
-      <div class="s"><div class="sk2">Median TAT</div><div class="sv" id="dTat">—</div>
+        <div class="sv" id="dLeak">-</div><div class="sd">ceiling 1.50%</div></div>
+      <div class="s"><div class="sk2">Median TAT</div><div class="sv" id="dTat">-</div>
         <div class="sd">days to decision</div></div>
-      <div class="s"><div class="sk2">Auto-settled</div><div class="sv" id="dAuto">—</div>
+      <div class="s"><div class="sk2">Auto-settled</div><div class="sv" id="dAuto">-</div>
         <div class="sd">of ${POP ? POP.length : 200} claims</div></div>
     </div>
     <div class="guardrail" id="dGuard"></div>
@@ -977,7 +977,7 @@ function wireDial() {
   const handler = () => {
     if (raf) return;
     raf = requestAnimationFrame(() => { raf = null; onDial(parseFloat(inp.value)); });
-    // rAF can stall in background tabs — never let the numbers freeze
+    // rAF can stall in background tabs - never let the numbers freeze
     setTimeout(() => { if (raf) { cancelAnimationFrame(raf); raf = null; onDial(parseFloat(inp.value)); } }, 80);
   };
   inp.addEventListener("input", handler);
@@ -1033,7 +1033,7 @@ function flowCard(d) {
         </div>`).join("")}
     </div>
     <div class="note ${leakOk ? "ok" : "bad"}" style="margin-top:16px"><span>${leakOk ? "🛡" : "!"}</span><div>
-      <b>Leakage guardrail:</b> ${(leak * 100).toFixed(2)}% of touchless auto-clears turn out fraudulent —
+      <b>Leakage guardrail:</b> ${(leak * 100).toFixed(2)}% of touchless auto-clears turn out fraudulent -
       ${leakOk ? "safely under" : "<b>BREACHING</b>"} the ${(ceil * 100).toFixed(1)}% hard ceiling.
     </div></div>
   </div></div>`;
@@ -1041,7 +1041,7 @@ function flowCard(d) {
 
 /* ===================== STREAM MODE =====================
    Cascade the book into its three lanes so scale is something you watch rather
-   than read. Drives on rAF, but every path ends in the correct final state —
+   than read. Drives on rAF, but every path ends in the correct final state -
    a stalled frame loop costs the animation, never the result. */
 
 const STREAM_N = 200;
@@ -1097,8 +1097,8 @@ function streamSummary(pop, counts, fraudL1) {
     <b>${pop.length} claims cleared.</b>
     ${counts[1]} auto-settled · ${counts[2]} to officers · ${counts[3]} investigated ·
     Lane-1 leakage <b>${(leak * 100).toFixed(2)}%</b>
-    ${safe ? `— under the ${(CEILING * 100).toFixed(1)}% ceiling.`
-      : `— above the ceiling; the guardrail would tighten before this shipped.`}
+    ${safe ? `- under the ${(CEILING * 100).toFixed(1)}% ceiling.`
+      : `- above the ceiling; the guardrail would tighten before this shipped.`}
   </div></div>`;
 }
 
@@ -1156,7 +1156,7 @@ function runStream() {
   }, 11000);
 }
 
-/* ---------- THE BRAIN — cognitive trace + self-assessment ---------- */
+/* ---------- THE BRAIN - cognitive trace + self-assessment ---------- */
 async function loadBrain(claimId) {
   const box = $("brainBox");
   if (!box) return;
@@ -1168,14 +1168,14 @@ async function loadBrain(claimId) {
 
     const verdict = entitled
       ? `<div class="note ok"><span>✓</span><div><b>Entitled to decide.</b>
-           Confidence and familiarity are both sufficient — the brain proceeds to route this claim.</div></div>`
+           Confidence and familiarity are both sufficient - the brain proceeds to route this claim.</div></div>`
       : ood
-        ? `<div class="note bad"><span>!</span><div><b>Abstaining — unfamiliar claim.</b>
+        ? `<div class="note bad"><span>!</span><div><b>Abstaining - unfamiliar claim.</b>
              This claim is more unusual than 99% of the data the models were fitted on.
              The brain hands it to a human rather than guess, and logs it as high-value
              training data.</div></div>`
         : `<div class="note warn"><span>~</span><div><b>Not entitled to decide.</b>
-             Confidence sits below the floor — the brain asks for evidence instead of
+             Confidence sits below the floor - the brain asks for evidence instead of
              deciding on thin information.</div></div>`;
 
     box.innerHTML = `
@@ -1203,17 +1203,17 @@ async function loadBrain(claimId) {
                 ${(l.reasons || []).slice(0, 2).map(esc).join(" · ")}</div>
             </span></div>`).join("")}
       </div>
-      <div class="note info" style="margin-top:14px"><span>→</span><div>
-        <b>${esc(b.outcome || "—")}</b> — ${esc(b.outcome_reason || "")}</div></div>`;
+      <div class="note info" style="margin-top:14px"><span>•</span><div>
+        <b>${esc(b.outcome || "-")}</b> - ${esc(b.outcome_reason || "")}</div></div>`;
   } catch (e) {
     box.innerHTML = `<div class="note warn"><span>!</span><div>
       Brain trace unavailable: ${esc(e.message)}</div></div>`;
   }
 }
 
-/* ===================== WORKFLOW — the live pipeline =====================
+/* ===================== WORKFLOW - the live pipeline =====================
    Seven stages, driven by a real claim from the book. Every value shown is one
-   the engine actually produced — this is a window onto the pipeline, not a
+   the engine actually produced - this is a window onto the pipeline, not a
    picture of it. */
 
 const ICON = {
@@ -1231,7 +1231,7 @@ function _wfStage(idx, title, sub, body) {
 }
 const _wfLink = () => `<div class="wf-link"></div>`;
 
-/* Judge-facing map: the seven ATOM PS6 deliverables → what implements each,
+/* Judge-facing map: the seven ATOM PS6 deliverables - what implements each,
    and an honest status. "live" = running on the engine in this build;
    "partial" = built insurer-side, customer-side is the named next step. */
 function deliverablesMap() {
@@ -1243,19 +1243,19 @@ function deliverablesMap() {
      "LightGBM fraud (isotonic-calibrated) + networkx collusion graph + perceptual-hash photo reuse + four-tier duplicate/re-filing rule (exact, near, re-file-after-reject, same-part) with frequency & backdating tells.",
      "live"],
     ["AI-based damage assessment",
-     "Vision model reads severity + damaged parts; declared-vs-assessed mismatch is a HARD routing rule (±2 ranks → investigate), with a value-tiered confidence floor.",
+     "Vision model reads severity + damaged parts; declared-vs-assessed mismatch is a HARD routing rule (a 2-rank gap forces investigation), with a value-tiered confidence floor.",
      "live"],
     ["Repair cost estimation",
-     "Deterministic parts+labour rate card (segment × region × depreciation) gives a line-item P10–P50–P90 that stacks with the GBT; claim-vs-estimate divergence is a padding signal.",
+     "Deterministic parts+labour rate card (segment x region x depreciation) gives a line-item P10-P50-P90 that stacks with the GBT; claim-vs-estimate divergence is a padding signal.",
      "live"],
     ["Policy coverage validation",
      "4-state engine (clear / flag / hard-decline / legal-weak): deductibles, NCB, add-ons, in-force-on-incident-date, cover-type, engine-peril, plus the full settlement waterfall and advise-withdraw.",
      "live"],
     ["End-to-end workflow automation",
-     "The three-lane triage wedge with an evidence-gap retake gate routes every claim by risk — touchless, assisted, or investigative.",
+     "The three-lane triage wedge with an evidence-gap retake gate routes every claim by risk - touchless, assisted, or investigative.",
      "live"],
     ["User-experience layer",
-     "Two personas, both live: the insurer console (this app) and a mobile-first customer self-service journey at /claim — policy lookup, guided FNOL, live photo vision, instant triage, and the advise-withdraw moment.",
+     "Two personas, both live: the insurer console (this app) and a mobile-first customer self-service journey at /claim - policy lookup, guided FNOL, live photo vision, instant triage, and the advise-withdraw moment.",
      "live"],
   ];
   const dot = (st) => st === "live"
@@ -1264,7 +1264,7 @@ function deliverablesMap() {
   return `
   <div class="card" style="margin-top:26px"><div class="card-h">
       <h3>ATOM PS6 · deliverables coverage</h3>
-      <span class="sub">what implements each requirement — and where we're honest</span>
+      <span class="sub">what implements each requirement - and where we're honest</span>
     </div>
     <div class="card-b"><div class="dmap">
       ${D.map(([t, impl, st], i) => `
@@ -1291,7 +1291,7 @@ async function renderWorkflow(el) {
     || (scenarios[0] && scenarios[0].c) || scored[0];
 
   if (!active) {
-    el.innerHTML = `<div class="empty"><div>No scored claims yet — open one and score it first.</div>
+    el.innerHTML = `<div class="empty"><div>No scored claims yet - open one and score it first.</div>
       <button class="btn primary" style="margin-top:12px" onclick="go('intake')">New claim</button></div>`;
     return;
   }
@@ -1309,7 +1309,7 @@ async function renderWorkflow(el) {
     <div class="wf-head">
       <h2>How a claim actually moves</h2>
       <p>Seven stages, running on the live engine. Every module returns a
-         <b style="color:var(--ink)">result, a confidence, and a reason</b> — no black boxes.</p>
+         <b style="color:var(--ink)">result, a confidence, and a reason</b> - no black boxes.</p>
       <div class="wf-run">
         ${scenarios.map(sc => `<button class="btn ${sc.c.claim_id === active.claim_id ? "primary" : ""}"
           onclick="wfPick('${sc.c.claim_id}')">${sc.label}</button>`).join("")}
@@ -1320,11 +1320,11 @@ async function renderWorkflow(el) {
         ${esc(c.claim_type)} · ${money(c.claim_amount)} claimed</div>
     </div>
 
-    ${_wfStage(1, "Digital FNOL", "customer · 3–5 steps", `
+    ${_wfStage(1, "Digital FNOL", "customer · 3-5 steps", `
       <div class="wf-chips">
-        <span class="wf-chip on"><i></i>Policy ${esc(c.policy_id || "—")}</span>
+        <span class="wf-chip on"><i></i>Policy ${esc(c.policy_id || "-")}</span>
         <span class="wf-chip on"><i></i>${esc(c.claim_type)} · ${esc(c.incident_severity)}</span>
-        <span class="wf-chip ${c.geo ? "on" : ""}"><i></i>Geo-tag ${esc(c.geo || "—")}</span>
+        <span class="wf-chip ${c.geo ? "on" : ""}"><i></i>Geo-tag ${esc(c.geo || "-")}</span>
         <span class="wf-chip ${photos.length ? "on" : ""}"><i></i>${photos.length} photo${photos.length === 1 ? "" : "s"}</span>
         <span class="wf-chip ${docs.length ? "on" : ""}"><i></i>${docs.length} document${docs.length === 1 ? "" : "s"}</span>
         <span class="wf-chip ${Number(c.intimation_delay_hours) <= 48 ? "on" : ""}"><i></i>
@@ -1336,28 +1336,28 @@ async function renderWorkflow(el) {
       <div class="wf-mods">
         <div class="wf-mod" data-m="0"><div class="wf-scan"></div>
           <div class="mt">${ICON.cam}Damage</div>
-          <div class="mr" data-v="${esc(c.incident_severity || "—")}">—</div>
+          <div class="mr" data-v="${esc(c.incident_severity || "-")}">-</div>
           <div class="mw">Photo quality ${(Number(c.photo_quality_score) || 0).toFixed(2)} ·
-            ${photos.filter(p => p.is_blurry).length ? "blur detected → retake" : "capture usable"}</div>
+            ${photos.filter(p => p.is_blurry).length ? "blur detected, retake" : "capture usable"}</div>
           <div class="mc">${confChip(Number(c.photo_quality_score) || 0, "capture")}</div></div>
 
         <div class="wf-mod" data-m="1"><div class="wf-scan"></div>
           <div class="mt">${ICON.shield}Coverage</div>
-          <div class="mr" data-v="${esc(s.coverage_clear || "—")}">—</div>
-          <div class="mw">${esc(s.coverage_reason === "none" ? "Policy active · driver eligible · docs present" : "Rule hit: " + (s.coverage_reason || "—"))}</div>
+          <div class="mr" data-v="${esc(s.coverage_clear || "-")}">-</div>
+          <div class="mw">${esc(s.coverage_reason === "none" ? "Policy active · driver eligible · docs present" : "Rule hit: " + (s.coverage_reason || "-"))}</div>
           <div class="mc"><span class="chip hi"><i></i>deterministic</span></div></div>
 
         <div class="wf-mod" data-m="2"><div class="wf-scan"></div>
           <div class="mt">${ICON.fraud}Fraud</div>
-          <div class="mr" data-v="${pct(s.p_fraud, 1)}">—</div>
+          <div class="mr" data-v="${pct(s.p_fraud, 1)}">-</div>
           <div class="mw">Rules · content (EXIF, reuse) · graph.
             Ring risk ${Number(s.ring_risk || 0).toFixed(2)}${(s.component_size || 1) > 1 ? ` across ${s.component_size} linked` : ""}</div>
           <div class="mc">${confChip(Math.min(1, 2 * Math.abs(Number(s.p_fraud || 0) - .5)))}</div></div>
 
         <div class="wf-mod" data-m="3"><div class="wf-scan"></div>
           <div class="mt">${ICON.doc}Documents</div>
-          <div class="mr" data-v="${docs.length ? docs.length + " read" : "none"}">—</div>
-          <div class="mw">OCR → field match · VAHAN · DigiLocker · IIB
+          <div class="mr" data-v="${docs.length ? docs.length + " read" : "none"}">-</div>
+          <div class="mw">OCR then field match · VAHAN · DigiLocker · IIB
             <span style="color:var(--slate-2)">(mocked rails)</span></div>
           <div class="mc"><span class="chip ${docs.length ? "hi" : "mid"}"><i></i>${docs.length ? "extracted" : "awaiting"}</span></div></div>
       </div>
@@ -1365,15 +1365,15 @@ async function renderWorkflow(el) {
       <div class="wf-mods" style="margin-top:12px">
         <div class="wf-mod" data-m="4" style="grid-column:span 2"><div class="wf-scan"></div>
           <div class="mt">${ICON.cost}Repair cost estimate</div>
-          <div class="mr" data-v="${money(s.cost_p50)}">—</div>
-          <div class="mw">Band ${money(s.cost_p10)} – ${money(s.cost_p90)} ·
-            claimed ${gap ? `<b style="color:${gap > 1.25 ? "var(--bad)" : "var(--ink)"}">${gap.toFixed(2)}×</b> predicted` : "—"}</div>
+          <div class="mr" data-v="${money(s.cost_p50)}">-</div>
+          <div class="mw">Band ${money(s.cost_p10)} - ${money(s.cost_p90)} ·
+            claimed ${gap ? `<b style="color:${gap > 1.25 ? "var(--bad)" : "var(--ink)"}">${gap.toFixed(2)}x</b> predicted` : "-"}</div>
           <div class="mc">${confChip(Number(s.c_cost || 0), "cost")}</div></div>
 
         <div class="wf-mod" data-m="5" style="grid-column:span 2"><div class="wf-scan"></div>
           <div class="mt">${ICON.fraud}Latent escalation</div>
-          <div class="mr" data-v="${pct(s.p_escalation, 1)}">—</div>
-          <div class="mw">Jumper/sleeper risk at the 90-day mark — invisible at FNOL,
+          <div class="mr" data-v="${pct(s.p_escalation, 1)}">-</div>
+          <div class="mw">Jumper/sleeper risk at the 90-day mark - invisible at FNOL,
             which is exactly why it is priced here</div>
           <div class="mc">${confChip(Math.min(1, 2 * Math.abs(Number(s.p_escalation || 0) - .5)))}</div></div>
       </div>`)}
@@ -1383,19 +1383,19 @@ async function renderWorkflow(el) {
       <div class="tag">◆ The wedge ◆</div>
       <h3>Risk-triage engine</h3>
       <div class="wf-formula">
-        <span>value</span><span>×</span><span>confidence</span><span>×</span>
-        <span class="hot">fraud signal</span><span>×</span><span>severity</span><span>×</span>
+        <span>value</span><span>x</span><span>confidence</span><span>x</span>
+        <span class="hot">fraud signal</span><span>x</span><span>severity</span><span>x</span>
         <span>latent escalation</span>
       </div>
-      <div class="wf-score" data-v="${Math.round(conf * 100)}">—</div>
+      <div class="wf-score" data-v="${Math.round(conf * 100)}">-</div>
       <div class="wf-anchor">automation score · anchored to the
         <b>₹50,000</b> IRDAI surveyor seam · decides <b>how much automation this claim deserves</b></div>
     </div>
     ${_wfLink()}
 
     <div class="wf-gate ${retake ? "tripped" : ""}" data-stage="gate">
-      Evidence gap check — ${retake
-        ? `<b>tripped.</b> Confidence ${conf.toFixed(2)} below floor → one bounded retake requested`
+      Evidence gap check - ${retake
+        ? `<b>tripped.</b> Confidence ${conf.toFixed(2)} below floor, one bounded retake requested`
         : `<b>passed.</b> All critical signals above the confidence floor`}
     </div>
     ${_wfLink()}
@@ -1406,7 +1406,7 @@ async function renderWorkflow(el) {
           <div class="lh"><i></i>Lane 3 · Investigative</div>
           <p>High value · fraud flags · severe or total loss. Surveyor plus fraud
              investigator, full evidence pack with linked red flags.</p>
-          <div class="lt">days – weeks</div></div>
+          <div class="lt">days - weeks</div></div>
         <div class="wf-lane l1 ${s.lane === "lane1_touchless" ? "win" : ""}">
           <div class="lh"><i></i>Lane 1 · Touchless</div>
           <p>Under ₹50k · low fraud · high confidence. Straight-through, no human
@@ -1422,7 +1422,7 @@ async function renderWorkflow(el) {
 
     ${_wfStage(5, "Orchestration", "the plumbing", `
       <div class="wf-row">
-        <span class="it">Routing → ${esc(L.label)}</span>
+        <span class="it">Routing: ${esc(L.label)}</span>
         <span class="it">SLA clock started</span>
         <span class="it">${esc(c.garage_type || "network")} garage authorisation</span>
         <span class="it">Task assignment</span>
@@ -1439,8 +1439,8 @@ async function renderWorkflow(el) {
       ${s.legal_weak_reject_flag
       ? `<div class="note warn"><span>⚖</span><div><b>Legally-weak rejection auto-flagged.</b>
            Late intimation with a valid reason is not lawful grounds to reject (Supreme Court).
-           Routed to a human instead — this is where Ombudsman appeals get avoided.</div></div>`
-      : `<div class="note ok"><span>✓</span><div>Decision carries its full reason chain —
+           Routed to a human instead - this is where Ombudsman appeals get avoided.</div></div>`
+      : `<div class="note ok"><span>✓</span><div>Decision carries its full reason chain -
            every number above is traceable to the module that produced it.</div></div>`}`)}
     ${_wfLink()}
 
@@ -1448,7 +1448,7 @@ async function renderWorkflow(el) {
       <div class="lt">7 · Feedback loop</div>
       <p>Every human override becomes a labelled training example. Surveyor verdict versus
          AI estimate recalibrates the confidence thresholds, so the
-         <span class="env">Lane 1 envelope widens safely over time</span> — never past the
+         <span class="env">Lane 1 envelope widens safely over time</span> - never past the
          1.5% leakage ceiling.</p>
     </div>
 
@@ -1462,7 +1462,7 @@ async function renderWorkflow(el) {
 
 window.wfPick = (id) => { S.wfClaim = id; render(); };
 
-/* Sequential choreography — stages light up in order, modules scan, numbers resolve. */
+/* Sequential choreography - stages light up in order, modules scan, numbers resolve. */
 let _wfTimers = [];
 function wfPlay() {
   _wfTimers.forEach(clearTimeout);
@@ -1472,7 +1472,7 @@ function wfPlay() {
 
   // Truth first, animation second. Writing the value up front means a stalled
   // rAF (background tab, throttled renderer) can never leave a number showing
-  // a placeholder — the scramble only re-animates to the same value.
+  // a placeholder - the scramble only re-animates to the same value.
   const setVal = (n) => {
     const v = n.getAttribute("data-v");
     if (!v) return;
@@ -1519,7 +1519,7 @@ function wfPlay() {
   _wfTimers.push(setTimeout(() => {
     document.querySelectorAll("[data-v]").forEach(n => {
       const v = n.getAttribute("data-v");
-      if (v && n.textContent.trim() === "—") n.textContent = v;
+      if (v && n.textContent.trim() === "-") n.textContent = v;
     });
     document.querySelectorAll(".wf-mod").forEach(m => m.classList.add("on"));
   }, reduced ? 60 : t + 900));
@@ -1527,7 +1527,7 @@ function wfPlay() {
 
 /* ===================== COMPONENT KIT ===================== */
 
-/* StatusTracker — where the claim is, always visible */
+/* StatusTracker - where the claim is, always visible */
 function statusTracker(c) {
   const steps = ["Reported", "Evidence", "Assessed", "Decision", "Payout"];
   const idx = { intake: 0, evidence: 1, verifying: 1, scored: 2, retake: 1,
@@ -1538,7 +1538,7 @@ function statusTracker(c) {
     </div></div></div>`;
 }
 
-/* SLAClock — countdown against the Master-Circular norms */
+/* SLAClock - countdown against the Master-Circular norms */
 function slaClock(c) {
   const created = c.created_at ? new Date(c.created_at) : new Date();
   const hrs = (Date.now() - created.getTime()) / 36e5;
@@ -1560,7 +1560,7 @@ function slaClock(c) {
   </div>`;
 }
 
-/* SettlementWaterfall — how the payout was built, line by line */
+/* SettlementWaterfall - how the payout was built, line by line */
 function waterfall(r) {
   const gross = Number(r.gross_amount) || 0;
   const w = (v) => gross ? Math.max(2, Math.min(100, Math.abs(v) / gross * 100)) : 0;
@@ -1577,12 +1577,12 @@ function waterfall(r) {
       <span class="wf-bar"><i style="width:${w(r.net_payable)}%;background:var(--l1-dot)"></i></span>
       <span class="amt">${money(r.net_payable)}</span></div>
     ${r.total_loss ? `<div class="note warn" style="margin-top:8px"><span>!</span><div>
-      <b>Constructive total loss</b> — repair exceeds 75% of IDV, settled on the IRDAI
+      <b>Constructive total loss</b> - repair exceeds 75% of IDV, settled on the IRDAI
       depreciation grid.</div></div>` : ""}
   </div>`;
 }
 
-/* CollusionGraph — the claim against the entities it shares */
+/* CollusionGraph - the claim against the entities it shares */
 function drawCollusion(s) {
   const svg = document.getElementById("cgraph");
   if (!svg) return;
@@ -1598,7 +1598,7 @@ function drawCollusion(s) {
       stroke: "var(--slate-2)", "stroke-width": 2 }));
     const t = mk("text", { x: cx, y: cy + 44, "text-anchor": "middle",
       fill: "var(--slate)", "font-size": 12, "font-family": "var(--font-ui)" });
-    t.textContent = "No shared entities — isolated claim";
+    t.textContent = "No shared entities - isolated claim";
     svg.appendChild(t);
     return;
   }

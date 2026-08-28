@@ -1,4 +1,4 @@
-"""NVIDIA NIM client — OpenAI-compatible chat + vision.
+"""NVIDIA NIM client - OpenAI-compatible chat + vision.
 
 Used for:
   * Nemotron OCR v2   -> document text extraction  (NVIDIA_OCR_KEY / NVIDIA_OCR_MODEL)
@@ -32,7 +32,7 @@ class NvResult:
 
 
 # --------------------------------------------------------------------------- #
-# Model resolution — NIM retires models (kimi-k2 went EOL 2026-05-12 and now
+# Model resolution - NIM retires models (kimi-k2 went EOL 2026-05-12 and now
 # returns HTTP 410). Hardcoding one model id guarantees a future outage, so we
 # discover what the account can actually serve and fall back automatically.
 # --------------------------------------------------------------------------- #
@@ -150,7 +150,7 @@ def _img_content(data: bytes, prompt: str, mime: str = "image/jpeg") -> list:
 
 
 # --------------------------------------------------------------------------- #
-# OCR — Nemotron OCR v2
+# OCR - Nemotron OCR v2
 # --------------------------------------------------------------------------- #
 def ocr_document(data: bytes, doc_type: str = "other") -> NvResult:
     key = os.getenv("NVIDIA_OCR_KEY", "").strip()
@@ -164,7 +164,7 @@ def ocr_document(data: bytes, doc_type: str = "other") -> NvResult:
 
 
 # --------------------------------------------------------------------------- #
-# Reasoning — Kimi K2
+# Reasoning - Kimi K2
 # --------------------------------------------------------------------------- #
 def claim_narrative(payload: dict) -> NvResult:
     """Officer-facing plain-English summary of the decision (XAI polish).
@@ -183,7 +183,7 @@ def claim_narrative(payload: dict) -> NvResult:
         "- The 'decision' field is authoritative. Do NOT contradict it. If the "
         "decision is an approval, do not describe it as a rejection (or vice versa).\n"
         "- 'coverage_status' describes policy eligibility checks. 'No rule hits' "
-        "means the policy IS valid and eligible — it does NOT mean uncovered.\n"
+        "means the policy IS valid and eligible - it does NOT mean uncovered.\n"
         "- Plain English, no jargon, no bullet points.\n\n"
         "FACTS:\n" + json.dumps(payload, default=str, indent=1)
     )
@@ -191,7 +191,7 @@ def claim_narrative(payload: dict) -> NvResult:
 
 
 # A vision-capable default so damage assessment works even if NVIDIA_VLM_MODEL
-# isn't set in the running process. Never fall back to the text LLM here — a
+# isn't set in the running process. Never fall back to the text LLM here - a
 # text model returns nothing useful for an image and the feature silently dies.
 DEFAULT_VLM = "meta/llama-3.2-11b-vision-instruct"
 
@@ -213,7 +213,7 @@ def severity_from_photo(data: bytes) -> dict:
         return json.loads(raw)
     except Exception:
         pass
-    # Model wrapped the JSON in prose — extract the first {...} block.
+    # Model wrapped the JSON in prose - extract the first {...} block.
     try:
         s, e = raw.find("{"), raw.rfind("}")
         if s != -1 and e > s:
@@ -225,7 +225,7 @@ def severity_from_photo(data: bytes) -> dict:
 
 
 def health() -> dict:
-    """Quick live check of both keys — surfaced in the console sidebar."""
+    """Quick live check of both keys - surfaced in the console sidebar."""
     out = {}
     key = os.getenv("NVIDIA_LLM_KEY", "").strip()
     llm = _chat(key, os.getenv("NVIDIA_LLM_MODEL", "").strip(),

@@ -1,4 +1,4 @@
-"""LIVE photo analysis — real computation, zero API keys.
+"""LIVE photo analysis - real computation, zero API keys.
 
 Everything here runs locally on the uploaded bytes and feeds signals the triage
 engine actually consumes:
@@ -9,7 +9,7 @@ engine actually consumes:
 
 This is the honest answer to "is the CV real?" for v1: quality + reuse + EXIF are
 genuinely computed. Damage severity from pixels needs a vision model (optional
-LLM key, see ocr.llm_severity) — without it severity stays operator-declared.
+LLM key, see ocr.llm_severity) - without it severity stays operator-declared.
 """
 
 from __future__ import annotations
@@ -69,7 +69,7 @@ def _laplacian_variance(gray: np.ndarray) -> float:
 
 
 def _phash(img: Image.Image) -> str | None:
-    """Perceptual hash — identical/near-identical photos hash the same.
+    """Perceptual hash - identical/near-identical photos hash the same.
 
     This is what catches a garage re-submitting the same damage photo across
     'independent' claims.

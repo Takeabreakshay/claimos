@@ -1,4 +1,4 @@
-"""ClaimOS web API — FastAPI over the live workflow engine.
+"""ClaimOS web API - FastAPI over the live workflow engine.
 
 Serves the dashboard SPA (web/) plus a REST surface for every live capability:
 FNOL intake, photo vision, document OCR, model scoring, triage routing,
@@ -264,17 +264,17 @@ def settle(claim_id: str, actor: str = "officer.demo") -> dict[str, Any]:
 
 
 _LANE_PLAIN = {
-    "lane1_touchless": "APPROVED — auto-settled straight through, no human touched it",
+    "lane1_touchless": "APPROVED - auto-settled straight through, no human touched it",
     "lane2_assisted": "SENT TO A CLAIMS OFFICER for approval (AI-prepared file)",
-    "lane3_investigative": "SENT TO INVESTIGATION — surveyor and fraud investigator",
-    "retake": "PAUSED — additional evidence requested from the customer",
+    "lane3_investigative": "SENT TO INVESTIGATION - surveyor and fraud investigator",
+    "retake": "PAUSED - additional evidence requested from the customer",
     "coverage_reject": "DECLINED on a policy-eligibility rule (human reviewed)",
 }
 
 
 @app.post("/api/claims/{claim_id}/narrative")
 def narrative(claim_id: str) -> dict[str, Any]:
-    """Officer note. The payload is written in plain language on purpose — feeding
+    """Officer note. The payload is written in plain language on purpose - feeding
     raw internal enums (e.g. coverage_reason='none') caused the model to invert
     the decision and describe an approved claim as uncovered."""
     store = get_store()
@@ -283,7 +283,7 @@ def narrative(claim_id: str) -> dict[str, Any]:
 
     lane = sc.get("lane")
     reason = sc.get("coverage_reason")
-    coverage_status = ("No rule hits — policy active and the claim is eligible"
+    coverage_status = ("No rule hits - policy active and the claim is eligible"
                        if reason in (None, "", "none")
                        else f"Rule hit: {reason}")
 
@@ -297,7 +297,7 @@ def narrative(claim_id: str) -> dict[str, Any]:
         "amount_claimed_inr": claim.get("claim_amount"),
         "coverage_status": coverage_status,
         "legally_weak_rejection_flag": bool(sc.get("legal_weak_reject_flag")),
-        "note_on_flag": ("Late intimation with a valid reason — Supreme Court rulings "
+        "note_on_flag": ("Late intimation with a valid reason - Supreme Court rulings "
                          "mean this alone is NOT lawful grounds to reject, so it goes "
                          "to a human.") if sc.get("legal_weak_reject_flag") else None,
     })
@@ -305,7 +305,7 @@ def narrative(claim_id: str) -> dict[str, Any]:
 
 
 # --------------------------------------------------------------------------- #
-# Policy lookup (customer app) — mocked core-policy-DB rail
+# Policy lookup (customer app) - mocked core-policy-DB rail
 # --------------------------------------------------------------------------- #
 @app.get("/api/policies/{policy_id}")
 def policy_lookup(policy_id: str) -> dict[str, Any]:
@@ -362,7 +362,7 @@ def dashboard() -> dict[str, Any]:
 if WEB_DIR.exists():
     app.mount("/assets", StaticFiles(directory=str(WEB_DIR)), name="assets")
 
-    # Source files must never be served stale — a cached stylesheet after an edit
+    # Source files must never be served stale - a cached stylesheet after an edit
     # looks exactly like a code bug (and will bite during a live demo). Fonts and
     # vendored libraries are immutable, so those we do let the browser keep.
     _NO_CACHE = {"Cache-Control": "no-cache, no-store, must-revalidate",

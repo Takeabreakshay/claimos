@@ -1,4 +1,4 @@
-"""Persistence layer — Supabase (Postgres + Storage) with a local fallback.
+"""Persistence layer - Supabase (Postgres + Storage) with a local fallback.
 
 If SUPABASE_URL / SUPABASE_SERVICE_KEY are set, everything is written to your
 Supabase project (claims, photos, docs, scores, decisions, audit events, files).
@@ -53,7 +53,7 @@ class Store:
         # backend silently drops columns it doesn't have yet; the overlay keeps
         # the FULL row in-process so the running session still sees every field
         # (rate-card estimate, coverage inputs, settlement...). It is per-process
-        # — migrations are what make the fields durable ACROSS restarts.
+        # - migrations are what make the fields durable ACROSS restarts.
         self._full_claims: dict[str, dict[str, Any]] = {}
         self._full_children: dict[tuple[str, str], list[dict[str, Any]]] = {}
 
@@ -78,7 +78,7 @@ class Store:
                     last_msg = str(exc)
                     if "PGRST205" in last_msg or "schema cache" in last_msg:
                         self.init_error = (
-                            "Supabase reachable but the schema is missing — run "
+                            "Supabase reachable but the schema is missing - run "
                             "supabase/schema.sql in the SQL editor, then restart."
                         )
                         self.mode = "local"

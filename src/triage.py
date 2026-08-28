@@ -1,4 +1,4 @@
-"""Phase 4 — THE WEDGE: the risk-triage routing policy (CLAUDE.md §6, LOGIC Phase 4).
+"""Phase 4 - THE WEDGE: the risk-triage routing policy (CLAUDE.md §6, LOGIC Phase 4).
 
 Reads ``config/thresholds.yaml`` and routes each *scored* claim. Deterministic;
 emits the triggered reasons at every step (rule 9). Routing order (rule 6/8):
@@ -11,10 +11,10 @@ emits the triggered reasons at every step (rule 9). Routing order (rule 6/8):
   F. else                -> Lane 2 (Assisted, the default)
 
 Notes on the two gate outcomes (Rule-13 interpretation, tied to the §10 test):
-  * COVERAGE_REJECT — a lapsed policy / ineligible driver / missing FIR is a
-    hard rule failure; it is not auto-settled. (Late intimation is NOT here — SC
+  * COVERAGE_REJECT - a lapsed policy / ineligible driver / missing FIR is a
+    hard rule failure; it is not auto-settled. (Late intimation is NOT here - SC
     rulings, handled by the legal-weak override.)
-  * legal-weak override — any late intimation (>48h), even with a valid reason,
+  * legal-weak override - any late intimation (>48h), even with a valid reason,
     goes to a human with a legal-check note instead of Lane 1. This is the
     fairness / appeal-rate win (§7/§8). Late-alone is never an auto-reject.
 """
@@ -100,13 +100,13 @@ def route_claim(
     # ----- C. Lane 3 (Investigative): ANY trigger ---------------------------
     l3_reasons: list[str] = []
     if p_fraud >= l3["min_fraud_prob"]:
-        l3_reasons.append(f"fraud_prob>={l3['min_fraud_prob']}")
+        l3_reasons.append(f"fraud_prob {l3['min_fraud_prob']}+")
     if amount >= l3["high_value_threshold"]:
-        l3_reasons.append(f"high_value>={l3['high_value_threshold']}")
+        l3_reasons.append(f"high_value {l3['high_value_threshold']}+")
     if severity in set(l3["severities"]):
         l3_reasons.append(f"severity={severity}")
     if p_esc >= l3["min_escalation_prob"]:
-        l3_reasons.append(f"escalation_prob>={l3['min_escalation_prob']}")
+        l3_reasons.append(f"escalation_prob {l3['min_escalation_prob']}+")
     if l3.get("tp_with_injury") and claim_type == "TP" and injury == 1:
         l3_reasons.append("tp_with_injury")
     if l3_reasons:
@@ -121,13 +121,13 @@ def route_claim(
     # ----- E. Lane 1 (Touchless): ALL must hold -----------------------------
     l1_fail: list[str] = []
     if not amount < l1["max_claim_amount"]:
-        l1_fail.append(f"amount>={l1['max_claim_amount']}")
+        l1_fail.append(f"amount {l1['max_claim_amount']}+")
     if not p_fraud < l1["max_fraud_prob"]:
-        l1_fail.append(f"fraud_prob>={l1['max_fraud_prob']}")
+        l1_fail.append(f"fraud_prob {l1['max_fraud_prob']}+")
     if not conf >= l1["min_confidence"]:
-        l1_fail.append(f"confidence<{l1['min_confidence']}")
+        l1_fail.append(f"confidence under {l1['min_confidence']}")
     if not p_esc < l1["max_escalation_prob"]:
-        l1_fail.append(f"escalation_prob>={l1['max_escalation_prob']}")
+        l1_fail.append(f"escalation_prob {l1['max_escalation_prob']}+")
     if severity not in set(l1["allowed_severity"]):
         l1_fail.append(f"severity={severity}")
     if l1["require_coverage_clear"] and coverage_clear != CLEAR:

@@ -1,7 +1,7 @@
-"""Phase 6 — evaluation harness (CLAUDE.md §9, LOGIC §Phase 6 + auto-tighten).
+"""Phase 6 - evaluation harness (CLAUDE.md §9, LOGIC §Phase 6 + auto-tighten).
 
 Compares baseline (all-manual) vs triaged and writes ``reports/eval.json`` +
-figures. Computes the make-or-break metric — Lane-1 leakage — and runs the
+figures. Computes the make-or-break metric - Lane-1 leakage - and runs the
 auto-tighten loop so a leaky Lane 1 is never shipped (rule 8).
 
 Entry point: ``poetry run claimos-evaluate``.
@@ -29,7 +29,7 @@ _LANE2_LIKE = {Lane.ASSISTED.value, RETAKE}
 
 
 def _holdout_mask(df: pd.DataFrame) -> np.ndarray:
-    """Rows the models never trained on — the only honest place to measure leakage.
+    """Rows the models never trained on - the only honest place to measure leakage.
 
     Reproduces the exact split used in training (same seed, same stratification),
     so this mask is the held-out test set.
@@ -50,7 +50,7 @@ def _lane1_leakage(df: pd.DataFrame, outcome: np.ndarray,
                    mask: np.ndarray | None = None) -> tuple[float, float, int]:
     """(count-rate, value-rate, n_lane1) of fraud auto-cleared in Lane 1.
 
-    ``mask`` restricts the measurement to a subset of rows — pass the held-out
+    ``mask`` restricts the measurement to a subset of rows - pass the held-out
     mask so the guardrail is not flattered by claims the models memorised.
     """
     m = outcome == Lane.TOUCHLESS.value
@@ -71,7 +71,7 @@ def _auto_tighten(df, scored, thresholds, ceiling, mask=None):
     """Raise min_confidence / lower max_fraud_prob until Lane-1 leakage <= ceiling.
 
     The guardrail governs on HELD-OUT leakage. Measured on the whole book it read
-    1.195% (safe) while the true out-of-sample rate was 2.425% — a breach the loop
+    1.195% (safe) while the true out-of-sample rate was 2.425% - a breach the loop
     never saw, because most of those rows were ones the models had memorised.
     """
     base = copy.deepcopy(thresholds)
@@ -82,12 +82,12 @@ def _auto_tighten(df, scored, thresholds, ceiling, mask=None):
 
     # Unsafe at the shipped gate. Rather than ratchet both knobs together (which
     # overshoots to a Lane 1 of ~zero), search the grid and keep the setting that
-    # AUTOMATES THE MOST while holding leakage under the ceiling — the
+    # AUTOMATES THE MOST while holding leakage under the ceiling - the
     # envelope-search from L7 §6, run in the tightening direction.
     # Use most of the safety budget deliberately (edge-of-ceiling posture), not a
     # timid fraction that leaves 2/3 of the budget unused. The hard ceiling is
     # still never crossed. Search DOWN from the configured floor too, since the
-    # floor may itself be over-tight — the envelope decides what is safe.
+    # floor may itself be over-tight - the envelope decides what is safe.
     margin = 0.95 * ceiling
     best, best_routed, steps = None, None, 0
     conf_lo = min(0.80, base["lane1_touchless"]["min_confidence"])
@@ -106,7 +106,7 @@ def _auto_tighten(df, scored, thresholds, ceiling, mask=None):
             if best is None or share > best[0]:
                 best, best_routed = (share, cand), r
 
-    if best is None:      # nothing is safe at any setting — automate nothing
+    if best is None:      # nothing is safe at any setting - automate nothing
         cand = copy.deepcopy(base)
         cand["lane1_touchless"]["min_confidence"] = 0.99
         cand["lane1_touchless"]["max_fraud_prob"] = 0.0
@@ -211,7 +211,7 @@ def run_evaluation(df: pd.DataFrame | None = None, models: dict | None = None) -
         "leakage_under_ceiling": bool(leak_count <= ceiling),
         "leakage_measured_on": "held-out test rows only",
         "n_lane1_holdout": int(n_lane1_holdout),
-        # Whole-book figure kept ONLY for contrast — it is optimistically biased
+        # Whole-book figure kept ONLY for contrast - it is optimistically biased
         # because most rows were used in training. Never quote it as the headline.
         "lane1_leakage_whole_book_biased": round(leak_book, 5),
         "auto_tighten_steps": tighten_steps,
