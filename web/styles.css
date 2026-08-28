@@ -1,24 +1,22 @@
-/* ---- Switzer (Fontshare, free for commercial use) — variable, all weights ---- */
+/* ---- IBM Plex superfamily (SIL OFL, self-hosted) ----------------------------
+   ONE designed system: Plex Sans for all UI/body/headings, Plex Mono for every
+   computed value (claim IDs, confidence, lane tags, reason codes, timestamps,
+   KPI numbers). Shared proportions read as engineered + institutional — the
+   register a decisioning platform wants. Ships the rupee glyph + tabular figs. */
 @font-face{
-  font-family:"Switzer";
-  src:url("/fonts/Switzer-Variable.woff2") format("woff2-variations"),
-      url("/fonts/Switzer-Variable.woff2") format("woff2");
-  font-weight:100 900;
-  font-style:normal;
-  font-display:swap;
+  font-family:"IBM Plex Sans";
+  src:url("/fonts/IBMPlexSans-Variable.woff2") format("woff2-variations"),
+      url("/fonts/IBMPlexSans-Variable.woff2") format("woff2");
+  font-weight:100 700; font-style:normal; font-display:swap;
 }
-/* anime.js type system: DINish (display/UI) + Berkeley Mono (all data/labels) */
-@font-face{
-  font-family:"DINish";
-  src:url("/fonts/DINish-Variable.woff2") format("woff2-variations"),
-      url("/fonts/DINish-Variable.woff2") format("woff2");
-  font-weight:400 700; font-style:normal; font-display:swap;
-}
-@font-face{
-  font-family:"Berkeley Mono";
-  src:url("/fonts/BerkeleyMono-Regular.woff2") format("woff2");
-  font-weight:400 700; font-style:normal; font-display:swap;
-}
+@font-face{font-family:"IBM Plex Mono";src:url("/fonts/IBMPlexMono-400.woff2") format("woff2");
+  font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"IBM Plex Mono";src:url("/fonts/IBMPlexMono-500.woff2") format("woff2");
+  font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:"IBM Plex Mono";src:url("/fonts/IBMPlexMono-600.woff2") format("woff2");
+  font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"IBM Plex Mono";src:url("/fonts/IBMPlexMono-700.woff2") format("woff2");
+  font-weight:700;font-style:normal;font-display:swap}
 
 /* ===================== ClaimOS — dark console ===================== */
 /* Design language: near-black canvas, disciplined grey ramp, ONE hot accent,
@@ -34,15 +32,15 @@
   --g-600:#d5e0f0; --g-500:#aab9d2; --g-400:#8090a6; --g-300:#5a6a80;
   --g-200:#3c4c65; --g-150:#28384f; --g-100:#1a2b45; --g-50:#0e2547;
 
-  --blue:#1d5fd6; --blue-2:#4d9cff; --blue-soft:rgba(29,95,214,.07);
-  --accent:#1d5fd6;                 /* one vivid blue accent (anime.js "king") */
+  --blue:#1959A5; --blue-2:#4d9cff; --blue-soft:rgba(25,89,165,.07);
+  --accent:#1959A5;                 /* Bajaj Blue — accent, links, active states */
   --accent-ink:#ffffff;             /* text on an accent fill */
   --navy:#12244a;                   /* deep blue for text on light */
 
   /* LIGHT base: white page, navy ink, brand colors darkened for AA on white.
      The sidebar and hero panels (risk dial, workflow wedge, stream) stay navy —
      "white page, sections highlighted in blue". */
-  --ink:#1a2230; --ink-2:#3d4757; --slate:#5b6675; --slate-2:#7c8797;
+  --ink:#1B2430; --ink-2:#3d4757; --slate:#5b6675; --slate-2:#7c8797;
   --canvas:#f5f7fb; --panel:#ffffff; --line:#e4e8f0; --line-2:#eef1f7;
   --rail:#081226; --rail-2:#0b1a33; --rail-line:#16305a;
   --rail-text:#a9b8d4; --rail-active:#ffffff;
@@ -61,13 +59,13 @@
   --ease-out:cubic-bezier(.215,.61,.355,1);
   --ease-soft:cubic-bezier(0,.4,.25,1);
   --r:12px; --r-sm:9px;
-  /* Type system (BRIEF Part 3): prose = Inter, headlines = Space Grotesk,
-     ALL DATA = JetBrains Mono. Numbers read as system output, not website copy. */
-  /* Switzer carries both display and UI, the way Everett does on sui.io.
-     Space Grotesk / Inter remain as fallbacks if the local font 404s. */
-  --font-display:"DINish","Montserrat","Switzer",system-ui,sans-serif;
-  --font-ui:"DINish","Switzer","Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  --font-data:"Berkeley Mono","JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  /* Type system: IBM Plex superfamily. Plex Sans = all UI/body/headings;
+     Plex Mono = every computed value (claim IDs, confidence, lanes, reason
+     codes, timestamps, KPI numbers) — so a computed decision reads as machine
+     output, not decoration. System fonts fall back if a local face 404s. */
+  --font-display:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-data:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --sans:var(--font-ui);
   --mono:var(--font-data);
   --rail-w:250px;
@@ -86,6 +84,9 @@
 /* every number in the product is mono + tabular */
 .num,.mono,td.num,.kpi .v,.mod .val,.dec-score .s{
   font-family:var(--font-data);font-variant-numeric:tabular-nums lining-nums}
+/* every table + KPI aligns figures vertically (rupee columns, percentages) */
+table,.tbl,.tbl td,.tbl th,.kpi,.aj-stat,.aj-stats,.mod,.wf-row,.sla,.qbadge{
+  font-variant-numeric:tabular-nums lining-nums}
 *{box-sizing:border-box}
 /* NOTE: no `height:100%` here. Lenis needs the document to grow naturally —
    a fixed height pins the scroll container and smooth scrolling silently dies. */
