@@ -1,9 +1,12 @@
 """NVIDIA NIM client - OpenAI-compatible chat + vision.
 
 Used for:
-  * Nemotron OCR v2   -> document text extraction  (NVIDIA_OCR_KEY / NVIDIA_OCR_MODEL)
-  * Kimi K2           -> plain-English claim narrative, officer summary,
-                         damage severity read  (NVIDIA_LLM_KEY / NVIDIA_LLM_MODEL)
+  * Document OCR   -> local RapidOCR by default (hosted Nemotron OCR is optional
+                      via NVIDIA_OCR_KEY / NVIDIA_OCR_MODEL; 404s on some accounts)
+  * LLM reasoning  -> plain-English claim narrative + officer summary
+                      (NVIDIA_LLM_KEY / NVIDIA_LLM_MODEL, e.g. nemotron-3-super)
+  * Vision         -> damage severity + parts from the photo
+                      (NVIDIA_LLM_KEY / NVIDIA_VLM_MODEL = llama-3.2-11b-vision)
 
 Both the base URL and model ids come from .env so a model string can be swapped
 without touching code. Every call degrades gracefully: on any failure the caller
@@ -40,13 +43,16 @@ _model_cache: dict[str, list[str]] = {}
 _dead: set[str] = set()
 
 # Preference order when the configured model is unavailable. First match wins.
+# Verified live on the account 2026-08-28 (a mass NIM EOL on 2026-08-26 retired
+# most llama-3.1/3.3 + nemotron-super-49b ids). The vision model doubles as a
+# text fallback, so the LLM feature survives even if the Nemotron ids go too.
 _PREFERRED = [
-    "meta/llama-3.3-70b-instruct",
-    "nvidia/llama-3.3-nemotron-super-49b-v1.5",
-    "meta/llama-3.1-70b-instruct",
-    "mistralai/mistral-nemo-12b-instruct",
-    "qwen/qwen2.5-coder-32b-instruct",
-    "meta/llama-3.1-8b-instruct",
+    "nvidia/nemotron-3-super-120b-a12b",   # strong general reasoning (verified)
+    "nvidia/nemotron-3-nano-30b-a3b",      # fast fallback (verified)
+    "meta/llama-3.2-11b-vision-instruct",  # vision-capable, also handles text
+    "nvidia/nemotron-4-340b-instruct",
+    "openai/gpt-oss-120b",
+    "mistralai/mistral-large-2-instruct",
 ]
 
 
