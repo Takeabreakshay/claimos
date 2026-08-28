@@ -160,7 +160,10 @@ def _img_content(data: bytes, prompt: str, mime: str = "image/jpeg") -> list:
 # --------------------------------------------------------------------------- #
 def ocr_document(data: bytes, doc_type: str = "other") -> NvResult:
     key = os.getenv("NVIDIA_OCR_KEY", "").strip()
-    model = os.getenv("NVIDIA_OCR_MODEL", "nvidia/nemotron-ocr-v2").strip()
+    # Default to the vision model (reads document text accurately as an image);
+    # the hosted nemotron-ocr-v2 function 404s on many accounts. Overridable via
+    # NVIDIA_OCR_MODEL so a dedicated OCR NIM can be swapped in where provisioned.
+    model = os.getenv("NVIDIA_OCR_MODEL", "meta/llama-3.2-11b-vision-instruct").strip()
     prompt = (
         "Extract ALL text from this Indian motor-insurance document "
         f"(declared type: {doc_type}). Return the raw text verbatim, preserving "
@@ -241,5 +244,5 @@ def health() -> dict:
                   "available": len(list_models(key)), "retired": sorted(_dead)}
     ocr_key = os.getenv("NVIDIA_OCR_KEY", "").strip()
     out["ocr"] = {"configured": bool(ocr_key),
-                  "model": os.getenv("NVIDIA_OCR_MODEL", "nvidia/nemotron-ocr-v2")}
+                  "model": os.getenv("NVIDIA_OCR_MODEL", "meta/llama-3.2-11b-vision-instruct")}
     return out
