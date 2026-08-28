@@ -6,6 +6,7 @@ const $ = (id) => document.getElementById(id);
 const money = (n) => (n === null || n === undefined || n === "") ? "-"
   : "₹" + Math.round(Number(n)).toLocaleString("en-IN");
 const pct = (x, d = 1) => (x === null || x === undefined) ? "-" : (Number(x) * 100).toFixed(d) + "%";
+const hz = (s) => String(s ?? "").replace(/_/g, " ");
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const LANE = {
@@ -250,7 +251,7 @@ async function renderDashboard(el) {
           <td class="num">${money(r.claim_amount)}</td><td>${laneChip(r.lane)}</td>
           <td class="num">${r.p_fraud != null ? pct(r.p_fraud, 0) : "-"}</td>
           <td>${r.confidence != null ? `<div class="bar"><i style="width:${Math.round(r.confidence * 100)}%"></i></div>` : "-"}</td>
-          <td>${esc(r.status || "-")}</td></tr>`).join("") ||
+          <td>${esc(hz(r.status || "-"))}</td></tr>`).join("") ||
     `<tr><td colspan="7"><div class="empty">No claims yet - open one from <b>New claim</b>.</div></td></tr>`}
         </tbody></table>
       </div>
@@ -288,12 +289,12 @@ async function renderQueue(el) {
       const fresh = isNew(c);
       return `<tr class="${fresh ? "qnew" : ""}${fresh && i === 0 ? " qflash" : ""}" onclick="openClaim('${c.claim_id}')">
         <td class="mono">${esc(c.claim_id)}${fresh ? '<span class="qbadge">NEW</span>' : ""}</td>
-        <td>${esc(c.claim_type || "-")}</td>
-        <td class="num">${money(c.claim_amount)}</td><td>${esc(c.incident_severity || "-")}</td>
+        <td>${esc(hz(c.claim_type || "-"))}</td>
+        <td class="num">${money(c.claim_amount)}</td><td>${esc(hz(c.incident_severity || "-"))}</td>
         <td>${laneChip(c.lane)}</td>
         <td class="num">${s.p_fraud != null ? pct(s.p_fraud, 0) : "-"}</td>
         <td>${s.model_confidence != null ? `<div class="bar"><i style="width:${Math.round(s.model_confidence * 100)}%"></i></div>` : "-"}</td>
-        <td>${esc(c.status || "-")}</td></tr>`;
+        <td>${esc(hz(c.status || "-"))}</td></tr>`;
     }).join("") || `<tr><td colspan="8"><div class="empty">Nothing in this lane.</div></td></tr>`;
   };
   $("fLane").onchange = draw;
@@ -323,7 +324,7 @@ function renderIntake(el) {
       <div class="field"><label>Policy number</label><input type="text" id="policy_id" value="POL-2026-000141"></div>
       <div class="field"><label>Customer id</label><input type="text" id="customer_id" value="CUST-000141"></div>
       <div class="grid g2">
-        <div class="field"><label>Claim type</label><select id="claim_type"><option>OD</option><option>TP</option><option value="theft_total">theft_total</option></select></div>
+        <div class="field"><label>Claim type</label><select id="claim_type"><option>OD</option><option>TP</option><option value="theft_total">theft total</option></select></div>
         <div class="field"><label>Severity (declared)</label><select id="incident_severity"><option>minor</option><option>moderate</option><option>severe</option></select></div>
         <div class="field"><label>Claimed amount (₹)</label><input type="number" id="claim_amount" value="24000"></div>
         <div class="field"><label>IDV (₹)</label><input type="number" id="idv" value="450000"></div>
@@ -335,7 +336,7 @@ function renderIntake(el) {
 
     <div class="card"><div class="card-h"><h3>Routing &amp; eligibility</h3></div><div class="card-b">
       <div class="grid g2">
-        <div class="field"><label>Garage</label><select id="garage_type"><option>network</option><option value="non_network">non_network</option></select></div>
+        <div class="field"><label>Garage</label><select id="garage_type"><option>network</option><option value="non_network">non network</option></select></div>
         <div class="field"><label>Garage id</label><input type="text" id="garage_id" value="GAR-1042"></div>
         <div class="field"><label>Surveyor id</label><input type="text" id="surveyor_id" value="SUR-204"></div>
         <div class="field"><label>Payout account</label><input type="text" id="bank_account" value="AC-99881"></div>
@@ -399,13 +400,13 @@ async function renderEvidence(el) {
   const c = d.claim;
   el.innerHTML = `
     <div class="grid g4" style="margin-bottom:16px">
-      <div class="kpi"><div class="k">Claim</div><div class="v mono" style="font-size:17px">${esc(c.claim_id)}</div><div class="d">${esc(c.claim_type)} · ${esc(c.incident_severity)}</div></div>
+      <div class="kpi"><div class="k">Claim</div><div class="v mono" style="font-size:17px">${esc(c.claim_id)}</div><div class="d">${esc(hz(c.claim_type))} · ${esc(hz(c.incident_severity))}</div></div>
       <div class="kpi"><div class="k">Photos</div><div class="v num">${c.num_photos || 0}</div><div class="d">avg quality ${(c.photo_quality_score || 0).toFixed(2)}</div></div>
       <div class="kpi ${c.photo_reuse_flag ? "bad" : ""}"><div class="k">Reuse flag</div><div class="v" style="color:${c.photo_reuse_flag ? "var(--bad)" : "var(--good)"}">${c.photo_reuse_flag ? "YES" : "clean"}</div><div class="d">cross-claim hash check</div></div>
-      <div class="kpi"><div class="k">Status</div><div class="v" style="font-size:20px">${esc(c.status)}</div><div class="d">${laneChip(c.lane)}</div></div>
+      <div class="kpi"><div class="k">Status</div><div class="v" style="font-size:20px">${esc(hz(c.status))}</div><div class="d">${laneChip(c.lane)}</div></div>
     </div>
 
-    ${c.cv_severity ? `<div class="note ${c.cv_severity_mismatch ? "warn" : "ok"}" style="margin-bottom:16px"><span>◈</span><div><b>AI damage assessment:</b> photos read as <b>${esc(c.cv_severity)}</b>; operator declared <b>${esc(c.incident_severity)}</b>. ${c.cv_severity_mismatch ? "Severity mismatch - surfaced to the officer, not auto-actioned." : "Consistent with the declaration."}</div></div>` : ""}
+    ${c.cv_severity ? `<div class="note ${c.cv_severity_mismatch ? "warn" : "ok"}" style="margin-bottom:16px"><span>◈</span><div><b>AI damage assessment:</b> photos read as <b>${esc(hz(c.cv_severity))}</b>; operator declared <b>${esc(hz(c.incident_severity))}</b>. ${c.cv_severity_mismatch ? "Severity mismatch - surfaced to the officer, not auto-actioned." : "Consistent with the declaration."}</div></div>` : ""}
 
     <div class="grid g2">
       <div class="card"><div class="card-h"><h3>Damage photos</h3><span class="sub">quality · blur · EXIF · reuse</span></div>
@@ -439,7 +440,7 @@ async function renderEvidence(el) {
           <input type="file" id="dfile" accept="image/*,.pdf" class="hide">
           <div id="dresult" style="margin-top:12px"></div>
           ${(d.documents || []).length ? `<div style="margin-top:14px"><div class="eyebrow" style="margin-bottom:6px">Attached</div>
-            ${d.documents.map(x => `<div class="kv"><span class="k">${esc(x.doc_type)}</span><span class="v">${Object.keys(x.ocr_fields || {}).length} fields</span></div>`).join("")}</div>` : ""}
+            ${d.documents.map(x => `<div class="kv"><span class="k">${esc(hz(x.doc_type))}</span><span class="v">${Object.keys(x.ocr_fields || {}).length} fields</span></div>`).join("")}</div>` : ""}
         </div>
       </div>
     </div>
@@ -488,7 +489,7 @@ async function uploadPhotos(files) {
       const dmgTone = dmg.severity === "total" || dmg.severity === "severe" ? "bad"
                     : dmg.severity === "moderate" ? "warn" : "ok";
       const dmgCard = dmg.severity
-        ? `<div class="note ${dmgTone}"><span>◈</span><div><b>AI damage read:</b> ${esc(dmg.severity)}${dmg.damaged_parts && dmg.damaged_parts.length ? ` - ${esc(dmg.damaged_parts.join(", "))}` : ""} <span style="color:var(--slate)">· vision model, conf ${(Number(dmg.confidence) || 0).toFixed(2)}</span></div></div>`
+        ? `<div class="note ${dmgTone}"><span>◈</span><div><b>AI damage read:</b> ${esc(dmg.severity)}${dmg.damaged_parts && dmg.damaged_parts.length ? ` - ${esc(hz(dmg.damaged_parts.join(", ")))}` : ""} <span style="color:var(--slate)">· vision model, conf ${(Number(dmg.confidence) || 0).toFixed(2)}</span></div></div>`
         : "";
       cards.push(`<div style="margin-bottom:10px">
         <div style="font-size:13px;font-weight:600">${esc(r.filename)} - quality <b>${r.quality_score.toFixed(2)}</b>
@@ -522,8 +523,8 @@ async function uploadDoc(files) {
         ${r.error ? `<div style="font-size:11px;opacity:.8;margin-top:4px">${esc(r.error)}</div>` : ""}
       </div></div>
       ${fields.length ? `<div style="margin-top:10px"><div class="eyebrow" style="margin-bottom:4px">Extracted fields</div>
-        ${fields.map(([k, v]) => `<div class="kv"><span class="k">${esc(k)}</span><span class="v mono">${esc(v)}</span></div>`).join("")}</div>` : ""}
-      ${r.applied && Object.keys(r.applied).length ? `<div class="note info" style="margin-top:10px"><span>•</span><div>Applied to claim: <b>${esc(JSON.stringify(r.applied))}</b></div></div>` : ""}
+        ${fields.map(([k, v]) => `<div class="kv"><span class="k">${esc(hz(k))}</span><span class="v mono">${esc(hz(v))}</span></div>`).join("")}</div>` : ""}
+      ${r.applied && Object.keys(r.applied).length ? `<div class="note info" style="margin-top:10px"><span>•</span><div>Applied to claim: <b>${esc(hz(JSON.stringify(r.applied)))}</b></div></div>` : ""}
       ${r.text ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;color:var(--slate)">Raw OCR text</summary>
         <pre style="white-space:pre-wrap;font-size:11px;background:var(--canvas);padding:10px;border-radius:8px;margin-top:6px;max-height:220px;overflow:auto">${esc(r.text)}</pre></details>` : ""}`;
     toast("OCR complete");
@@ -555,7 +556,7 @@ function reconAndSettlementCards(c, s) {
   const cov = covState ? covMap[covState] || ["", covState] : null;
   const covChip = cov ? `<span class="pill ${cov[0]}">${cov[1]}</span>` : "";
   const covReasons = (s.coverage_state_reasons || []).length
-    ? `<div class="t-caption" style="margin-top:6px">${(s.coverage_state_reasons).map(esc).join(" · ")}</div>` : "";
+    ? `<div class="t-caption" style="margin-top:6px">${(s.coverage_state_reasons).map(x => esc(hz(x))).join(" · ")}</div>` : "";
 
   // ----- Reconciliation card -----
   const ratio = s.reconciliation_ratio;
@@ -642,7 +643,7 @@ async function renderDecision(el) {
       ${(s.component_size || 1) - 1} other claim(s) in the book.</div></div>` : ""}
     ${ratio && ratio > 1.25 ? `<div class="note warn" style="margin-bottom:16px"><span>~</span><div>
       Claimed amount is <b>${ratio.toFixed(2)}x</b> the predicted repair cost - possible inflation.</div></div>` : ""}
-    ${(() => { const dr = (s.lane_reasons || []).find(r => String(r).startsWith("duplicate_claim")); return dr ? `<div class="note bad" style="margin-bottom:16px"><span>⧉</span><div><b>Duplicate claim detected.</b> ${esc(String(dr).replace("duplicate_claim:", ""))} - force-routed to investigation regardless of value.</div></div>` : ""; })()}
+    ${(() => { const dr = (s.lane_reasons || []).find(r => String(r).startsWith("duplicate_claim")); return dr ? `<div class="note bad" style="margin-bottom:16px"><span>⧉</span><div><b>Duplicate claim detected.</b> ${esc(hz(String(dr).replace("duplicate_claim:", "")))} - force-routed to investigation regardless of value.</div></div>` : ""; })()}
     ${c.cv_severity_mismatch ? `<div class="note warn" style="margin-bottom:16px"><span>◈</span><div><b>Damage mismatch.</b> Photos read as <b>${esc(c.cv_severity)}</b> but the claim was declared <b>${esc(c.incident_severity)}</b> - the officer sees both before deciding.</div></div>` : ""}
 
     <div class="grid g2">
@@ -662,7 +663,7 @@ async function renderDecision(el) {
             ${confChip(cert(s.p_escalation))}</div>
           <div class="mod"><div class="name">Coverage</div>
             <div><div class="val">${esc(s.coverage_clear || "-")}</div>
-              <div class="why">${esc(s.coverage_reason || "no rule hits")}</div></div>
+              <div class="why">${esc(hz(s.coverage_reason || "no rule hits"))}</div></div>
             <span class="chip hi"><i></i>rule</span></div>
           <div class="mod"><div class="name">Confidence</div>
             <div><div class="val num">${(Number(s.model_confidence) * 100).toFixed(0)}%</div>
@@ -673,7 +674,7 @@ async function renderDecision(el) {
 
       <div>
         <div class="card"><div class="card-h"><h3>Why this lane</h3></div><div class="card-b">
-          ${(s.lane_reasons || []).map(r => `<div class="kv"><span class="k">trigger</span><span class="v mono">${esc(r)}</span></div>`).join("") || "<div class='empty'>No triggers recorded.</div>"}
+          ${(s.lane_reasons || []).map(r => `<div class="kv"><span class="k">trigger</span><span class="v mono">${esc(hz(r))}</span></div>`).join("") || "<div class='empty'>No triggers recorded.</div>"}
           <div id="narr" style="margin-top:12px"></div>
           <button class="btn" id="narrBtn" style="margin-top:10px">Draft officer note</button>
         </div></div>
@@ -726,7 +727,7 @@ async function renderDecision(el) {
     <div class="card" style="margin-top:16px"><div class="card-h"><h3>Audit trail</h3><span class="sub">every state change</span></div>
       <div class="card-b"><div class="tl">
         ${(d.timeline || []).slice().reverse().map(e => `<div class="tl-item">
-          <div class="e">${esc(e.event)}</div>
+          <div class="e">${esc(hz(e.event))}</div>
           <div class="t">${esc((e.created_at || "").slice(0, 19))} · ${esc(e.actor || "SYSTEM")}</div>
         </div>`).join("") || "<div class='empty'>No events.</div>"}
       </div></div>
@@ -1198,13 +1199,13 @@ async function loadBrain(claimId) {
           <div class="kv" style="align-items:flex-start">
             <span class="k mono" style="min-width:170px">${esc(l.level)}</span>
             <span class="v" style="text-align:left;flex:1">
-              <b>${esc(l.decision)}</b>
+              <b>${esc(hz(l.decision))}</b>
               <div class="t-caption" style="margin-top:3px">
-                ${(l.reasons || []).slice(0, 2).map(esc).join(" · ")}</div>
+                ${(l.reasons || []).slice(0, 2).map(x => esc(hz(x))).join(" · ")}</div>
             </span></div>`).join("")}
       </div>
       <div class="note info" style="margin-top:14px"><span>•</span><div>
-        <b>${esc(b.outcome || "-")}</b> - ${esc(b.outcome_reason || "")}</div></div>`;
+        <b>${esc(hz(b.outcome || "-"))}</b> - ${esc(hz(b.outcome_reason || ""))}</div></div>`;
   } catch (e) {
     box.innerHTML = `<div class="note warn"><span>!</span><div>
       Brain trace unavailable: ${esc(e.message)}</div></div>`;
@@ -1344,7 +1345,7 @@ async function renderWorkflow(el) {
         <div class="wf-mod" data-m="1"><div class="wf-scan"></div>
           <div class="mt">${ICON.shield}Coverage</div>
           <div class="mr" data-v="${esc(s.coverage_clear || "-")}">-</div>
-          <div class="mw">${esc(s.coverage_reason === "none" ? "Policy active · driver eligible · docs present" : "Rule hit: " + (s.coverage_reason || "-"))}</div>
+          <div class="mw">${esc(s.coverage_reason === "none" ? "Policy active · driver eligible · docs present" : "Rule hit: " + hz(s.coverage_reason || "-"))}</div>
           <div class="mc"><span class="chip hi"><i></i>deterministic</span></div></div>
 
         <div class="wf-mod" data-m="2"><div class="wf-scan"></div>
@@ -1434,7 +1435,7 @@ async function renderWorkflow(el) {
     ${_wfStage(6, "Decision & closure", "with reason, always", `
       <div class="wf-row" style="margin-bottom:12px">
         <span class="it">Status · <b style="color:var(--ink)">${esc(c.status)}</b></span>
-        ${s.lane_reasons ? s.lane_reasons.map(r => `<span class="it mono">${esc(r)}</span>`).join("") : ""}
+        ${s.lane_reasons ? s.lane_reasons.map(r => `<span class="it mono">${esc(hz(r))}</span>`).join("") : ""}
       </div>
       ${s.legal_weak_reject_flag
       ? `<div class="note warn"><span>⚖</span><div><b>Legally-weak rejection auto-flagged.</b>

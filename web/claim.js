@@ -22,7 +22,8 @@ const $ = (id) => document.getElementById(id);
 const app = () => $("app");
 function today() { const d = new Date(); return d.toISOString().slice(0, 10); }
 const money = (n) => "₹" + Math.round(Number(n) || 0).toLocaleString("en-IN");
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const hz = (s) => String(s ?? "").replace(/_/g, " ");
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 async function api(path, opts) {
   const r = await fetch(path, opts);
@@ -108,7 +109,7 @@ async function findPolicy(pid) {
 function showPolicy(p) {
   const addonName = { zero_depreciation: "Zero-dep", engine_protection: "Engine Protect",
     consumables: "Consumables", return_to_invoice: "Return to Invoice", roadside_assistance: "Roadside" };
-  const badges = [`${p.product_type === "comprehensive" ? "Comprehensive" : p.product_type}`,
+  const badges = [`${p.product_type === "comprehensive" ? "Comprehensive" : hz(p.product_type)}`,
     `NCB ${p.ncb_percent}%`].map(b => `<span class="cx-badge">${esc(b)}</span>`).join("")
     + (p.add_ons || []).map(a => `<span class="cx-badge on">${esc(addonName[a] || a)}</span>`).join("");
   $("polResult").innerHTML = `
@@ -383,7 +384,7 @@ function closeCamera() {
 
 function photoRow(p) {
   const dmg = p.damage && p.damage.severity
-    ? `AI sees: <b>${esc(p.damage.severity)}</b>${p.damage.damaged_parts?.length ? " · " + esc(p.damage.damaged_parts.slice(0, 3).join(", ")) : ""}`
+    ? `AI sees: <b>${esc(p.damage.severity)}</b>${p.damage.damaged_parts?.length ? " · " + esc(hz(p.damage.damaged_parts.slice(0, 3).join(", "))) : ""}`
     : (p.is_blurry ? "Blurry - a retake would help" : "Analysed");
   const q = Math.round((p.quality_score || 0) * 100);
   return `<div class="cx-photo">
@@ -435,7 +436,7 @@ function stepReview(el) {
       <div style="margin-top:14px">
         <div class="cx-kv"><span class="k">Vehicle</span><span class="v">${esc(p.make)} ${esc(p.model)}</span></div>
         <div class="cx-kv"><span class="k">Incident</span><span class="v">${esc(inc.t)}</span></div>
-        <div class="cx-kv"><span class="k">Severity</span><span class="v">${esc(I.severity || "-")}</span></div>
+        <div class="cx-kv"><span class="k">Severity</span><span class="v">${esc(hz(I.severity || "-"))}</span></div>
         <div class="cx-kv"><span class="k">Date</span><span class="v">${esc(I.date)}</span></div>
         <div class="cx-kv"><span class="k">Photos</span><span class="v">${C.photos.length}</span></div>
         ${I.amount ? `<div class="cx-kv"><span class="k">Your estimate</span><span class="v">${money(I.amount)}</span></div>` : ""}
