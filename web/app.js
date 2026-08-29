@@ -228,6 +228,36 @@ function dashLaneBar(mix, n) {
   const legend = present.map(([k, lbl, c]) => { const v = mix[k] || 0, pc = Math.round(v / n * 100); return `<div class="lp-lane-leg"><i style="background:${c}"></i><span class="lp-lane-name">${lbl}</span><span class="lp-lane-num num">${v} \u00B7 ${pc}%</span></div>`; }).join("");
   return `<div class="lp-lanebar"><div class="lp-lane-track">${seg}</div><div class="lp-lane-legend">${legend}</div></div>`;
 }
+function _pcard(title, rows, tone) {
+  return `<div class="pc ${tone || ""}"><div class="pc-top"><span class="lp-pd"></span><span class="lp-pd"></span><span class="lp-pd"></span><span class="pc-ttl">${title}</span></div><div class="pc-body">${rows}</div></div>`;
+}
+function dashProcess() {
+  const steps = [
+    { n: "01", eye: "Customer side", t: "File in minutes, from a phone",
+      d: "Guided FNOL, camera capture with a live blur gate, and instant policy lookup - no branch visit, no paperwork queue.",
+      panel: _pcard("ClaimOS \u00B7 file a claim",
+        `<div class="pc-phone"><div class="pc-cam">\uD83D\uDCF7 capture damage \u00B7 10:00</div><div class="pc-meter"><i style="width:82%"></i></div><div class="pc-ok">\u2713 sharp - ready to submit</div></div>`) },
+    { n: "02", eye: "Intelligent layer", t: "Read everything, verify everything",
+      d: "OCR extracts RC, licence, policy, FIR and the repair estimate; CV reads damage; cross-document checks flag tampering.",
+      panel: _pcard("Document intelligence",
+        `<div class="pc-row"><span>Registration</span><b>MH02TF4419</b></div><div class="pc-row"><span>Estimate total</span><b>\u20B918,400</b></div><div class="pc-row"><span>Damage (CV)</span><b>minor \u00B7 front bumper</b></div><div class="pc-row ok"><span>Cross-check</span><b>consistent \u2713</b></div>`) },
+    { n: "03", eye: "Risk-triage wedge", t: "Score value, fraud, severity, escalation",
+      d: "Calibrated models plus deterministic rules produce a confidence and a lane - with a single bounded retake if evidence is thin.",
+      panel: _pcard("Risk-triage engine",
+        `<div class="pc-row"><span>Fraud</span><b>2%</b></div><div class="pc-row"><span>Predicted repair</span><b>\u20B940,782</b></div><div class="pc-row"><span>Confidence</span><b>94%</b></div><div class="pc-bar"><i style="width:94%"></i></div>`) },
+    { n: "04", eye: "Three-speed execution", t: "Route to the effort it deserves",
+      d: "Touchless in minutes, Assisted with an officer, or Investigative with a surveyor - and a maker-checker second signature on every payout.",
+      panel: _pcard("Routing decision", `<div class="pc-lane">Lane 1 \u00B7 Touchless</div><div class="pc-chips"><span class="lp-chip l1">Touchless</span><span class="lp-chip l2">Assisted</span><span class="lp-chip l3">Investigate</span></div>`, "accent") },
+    { n: "05", eye: "Decision & closure", t: "Settle, explain, and learn",
+      d: "A transparent settlement waterfall, a full audit trail, and a feedback loop that retunes the thresholds over time.",
+      panel: _pcard("Settlement", `<div class="pc-row"><span>Assessed</span><b>\u20B918,400</b></div><div class="pc-row"><span>Deductible</span><b>-\u20B91,000</b></div><div class="pc-row ok"><span>Net payable</span><b>\u20B917,400</b></div><div class="pc-utr">UTR logged \u00B7 audit trail</div>`) },
+  ];
+  return `<div class="proc">` + steps.map((s, i) => `
+    <div class="proc-row ${i % 2 ? "rev" : ""}">
+      <div class="proc-copy"><div class="proc-eye">${s.n} \u00B7 ${s.eye}</div><h3 class="proc-t">${s.t}</h3><p class="proc-d">${s.d}</p></div>
+      <div class="proc-visual">${s.panel}</div>
+    </div>`).join("") + `</div>`;
+}
 function dashArch() {
   return `<div class="arch">
     <div class="arch-stage"><span class="arch-pill">1 \u00B7 Digital FNOL</span></div>
@@ -274,7 +304,7 @@ async function renderDashboard(el) {
   setQCount(d.n_claims);
   const n = d.n_claims || 0, mix = d.lane_mix || {}, ac = d.action_counts || {};
   const leakOk = d.leakage_rate <= d.leakage_ceiling;
-  el.innerHTML = `
+  el.innerHTML = `<div class="lp-dark">
     <section class="lp-hero">
       <div class="lp-hero-copy">
         <div class="lp-kicker">ClaimOS \u00B7 Motor-claims triage</div>
@@ -299,9 +329,9 @@ async function renderDashboard(el) {
     </section>
 
     <section class="lp-section">
-      <div class="lp-eyebrow">The architecture</div>
-      <h2 class="lp-h2">One intelligent layer, three speeds.</h2>
-      ${dashArch()}
+      <div class="lp-eyebrow">How it works</div>
+      <h2 class="lp-h2">From FNOL to settled,<br>in one intelligent pass.</h2>
+      ${dashProcess()}
     </section>
 
     <section class="lp-section">
@@ -337,7 +367,7 @@ async function renderDashboard(el) {
     <section class="lp-word">
       <div class="lp-word-cta">Route every claim to the effort it deserves.</div>
       <div class="lp-word-mark">ClaimOS</div>
-    </section>`;
+    </section></div>`;
 }
 
 /* ---------- QUEUE ---------- */
