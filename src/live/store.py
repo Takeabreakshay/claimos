@@ -212,9 +212,23 @@ class Store:
         con.close()
         return cur
 
+    def _exec_read(self, query, tries: int = 3):
+        """Run a Supabase read, retrying transient stalls (free-tier reads
+        occasionally time out). Reads are idempotent, so retrying is safe."""
+        import time as _t
+        last = None
+        for i in range(tries):
+            try:
+                return query.execute()
+            except Exception as exc:
+                last = exc
+                if i < tries - 1:
+                    _t.sleep(0.4 * (i + 1))
+        raise last
+
     def get_claim(self, claim_id: str) -> dict[str, Any] | None:
         if self.mode == "supabase":
-            res = self._sb.table("claims").select("*").eq("claim_id", claim_id).execute()
+            res = self._exec_read(self._sb.table("claims").select("*").eq("claim_id", claim_id))
             row = (res.data or [None])[0]
             cached = self._full_claims.get(claim_id)
             if cached:
@@ -227,8 +241,8 @@ class Store:
 
     def list_claims(self, limit: int = 200) -> list[dict[str, Any]]:
         if self.mode == "supabase":
-            res = (self._sb.table("claims").select("*")
-                   .order("created_at", desc=True).limit(limit).execute())
+            res = self._exec_read(self._sb.table("claims").select("*")
+                   .order("created_at", desc=True).limit(limit))
             rows = res.data or []
             if self._full_claims:
                 rows = [{**r, **self._full_claims.get(r.get("claim_id"), {})} for r in rows]
@@ -244,7 +258,7 @@ class Store:
             cached = self._full_children.get((table, claim_id))
             if cached is not None:
                 return [dict(r) for r in cached]  # full rows, no stripped columns
-            res = self._sb.table(table).select("*").eq("claim_id", claim_id).execute()
+            res = self._exec_read(self._sb.table(table).select("*").eq("claim_id", claim_id))
             return res.data or []
         con = self._lcon()
         rows = con.execute(f"select data from {table} where claim_id=?", (claim_id,)).fetchall()
@@ -262,8 +276,8 @@ class Store:
         if not claim_ids:
             return {}
         if self.mode == "supabase":
-            res = (self._sb.table("claim_scores").select("*")
-                   .in_("claim_id", claim_ids).execute())
+            res = self._exec_read(self._sb.table("claim_scores").select("*")
+                   .in_("claim_id", claim_ids))
             rows = res.data or []
         else:
             con = self._lcon()
@@ -292,7 +306,7 @@ class Store:
     def known_phashes(self, exclude_claim: str | None = None) -> list[tuple[str, str]]:
         """[(phash, claim_id)] for every photo already in the system."""
         if self.mode == "supabase":
-            res = self._sb.table("claim_photos").select("phash,claim_id").execute()
+            res = self._exec_read(self._sb.table("claim_photos").select("phash,claim_id"))
             rows = res.data or []
         else:
             con = self._lcon()

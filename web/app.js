@@ -66,13 +66,29 @@ function toast(msg, ms = 3200) {
 }
 
 async function api(path, opts = {}) {
-  const res = await fetch(path, opts);
-  if (!res.ok) {
-    let detail = res.statusText;
-    try { detail = (await res.json()).detail || detail; } catch (e) { }
-    throw new Error(detail);
+  // Resilient: GETs (and other idempotent reads) auto-retry on a transient
+  // network error or 5xx (the Supabase read behind the API occasionally times
+  // out on the free tier). Without this, a re-render could blank a view with
+  // "Failed to load". Non-GET writes are not retried (avoid double-submits).
+  const method = (opts.method || "GET").toUpperCase();
+  const retriable = method === "GET";
+  const tries = retriable ? 3 : 1;
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const res = await fetch(path, opts);
+      if (res.ok) return res.status === 204 ? null : res.json();
+      if (res.status >= 500 && i < tries - 1) { await new Promise(r => setTimeout(r, 350 * (i + 1))); continue; }
+      let detail = res.statusText;
+      try { detail = (await res.json()).detail || detail; } catch (e) { }
+      throw new Error(detail);
+    } catch (e) {
+      lastErr = e;
+      if (i < tries - 1 && retriable) { await new Promise(r => setTimeout(r, 350 * (i + 1))); continue; }
+      throw lastErr;
+    }
   }
-  return res.status === 204 ? null : res.json();
+  throw lastErr;
 }
 
 /* ------------------------------- HEALTH ------------------------------- */
@@ -194,7 +210,10 @@ async function render() {
     if (S.view === "decision") { await renderDecision(el); return revealAll(); }
     if (S.view === "workflow") { await renderWorkflow(el); return; }
   } catch (e) {
-    el.innerHTML = `<div class="note bad">Failed to load: ${esc(e.message)}</div>`;
+    el.innerHTML = `<div class="note bad" style="align-items:center">
+      <span>!</span>
+      <div style="flex:1"><b>Couldn't load this view.</b> ${esc(e.message)}</div>
+      <button type="button" class="btn" onclick="render()">Retry</button></div>`;
   }
 }
 
