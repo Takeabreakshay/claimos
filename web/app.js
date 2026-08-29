@@ -687,6 +687,7 @@ async function renderDecision(el) {
             <button type="button" class="btn" onclick="decide('assign_investigator')">Assign investigator</button>
             <button type="button" class="btn danger" onclick="decide('decline')">Decline</button>
           </div>
+          <div id="decisionOut" style="margin-top:12px"></div>
           <div style="margin-top:14px"><button type="button" class="btn primary" style="width:100%;justify-content:center" onclick="settleClaim()">Settle &amp; pay out</button></div>
           <div id="settleOut" style="margin-top:12px"></div>
           <details style="margin-top:14px"><summary style="cursor:pointer;font-size:12.5px;color:var(--slate);font-weight:600">Override lane (captured as a training label)</summary>
@@ -762,15 +763,34 @@ async function renderDecision(el) {
   };
 }
 
+const DECISION_UI = {
+  approve: ["Approved", "Claim approved and marked for settlement.", "ok", "✓"],
+  request_evidence: ["Evidence requested", "Sent back to the customer for a retake / re-submission.", "info", "●"],
+  assign_investigator: ["Assigned to investigation", "Routed to the surveyor + fraud unit for review.", "warn", "◈"],
+  decline: ["Declined", "Recorded with the reason on file; the customer is notified.", "bad", "✕"],
+};
 async function decide(action) {
+  const out = $("decisionOut");
+  const [title, msg, tone, icon] = DECISION_UI[action] || [hz(action), "Recorded.", "info", "●"];
+  if (out) out.innerHTML = `<div class="note info"><span class="spin"></span><div>Recording ${esc(title.toLowerCase())}…</div></div>`;
   try {
     await api(`/api/claims/${S.claimId}/decision`, {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ action, actor: S.actor }),
     });
-    toast("Recorded: " + action);
-    render();
-  } catch (e) { toast("Failed: " + e.message, 6000); }
+    // Persistent on-screen confirmation (survives on this screen; no full re-render).
+    if (out) {
+      out.innerHTML = `<div class="note ${tone}"><span>${icon}</span><div>
+        <b>${esc(title)}</b> - ${esc(msg)}
+        <div class="t-caption" style="margin-top:3px">Logged to the audit trail at ${new Date().toLocaleTimeString()}.</div>
+      </div></div>`;
+      out.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    toast("Recorded: " + title);
+  } catch (e) {
+    if (out) out.innerHTML = `<div class="note bad"><span>!</span><div>Could not record ${esc(title.toLowerCase())}: ${esc(e.message)}</div></div>`;
+    toast("Failed: " + e.message, 6000);
+  }
 }
 
 async function override() {
