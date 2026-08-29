@@ -235,25 +235,47 @@ function dashLaneBar(mix, n) {
 function _pcard(title, rows, tone) {
   return `<div class="pc ${tone || ""}"><div class="pc-top"><span class="lp-pd"></span><span class="lp-pd"></span><span class="lp-pd"></span><span class="pc-ttl">${title}</span></div><div class="pc-body">${rows}</div></div>`;
 }
+function _dots(title) {
+  return `<span class="lp-pd"></span><span class="lp-pd"></span><span class="lp-pd"></span><span class="pc-ttl">${title}</span>`;
+}
+function _qrow(id, amt, lane, label) {
+  return `<div class="pc-q"><i class="pc-qd ${lane}"></i><span class="pc-q-id">${id}</span><span class="pc-q-amt num">${amt}</span><span class="pc-q-lane ${lane}">${label}</span></div>`;
+}
 function dashProcess() {
   const steps = [
     { n: "01", eye: "Customer side", t: "File in minutes, from a phone",
       d: "Guided FNOL, camera capture with a live blur gate, and instant policy lookup - no branch visit, no paperwork queue.",
-      img: "/img/shot-customer.png", cls: "phone", cap: "claimos \u00B7 file a claim" },
+      panel: `<div class="pc phone"><div class="pc-top">${_dots("claimos \u00B7 capture")}</div><div class="pc-body">
+        <div class="pc-view"><span class="pc-rec">\u25CF REC \u00B7 09:41</span><span class="pc-view-tag">Front-left 45\u00B0</span></div>
+        <div class="pc-meterw"><span>clarity</span><div class="pc-meter"><i style="width:88%"></i></div></div>
+        <div class="pc-ok">\u2713 sharp - tap to capture</div></div></div>` },
     { n: "02", eye: "Intelligent layer", t: "Read everything, verify everything",
       d: "OCR extracts RC, licence, policy, FIR and the repair estimate; CV reads damage; cross-document checks flag tampering.",
-      img: "/img/shot-evidence.png", cls: "", cap: "claimos \u00B7 evidence & OCR" },
+      panel: `<div class="pc"><div class="pc-top">${_dots("claimos \u00B7 evidence & OCR")}</div><div class="pc-body">
+        <div class="pc-row"><span>Registration</span><b class="num">MH02TF4419</b></div>
+        <div class="pc-row"><span>Estimate total</span><b class="num">\u20B918,400</b></div>
+        <div class="pc-row"><span>Damage (CV)</span><b>minor \u00B7 front bumper</b></div>
+        <div class="pc-row ok"><span>Cross-check</span><b>consistent \u2713</b></div>
+        <div class="pc-foot">nemotron OCR \u00B7 confidence 0.98</div></div></div>` },
     { n: "03", eye: "Risk-triage wedge", t: "Score, explain, and route",
       d: "Every module reports a calibrated confidence; the wedge picks a lane and shows exactly why - with a maker-checker signature required on payouts.",
-      img: "/img/shot-decision.png", cls: "", cap: "claimos \u00B7 decision" },
+      panel: `<div class="pc accent"><div class="pc-top">${_dots("claimos \u00B7 decision")}</div><div class="pc-body">
+        <div class="pc-tiles"><div class="pc-tile"><span>PREDICTED</span><b class="num">\u20B940,782</b></div><div class="pc-tile"><span>FRAUD</span><b class="num">2%</b></div><div class="pc-tile"><span>CONFIDENCE</span><b class="num">94%</b></div></div>
+        <div class="pc-bar"><i style="width:94%"></i></div>
+        <div class="pc-lane">Lane 1 \u00B7 Touchless \u2014 auto-settled</div></div></div>` },
     { n: "04", eye: "The whole book", t: "One live queue, self-sorted",
       d: "Newest first, colour-coded by lane and SLA-aware - the officer's attention goes where the risk actually is.",
-      img: "/img/shot-queue.png", cls: "", cap: "claimos \u00B7 triage queue" },
+      panel: `<div class="pc"><div class="pc-top">${_dots("claimos \u00B7 triage queue")}</div><div class="pc-body pc-qbody">
+        ${_qrow("CLM-73C7", "\u20B918,400", "l1", "Touchless")}
+        ${_qrow("CLM-AE77", "\u20B91,10,500", "l2", "Assisted")}
+        ${_qrow("CLM-0DD9", "\u20B91,80,000", "l3", "Investigate")}
+        ${_qrow("CLM-4BE6", "\u20B935,000", "gray", "Declined")}
+      </div></div>` },
   ];
   return `<div class="proc">` + steps.map((s, i) => `
     <div class="proc-row ${i % 2 ? "rev" : ""}">
       <div class="proc-copy"><div class="proc-eye">${s.n} \u00B7 ${s.eye}</div><h3 class="proc-t">${s.t}</h3><p class="proc-d">${s.d}</p></div>
-      <div class="proc-visual"><div class="shot ${s.cls}"><div class="shot-bar"><span class="lp-pd"></span><span class="lp-pd"></span><span class="lp-pd"></span><span class="shot-url">${s.cap}</span></div><img src="${s.img}" alt="${s.t}" loading="lazy"></div></div>
+      <div class="proc-visual">${s.panel}</div>
     </div>`).join("") + `</div>`;
 }
 function dashArch() {

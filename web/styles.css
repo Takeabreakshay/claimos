@@ -1359,3 +1359,28 @@ input:focus, select:focus, textarea:focus{ border-color:var(--blue) !important;
 .shot-bar{display:flex;align-items:center;gap:6px;padding:9px 12px;background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.08)}
 .shot-url{margin-left:8px;font-family:var(--font-data);font-size:11px;color:#8ea3c2;letter-spacing:.04em}
 .shot img{display:block;width:100%;height:auto}
+
+/* ---- dark product mockups in the process path (replace raster shots) ---- */
+.pc-view{position:relative;height:118px;border-radius:10px;background:
+  radial-gradient(120% 120% at 50% 0,#1b3050,#05070c);border:1px solid rgba(255,255,255,.1);
+  display:flex;align-items:flex-end;justify-content:center;padding:10px}
+.pc-rec{position:absolute;top:9px;left:11px;font-family:var(--font-data);font-size:10.5px;color:#ff6a5d;letter-spacing:.06em}
+.pc-view-tag{font-size:11px;color:#cfe0ff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+  padding:4px 10px;border-radius:999px}
+.pc-meterw{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:11.5px;color:#9fb2ce}
+.pc-meterw .pc-meter{flex:1;margin:0}
+.pc-foot{margin-top:12px;font-family:var(--font-data);font-size:10.5px;color:#6ea8ff;letter-spacing:.04em}
+.pc-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pc-tile{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:11px 10px}
+.pc-tile span{display:block;font-family:var(--font-data);font-size:9px;letter-spacing:.1em;color:#8ea3c2}
+.pc-tile b{display:block;margin-top:5px;font-size:16px;color:#fff}
+.pc-qbody{display:flex;flex-direction:column;gap:2px}
+.pc-q{display:grid;grid-template-columns:14px 1fr auto auto;align-items:center;gap:10px;padding:9px 2px;
+  border-bottom:1px solid rgba(255,255,255,.07)}
+.pc-q:last-child{border-bottom:0}
+.pc-qd{width:9px;height:9px;border-radius:3px}
+.pc-qd.l1{background:var(--l1-dot)}.pc-qd.l2{background:var(--l2-dot)}.pc-qd.l3{background:var(--l3-dot)}.pc-qd.gray{background:#64789a}
+.pc-q-id{font-family:var(--font-data);font-size:12px;color:#cfe0ff}
+.pc-q-amt{font-size:12px;color:#fff;font-weight:700}
+.pc-q-lane{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;color:#fff}
+.pc-q-lane.l1{background:var(--l1-dot)}.pc-q-lane.l2{background:var(--l2-dot)}.pc-q-lane.l3{background:var(--l3-dot)}.pc-q-lane.gray{background:#64789a}
