@@ -29,6 +29,10 @@ function setRole(r) {
   if (S.view === "decision") render();
 }
 window.setRole = setRole;
+
+// Capture mode: headless/automation gets everything shown at once (the scroll
+// reveal otherwise leaves below-the-fold elements invisible in a screenshot).
+try { if (navigator.webdriver) document.documentElement.classList.add("cap"); } catch (e) {}
 const $ = (id) => document.getElementById(id);
 const money = (n) => (n === null || n === undefined || n === "") ? "-"
   : "₹" + Math.round(Number(n)).toLocaleString("en-IN");
@@ -235,27 +239,21 @@ function dashProcess() {
   const steps = [
     { n: "01", eye: "Customer side", t: "File in minutes, from a phone",
       d: "Guided FNOL, camera capture with a live blur gate, and instant policy lookup - no branch visit, no paperwork queue.",
-      panel: _pcard("ClaimOS \u00B7 file a claim",
-        `<div class="pc-phone"><div class="pc-cam">\uD83D\uDCF7 capture damage \u00B7 10:00</div><div class="pc-meter"><i style="width:82%"></i></div><div class="pc-ok">\u2713 sharp - ready to submit</div></div>`) },
+      img: "/img/shot-customer.png", cls: "phone", cap: "claimos \u00B7 file a claim" },
     { n: "02", eye: "Intelligent layer", t: "Read everything, verify everything",
       d: "OCR extracts RC, licence, policy, FIR and the repair estimate; CV reads damage; cross-document checks flag tampering.",
-      panel: _pcard("Document intelligence",
-        `<div class="pc-row"><span>Registration</span><b>MH02TF4419</b></div><div class="pc-row"><span>Estimate total</span><b>\u20B918,400</b></div><div class="pc-row"><span>Damage (CV)</span><b>minor \u00B7 front bumper</b></div><div class="pc-row ok"><span>Cross-check</span><b>consistent \u2713</b></div>`) },
-    { n: "03", eye: "Risk-triage wedge", t: "Score value, fraud, severity, escalation",
-      d: "Calibrated models plus deterministic rules produce a confidence and a lane - with a single bounded retake if evidence is thin.",
-      panel: _pcard("Risk-triage engine",
-        `<div class="pc-row"><span>Fraud</span><b>2%</b></div><div class="pc-row"><span>Predicted repair</span><b>\u20B940,782</b></div><div class="pc-row"><span>Confidence</span><b>94%</b></div><div class="pc-bar"><i style="width:94%"></i></div>`) },
-    { n: "04", eye: "Three-speed execution", t: "Route to the effort it deserves",
-      d: "Touchless in minutes, Assisted with an officer, or Investigative with a surveyor - and a maker-checker second signature on every payout.",
-      panel: _pcard("Routing decision", `<div class="pc-lane">Lane 1 \u00B7 Touchless</div><div class="pc-chips"><span class="lp-chip l1">Touchless</span><span class="lp-chip l2">Assisted</span><span class="lp-chip l3">Investigate</span></div>`, "accent") },
-    { n: "05", eye: "Decision & closure", t: "Settle, explain, and learn",
-      d: "A transparent settlement waterfall, a full audit trail, and a feedback loop that retunes the thresholds over time.",
-      panel: _pcard("Settlement", `<div class="pc-row"><span>Assessed</span><b>\u20B918,400</b></div><div class="pc-row"><span>Deductible</span><b>-\u20B91,000</b></div><div class="pc-row ok"><span>Net payable</span><b>\u20B917,400</b></div><div class="pc-utr">UTR logged \u00B7 audit trail</div>`) },
+      img: "/img/shot-evidence.png", cls: "", cap: "claimos \u00B7 evidence & OCR" },
+    { n: "03", eye: "Risk-triage wedge", t: "Score, explain, and route",
+      d: "Every module reports a calibrated confidence; the wedge picks a lane and shows exactly why - with a maker-checker signature required on payouts.",
+      img: "/img/shot-decision.png", cls: "", cap: "claimos \u00B7 decision" },
+    { n: "04", eye: "The whole book", t: "One live queue, self-sorted",
+      d: "Newest first, colour-coded by lane and SLA-aware - the officer's attention goes where the risk actually is.",
+      img: "/img/shot-queue.png", cls: "", cap: "claimos \u00B7 triage queue" },
   ];
   return `<div class="proc">` + steps.map((s, i) => `
     <div class="proc-row ${i % 2 ? "rev" : ""}">
       <div class="proc-copy"><div class="proc-eye">${s.n} \u00B7 ${s.eye}</div><h3 class="proc-t">${s.t}</h3><p class="proc-d">${s.d}</p></div>
-      <div class="proc-visual">${s.panel}</div>
+      <div class="proc-visual"><div class="shot ${s.cls}"><div class="shot-bar"><span class="lp-pd"></span><span class="lp-pd"></span><span class="lp-pd"></span><span class="shot-url">${s.cap}</span></div><img src="${s.img}" alt="${s.t}" loading="lazy"></div></div>
     </div>`).join("") + `</div>`;
 }
 function dashArch() {
@@ -1837,5 +1835,13 @@ document.addEventListener("click", (e) => {
 
 loadHealth();
 try { const rs = $("roleSel"); if (rs) rs.value = S.role; const av = $("who"); if (av) av.textContent = ROLES[S.role].init; } catch (e) {}
-(() => { let b = "dashboard"; try { b = sessionStorage.getItem('cos_view') || b; } catch (e) {}
-  go(["dashboard","queue","intake","workflow"].includes(b) ? b : "dashboard"); })();
+(() => {
+  // deep-link (used for headless capture + shareable links):
+  //   #v=queue   |   #open=CLM-XXXX&v=decision
+  const h = location.hash || "";
+  const mo = h.match(/open=([A-Za-z0-9\-]+)/), mv = h.match(/v=([a-z]+)/);
+  if (mo) { S.claimId = mo[1]; go(mv ? mv[1] : "decision"); return; }
+  if (mv) { go(mv[1]); return; }
+  let b = "dashboard"; try { b = sessionStorage.getItem('cos_view') || b; } catch (e) {}
+  go(["dashboard","queue","intake","workflow"].includes(b) ? b : "dashboard");
+})();

@@ -1349,3 +1349,13 @@ input:focus, select:focus, textarea:focus{ border-color:var(--blue) !important;
   .proc-row.rev .proc-copy{order:1}.proc-row.rev .proc-visual{order:2}
   .lp-dark{padding:0 16px 1px}
 }
+
+/* capture mode: force all reveal targets visible for headless screenshots */
+.cap .card,.cap .kpi,.cap .aj-stat,.cap .mod,.cap .wf-mod,.cap .feat,.cap .trust-item,.cap .lp-act,.cap .proc-row,.cap .pc,.cap .lp-hero,.cap .lp-panel,.cap [data-r]{opacity:1 !important;transform:none !important;filter:none !important}
+
+/* real product screenshots in the process path (browser frame) */
+.shot{width:100%;max-width:600px;background:#0e1c33;border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden;box-shadow:0 26px 60px rgba(0,0,0,.42)}
+.shot.phone{max-width:330px;margin:0 auto}
+.shot-bar{display:flex;align-items:center;gap:6px;padding:9px 12px;background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.08)}
+.shot-url{margin-left:8px;font-family:var(--font-data);font-size:11px;color:#8ea3c2;letter-spacing:.04em}
+.shot img{display:block;width:100%;height:auto}
