@@ -183,7 +183,7 @@ async function render() {
   const el = $("view");
   el.innerHTML = skeleton(S.view === "intake" ? "kpis" : "page");
   try {
-    if (S.view === "dashboard") { await renderDashboard(el); revealAll(); return wireDial(); }
+    if (S.view === "dashboard") { await renderDashboard(el); return revealAll(); }
     if (S.view === "queue") { await renderQueue(el); return revealAll(); }
     if (S.view === "intake") { renderIntake(el); return revealAll(); }
     if (S.view === "evidence") { await renderEvidence(el); return revealAll(); }
@@ -195,95 +195,148 @@ async function render() {
 }
 
 /* ---------- DASHBOARD ---------- */
+const DASH_FEATURES = [
+  { ic: "\u25A7", t: "Document intelligence (OCR)", d: "Reads RC, licence, policy, FIR, estimates and bank details, then cross-checks them for tampering." },
+  { ic: "\u25C8", t: "Damage assessment (CV)", d: "Reads severity and damaged parts from the photos; blur-gated so only usable evidence counts." },
+  { ic: "\u2318", t: "Fraud & duplicate", d: "Calibrated fraud probability plus a collusion graph and perceptual-hash reuse detection." },
+  { ic: "\u20B9", t: "Repair-cost estimate", d: "A deterministic parts-and-labour rate card gives a P10-P50-P90 band and flags padding." },
+  { ic: "\u25A4", t: "Coverage validation", d: "Maps the claim against policy terms - in-force, cover type, exclusions - in four clear states." },
+  { ic: "\u2442", t: "Risk-triage wedge", d: "Combines value, confidence, fraud, severity and escalation risk to pick the lane." },
+];
+const DASH_TRUST = [
+  { ic: "\uD83D\uDEE1", t: "100% synthetic data", d: "No real PII anywhere - built to be provable, not to hoard data." },
+  { ic: "\u25D4", t: "Explainable on every call", d: "Reason codes and a self-assessing decision trace on each claim." },
+  { ic: "\u25A6", t: "Audit trail + maker-checker", d: "Every action is logged; payouts need a second signature." },
+  { ic: "\u25F7", t: "IRDAI TAT-aligned", d: "Beats the Master-Circular clocks; the Rs 50k surveyor seam is the anchor." },
+];
+const DASH_RAILS = ["VAHAN", "DigiLocker", "IIB PRISM", "IIB QUEST", "Core policy DB", "Payments"];
+
+function dashBand(v, label, color) {
+  return `<div class="lp-band-item"><div class="lp-band-v num"${color ? ` style="color:${color}"` : ""}>${v}</div><div class="lp-band-k">${label}</div></div>`;
+}
+function dashAction(v, label) {
+  v = v || 0;
+  return `<button type="button" class="lp-act${v ? "" : " zero"}" onclick="go('queue')"><span class="lp-act-v num">${v}</span><span class="lp-act-k">${label}</span></button>`;
+}
+function dashLaneBar(mix, n) {
+  const order = [["lane1_touchless", "Touchless", "var(--l1-dot)"], ["lane2_assisted", "Assisted", "var(--l2-dot)"],
+    ["lane3_investigative", "Investigative", "var(--l3-dot)"], ["coverage_reject", "Coverage decline", "var(--slate-2)"],
+    ["retake", "Evidence retake", "var(--blue)"]];
+  const present = order.filter(([k]) => (mix[k] || 0) > 0);
+  if (!present.length || !n) return `<div class="empty">No scored claims yet.</div>`;
+  const seg = present.map(([k, lbl, c]) => { const v = mix[k] || 0, pc = Math.round(v / n * 100); return `<div class="lp-lane-seg" title="${lbl}: ${v} (${pc}%)" style="flex:${v} 0 0;background:${c}">${pc >= 9 ? pc + "%" : ""}</div>`; }).join("");
+  const legend = present.map(([k, lbl, c]) => { const v = mix[k] || 0, pc = Math.round(v / n * 100); return `<div class="lp-lane-leg"><i style="background:${c}"></i><span class="lp-lane-name">${lbl}</span><span class="lp-lane-num num">${v} \u00B7 ${pc}%</span></div>`; }).join("");
+  return `<div class="lp-lanebar"><div class="lp-lane-track">${seg}</div><div class="lp-lane-legend">${legend}</div></div>`;
+}
+function dashArch() {
+  return `<div class="arch">
+    <div class="arch-stage"><span class="arch-pill">1 \u00B7 Digital FNOL</span></div>
+    <div class="arch-down"></div>
+    <div class="arch-box">
+      <div class="arch-box-t">2 \u00B7 Intelligent layer <span>explainable AI</span></div>
+      <div class="arch-engines"><span class="arch-eng">Damage CV</span><span class="arch-eng">Coverage engine</span><span class="arch-eng">Fraud engine</span><span class="arch-eng">Document OCR</span></div>
+      <div class="arch-sub">parts detected \u00B7 Repair-cost estimate</div>
+    </div>
+    <div class="arch-down"></div>
+    <div class="arch-stage"><span class="arch-pill">3 \u00B7 Risk-triage engine</span></div>
+    <div class="arch-down"></div>
+    <div class="arch-gate">Evidence gap? low confidence or missing doc<span class="arch-loop">retake, bounded once</span></div>
+    <div class="arch-down"></div>
+    <div class="arch-stage"><span class="arch-pill">4 \u00B7 Three-speed execution</span></div>
+    <div class="arch-lanes">
+      <div class="arch-lane l1"><b>Lane 1</b><span>Touchless</span><em>low risk \u00B7 minutes</em></div>
+      <div class="arch-lane l2"><b>Lane 2</b><span>Assisted</span><em>medium \u00B7 officer</em></div>
+      <div class="arch-lane l3"><b>Lane 3</b><span>Investigate</span><em>high \u00B7 surveyor</em></div>
+    </div>
+    <div class="arch-down"></div>
+    <div class="arch-stage"><span class="arch-pill sm">5 \u00B7 Orchestration layer</span></div>
+    <div class="arch-down"></div>
+    <div class="arch-stage"><span class="arch-pill sm">6 \u00B7 Decision & closure</span></div>
+    <div class="arch-down"></div>
+    <div class="arch-stage"><span class="arch-pill sm ghost">7 \u00B7 Feedback loop \u00B7 retunes the thresholds</span></div>
+  </div>`;
+}
+function dashHeroPanel() {
+  return `<div class="lp-panel">
+    <div class="lp-panel-top"><span class="lp-pd"></span><span class="lp-pd"></span><span class="lp-pd"></span><span class="lp-panel-ttl">ClaimOS \u00B7 decision</span></div>
+    <div class="lp-panel-body">
+      <div class="lp-panel-row"><span>Predicted repair</span><b class="num">\u20B940,782</b></div>
+      <div class="lp-panel-row"><span>Fraud probability</span><b class="num">2%</b></div>
+      <div class="lp-panel-row"><span>Coverage</span><b>clear</b></div>
+      <div class="lp-panel-lane">Routed to <b>Lane 1 \u00B7 Touchless</b> - auto-settled in minutes</div>
+      <div class="lp-panel-chips"><span class="lp-chip l1">Touchless</span><span class="lp-chip l2">Assisted</span><span class="lp-chip l3">Investigate</span></div>
+    </div>
+  </div>`;
+}
+
 async function renderDashboard(el) {
   const d = await api("/api/dashboard");
-  await loadPop();
-  await loadEnvelope();
   setQCount(d.n_claims);
+  const n = d.n_claims || 0, mix = d.lane_mix || {}, ac = d.action_counts || {};
   const leakOk = d.leakage_rate <= d.leakage_ceiling;
-  const mix = Object.entries(d.lane_mix || {});
-  const total = mix.reduce((a, [, v]) => a + v, 0) || 1;
-  const colors = { lane1_touchless: "var(--l1-dot)", lane2_assisted: "var(--l2-dot)", lane3_investigative: "var(--l3-dot)", retake: "var(--blue)", coverage_reject: "var(--slate-2)" };
-
   el.innerHTML = `
-    <div class="aj-hero">
-      <div class="aj-kicker">ClaimOS · Risk-based claims triage</div>
-      <h1 class="aj-display">Effort flows to<br>where risk is.</h1>
-      <p class="aj-lede">Every motor claim is scored and routed into one of three lanes -
-        <b>touchless</b>, <b>assisted</b>, <b>investigative</b> - by exactly how much automation
-        it deserves. ${d.n_claims} claims in the book, ${pct(d.touchless_share)} settled with no human touch.</p>
-    </div>
-
-    <div class="aj-stats">
-      <div class="aj-stat"><div class="aj-stat-k">Claims in book</div>
-        <div class="aj-stat-v num" data-sc="${d.n_claims}">${d.n_claims}</div>
-        <div class="aj-stat-d">${money(d.total_exposure)} exposure</div></div>
-      <div class="aj-stat"><div class="aj-stat-k">Touchless</div>
-        <div class="aj-stat-v num" style="color:var(--l1-fg)" data-sc="${pct(d.touchless_share)}">${pct(d.touchless_share)}</div>
-        <div class="aj-stat-d">auto-settled, no human</div></div>
-      <div class="aj-stat"><div class="aj-stat-k">Lane-1 leakage</div>
-        <div class="aj-stat-v num" style="color:${leakOk ? "var(--good)" : "var(--bad)"}" data-sc="${pct(d.leakage_rate, 2)}">${pct(d.leakage_rate, 2)}</div>
-        <div class="aj-stat-d">${leakOk ? "under" : "BREACHING"} ${pct(d.leakage_ceiling, 1)} ceiling</div></div>
-      <div class="aj-stat"><div class="aj-stat-k">Fraud-flagged</div>
-        <div class="aj-stat-v num" style="color:var(--l3-fg)" data-sc="${d.fraud_flagged}">${d.fraud_flagged}</div>
-        <div class="aj-stat-d">${d.settled} settled to date</div></div>
-    </div>
-
-    <section class="aj-section">
-      <div class="aj-section-head"><span class="aj-idx">01</span>
-        <div><div class="aj-eyebrow">The engine</div><h2 class="aj-h">Watch the book route itself</h2></div></div>
-      ${flowCard(d)}
-      ${POP && POP.length ? `<div style="margin-top:16px">${dialCard()}</div>` : ""}
-      ${POP && POP.length ? streamCard() : ""}
-    </section>
-
-    <section class="aj-section">
-      <div class="aj-section-head"><span class="aj-idx">02</span>
-        <div><div class="aj-eyebrow">The guardrail</div><h2 class="aj-h">Automation, bounded by safety</h2></div></div>
-    <div class="grid g2">
-      <div class="card"><div class="card-h"><h3>Lane distribution</h3><span class="sub">how the book self-sorts</span></div>
-        <div class="card-b">
-          ${total > 1 || mix.length ? `
-          <div style="display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid var(--line-2)">
-            ${mix.map(([k, v]) => `<div title="${k}: ${v}" style="flex:${v} 0 0;background:${colors[k] || "var(--slate)"};display:grid;place-items:center;color:#fff;font-size:11px;font-weight:800">${(v / total * 100) > 8 ? Math.round(v / total * 100) + "%" : ""}</div>`).join("")}
-          </div>
-          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--slate)">
-            ${mix.map(([k, v]) => `<span style="display:inline-flex;align-items:center;gap:6px"><i style="width:10px;height:10px;border-radius:3px;background:${colors[k] || "var(--slate)"};display:inline-block"></i>${(LANE[k] || {}).label || k} · ${v}</span>`).join("")}
-          </div>` : `<div class="empty">No scored claims yet.</div>`}
+    <section class="lp-hero">
+      <div class="lp-hero-copy">
+        <div class="lp-kicker">ClaimOS \u00B7 Motor-claims triage</div>
+        <h1 class="lp-display">Claims,<br>triaged in minutes.</h1>
+        <p class="lp-lede">One intelligent layer reads every claim - documents, damage, fraud, coverage and cost - then routes it into the speed lane it actually deserves. <b>${n}</b> claims in the book, <b>${pct(d.touchless_share)}</b> settled with no human touch.</p>
+        <div class="lp-cta-row">
+          <button type="button" class="btn primary" onclick="go('queue')">Open the live queue</button>
+          <a class="btn ghost" href="/claim" target="_blank" rel="noopener">File a claim</a>
         </div>
       </div>
-
-      <div class="card"><div class="card-h"><h3>Leakage guardrail</h3><span class="sub">the make-or-break metric</span></div>
-        <div class="card-b">
-          ${leakOk
-      ? `<div class="note ok"><span>✓</span><div><b>Holding.</b> No fraud-flagged claim has been auto-settled beyond the ${pct(d.leakage_ceiling, 1)} ceiling. Touchless share is bounded by safety, never forced.</div></div>`
-      : `<div class="note bad"><span>!</span><div><b>Breach.</b> ${d.leaked_claims.length} fraud-flagged claim(s) landed in Lane 1: ${d.leaked_claims.map(esc).join(", ")}. Tighten Lane-1 thresholds before shipping.</div></div>`}
-          <div style="margin-top:14px" class="kv"><span class="k">Fraud-flagged claims</span><span class="v num">${d.fraud_flagged}</span></div>
-          <div class="kv"><span class="k">Auto-settled (Lane 1)</span><span class="v num">${d.lane_mix.lane1_touchless || 0}</span></div>
-          <div class="kv"><span class="k">Ceiling</span><span class="v num">${pct(d.leakage_ceiling, 1)}</span></div>
-        </div>
-      </div>
-    </div>
+      <div class="lp-hero-visual">${dashHeroPanel()}</div>
     </section>
 
-    <section class="aj-section">
-      <div class="aj-section-head"><span class="aj-idx">03</span>
-        <div><div class="aj-eyebrow">The book</div><h2 class="aj-h">Recent claims</h2></div></div>
-    <div class="card">
-      <div class="tblwrap">
-        <table class="tbl"><thead><tr>
-          <th>Claim</th><th>Type</th><th>Claimed</th><th>Lane</th><th>Fraud</th><th>Confidence</th><th>Status</th>
-        </tr></thead><tbody>
-        ${(d.recent || []).map(r => `<tr onclick="openClaim('${r.claim_id}')">
-          <td class="mono">${esc(r.claim_id)}</td><td>${esc(r.claim_type || "-")}</td>
-          <td class="num">${money(r.claim_amount)}</td><td>${laneChip(r.lane)}</td>
-          <td class="num">${r.p_fraud != null ? pct(r.p_fraud, 0) : "-"}</td>
-          <td>${r.confidence != null ? `<div class="bar"><i style="width:${Math.round(r.confidence * 100)}%"></i></div>` : "-"}</td>
-          <td>${esc(hz(r.status || "-"))}</td></tr>`).join("") ||
-    `<tr><td colspan="7"><div class="empty">No claims yet - open one from <b>New claim</b>.</div></td></tr>`}
-        </tbody></table>
-      </div>
+    <div class="lp-rails">
+      <span class="lp-rails-lbl">Plugs into the rails you already run</span>
+      <div class="lp-rails-row">${DASH_RAILS.map(r => `<span class="lp-rail">${r}</span>`).join("")}</div>
     </div>
+
+    <section class="lp-stuck">
+      <h2 class="lp-h2">Claims didn't get harder. <span class="mut">They got stuck.</span></h2>
+      <p class="lp-sub">A \u20B98,000 dent and a total loss run the same heavy, serial, manual path. The fix isn't more staff - it's routing effort to where the risk actually is.</p>
+    </section>
+
+    <section class="lp-section">
+      <div class="lp-eyebrow">The architecture</div>
+      <h2 class="lp-h2">One intelligent layer, three speeds.</h2>
+      ${dashArch()}
+    </section>
+
+    <section class="lp-section">
+      <div class="lp-eyebrow">Under the hood</div>
+      <h2 class="lp-h2">Six engines feed one decision.</h2>
+      <div class="lp-feats">${DASH_FEATURES.map(f => `<div class="feat"><div class="feat-ic">${f.ic}</div><h3>${f.t}</h3><p>${f.d}</p></div>`).join("")}</div>
+    </section>
+
+    <section class="lp-band">
+      ${dashBand(n, "claims in the book")}
+      ${dashBand(pct(d.touchless_share), "settled touchless", "var(--l1-fg)")}
+      ${dashBand(pct(d.leakage_rate, 2), "Lane-1 leakage \u00B7 ceiling " + pct(d.leakage_ceiling, 1), leakOk ? "var(--good)" : "var(--bad)")}
+      ${dashBand(money(d.total_exposure), "exposure under management")}
+    </section>
+
+    <section class="lp-section">
+      <div class="lp-eyebrow">The wedge, live</div>
+      <h2 class="lp-h2">How the book self-sorts.</h2>
+      <div class="card"><div class="card-b">${dashLaneBar(mix, n)}</div></div>
+      <div class="lp-action">
+        ${dashAction(ac.awaiting_manager, "awaiting Manager sign-off")}
+        ${dashAction(ac.investigating, "in investigation")}
+        ${dashAction(ac.needs_evidence, "evidence retakes")}
+        ${dashAction(d.doc_mismatch, "document mismatches")}
+      </div>
+    </section>
+
+    <section class="lp-section">
+      <div class="lp-eyebrow">Built for an insurer</div>
+      <div class="lp-trust">${DASH_TRUST.map(t => `<div class="trust-item"><div class="trust-ic">${t.ic}</div><div class="trust-tx"><b>${t.t}</b><span>${t.d}</span></div></div>`).join("")}</div>
+    </section>
+
+    <section class="lp-word">
+      <div class="lp-word-cta">Route every claim to the effort it deserves.</div>
+      <div class="lp-word-mark">ClaimOS</div>
     </section>`;
 }
 

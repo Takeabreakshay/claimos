@@ -321,7 +321,8 @@ def policy_lookup(policy_id: str) -> dict[str, Any]:
 def dashboard() -> dict[str, Any]:
     store = get_store()
     claims = store.list_claims(limit=5000)
-    rows = [(c, store.latest_score(c["claim_id"]) or {}) for c in claims]
+    scores = store.latest_scores([c["claim_id"] for c in claims])  # one query, no N+1
+    rows = [(c, scores.get(c["claim_id"], {})) for c in claims]
     n = len(rows)
     lane_mix: dict[str, int] = {}
     for c, _ in rows:
@@ -335,6 +336,11 @@ def dashboard() -> dict[str, Any]:
     settled = [c for c, _ in rows if c.get("status") == "paid"]
     exposure = sum(float(c.get("claim_amount") or 0) for c, _ in rows)
 
+    def _statusn(*sts: str) -> int:
+        return sum(1 for c, _ in rows if (c.get("status") or "") in sts)
+
+    doc_mismatch = [c["claim_id"] for c, s in rows if s.get("document_mismatch")]
+
     return {
         "n_claims": n,
         "touchless_share": (touchless / n) if n else 0,
@@ -345,6 +351,15 @@ def dashboard() -> dict[str, Any]:
         "leakage_ceiling": constants.load_thresholds()["guardrails"]["lane1_leakage_ceiling"],
         "settled": len(settled),
         "total_exposure": exposure,
+        # "needs action" workload (drives the dashboard action row; all derivable
+        # from the same claim rows, so counts stay in sync with the book)
+        "action_counts": {
+            "awaiting_officer": _statusn("awaiting_officer", "scored"),
+            "awaiting_manager": _statusn("payout_proposed"),
+            "needs_evidence": _statusn("retake", "evidence"),
+            "investigating": _statusn("investigating"),
+        },
+        "doc_mismatch": len(doc_mismatch),
         "recent": [
             {"claim_id": c["claim_id"], "lane": c.get("lane"),
              "status": c.get("status"), "claim_amount": c.get("claim_amount"),
