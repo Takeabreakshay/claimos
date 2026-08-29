@@ -1127,3 +1127,11 @@ input:focus, select:focus, textarea:focus{ border-color:var(--blue) !important;
 @media (max-width:860px) and (prefers-reduced-motion:reduce){
   .mnav button, .mnav button svg, .mnav button::before{transition:none}
 }
+
+/* role picker (lean RBAC switch in the header) */
+.rolepick{display:inline-flex;align-items:center;gap:7px}
+.rolepick #roleSel{appearance:auto;height:32px;border:1px solid var(--line);border-radius:8px;
+  background:var(--panel);color:var(--ink);font-family:var(--font-ui);font-size:12.5px;font-weight:600;
+  padding:0 8px;cursor:pointer}
+.rolepick #roleSel:hover{border-color:var(--blue-2)}
+@media (max-width:720px){ .rolepick #roleSel{max-width:96px} }

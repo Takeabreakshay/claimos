@@ -421,6 +421,18 @@ def score_and_route(claim_id: str, actor: str = "SYSTEM") -> dict[str, Any]:
     if vf:
         escalations.append((Lane.ASSISTED.value, vf))
 
+    # DOCUMENT CONSISTENCY / TAMPER CHECK (PS: document verification; ~70% of
+    # general-insurance fraud is document falsification). Cross-check the OCR'd
+    # identifiers across the uploaded documents; a mismatch is a strong forgery
+    # signal, so bump fraud and force investigation.
+    dc = _document_consistency(st, claim)
+    if dc["mismatch"]:
+        scored["p_fraud"] = min(1.0, float(scored["p_fraud"]) + 0.25)
+        rec["p_fraud"] = scored["p_fraud"]
+        escalations.append((Lane.INVESTIGATIVE.value, "document mismatch: " + dc["flags"][0]))
+    elif dc["flags"]:
+        escalations.append((Lane.ASSISTED.value, "document check: " + dc["flags"][0]))
+
     # Coverage-state reason, made readable in the reason chain (routing already
     # reflects it via the mapped inputs above - a hard decline can't be loosened).
     if cstate["state"] != cov.STATE_CLEAR and decision.outcome != "coverage_reject":
@@ -543,6 +555,48 @@ def _damage_mismatch(claim: dict[str, Any]) -> dict[str, Any]:
                    "assessed": claim.get("cv_severity"), "delta": delta,
                    "confidence": conf}
     return {"escalations": escalations, "fraud_bump": fraud_bump, "summary": summary}
+
+
+def _document_consistency(st, claim: dict[str, Any]) -> dict[str, Any]:
+    """Cross-check the OCR'd identifiers across a claim's documents.
+
+    Registration number should agree across RC / policy / repair-estimate / FIR
+    and match the policy vehicle. A disagreement is a strong document-falsification
+    signal (the single largest fraud vector). Pure consistency logic - never
+    invents data; only compares what OCR actually extracted.
+    """
+    def _norm(v: Any) -> str:
+        return "".join(str(v or "").split()).upper()
+
+    docs = st.list_child("claim_documents", claim.get("claim_id")) or []
+    reg_sources: dict[str, list[str]] = {}
+    fir_vehicles: list[str] = []
+    for d in docs:
+        f = d.get("ocr_fields") or {}
+        reg = _norm(f.get("registration_no") or f.get("registration_number")
+                    or f.get("vehicle_registration"))
+        if reg:
+            reg_sources.setdefault(reg, []).append(d.get("doc_type") or "doc")
+        if (d.get("doc_type") or "") == "fir":
+            fir_vehicles += [_norm(v) for v in (f.get("vehicles_involved") or []) if _norm(v)]
+
+    flags: list[str] = []
+    mismatch = False
+    distinct = set(reg_sources)
+    if len(distinct) > 1:
+        mismatch = True
+        flags.append("registration differs across documents (" + ", ".join(sorted(distinct)) + ")")
+
+    claim_reg = _norm(claim.get("registration_no") or claim.get("registration_number"))
+    if claim_reg and distinct and claim_reg not in distinct:
+        mismatch = True
+        flags.append("document registration does not match the policy vehicle")
+
+    if fir_vehicles and distinct and not (set(fir_vehicles) & distinct):
+        flags.append("FIR vehicle is not among the claim documents")
+
+    return {"mismatch": mismatch, "flags": flags,
+            "docs_checked": len(docs), "reg_numbers": sorted(distinct)}
 
 
 def _vision_floor_block(claim: dict[str, Any], mrow: dict[str, Any]) -> str | None:
@@ -796,6 +850,8 @@ def record_decision(claim_id: str, action: str, actor: str,
         patch["status"] = "paid"
     elif action == "request_evidence":
         patch["status"] = "retake"
+    elif action == "propose_payout":
+        patch["status"] = "payout_proposed"
     elif action == "override" and to_lane:
         patch["lane"] = to_lane
         patch["status"] = {"lane1_touchless": "approved",

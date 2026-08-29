@@ -1,7 +1,34 @@
 /* ===================== ClaimOS dashboard ===================== */
 "use strict";
 
-const S = { view: "dashboard", claimId: null, claim: null, actor: "officer.demo", claims: [] };
+const S = { view: "dashboard", claimId: null, claim: null, actor: "officer.demo", role: "officer", claims: [] };
+
+/* ---- Roles (lean RBAC + maker-checker). No passwords: a role switch that
+   gates what each user can do and stamps who acted into the audit trail.
+   Officer prepares + proposes; Manager signs off payouts (maker-checker);
+   Admin manages config and is read-only on claim decisions (separation of duties). */
+const ROLES = {
+  officer: { short: "Officer", label: "Claims Officer", actor: "officer.demo", init: "OF",
+             canDecide: true,  canSettle: false, canOverride: false, canConfig: false },
+  manager: { short: "Manager", label: "Claims Manager", actor: "manager.demo", init: "MG",
+             canDecide: true,  canSettle: true,  canOverride: true,  canConfig: false },
+  admin:   { short: "Admin",   label: "Administrator",   actor: "admin.demo",   init: "AD",
+             canDecide: false, canSettle: false, canOverride: false, canConfig: true },
+};
+try { S.role = localStorage.getItem("cos_role") || "officer"; } catch (e) { S.role = "officer"; }
+if (!ROLES[S.role]) S.role = "officer";
+S.actor = ROLES[S.role].actor;
+function curRole() { return ROLES[S.role] || ROLES.officer; }
+function setRole(r) {
+  if (!ROLES[r]) r = "officer";
+  S.role = r; S.actor = ROLES[r].actor;
+  try { localStorage.setItem("cos_role", r); } catch (e) {}
+  const av = document.getElementById("who"); if (av) av.textContent = ROLES[r].init;
+  const rs = document.getElementById("roleSel"); if (rs) rs.value = r;
+  if (typeof toast === "function") toast("Acting as " + ROLES[r].label);
+  if (S.view === "decision") render();
+}
+window.setRole = setRole;
 const $ = (id) => document.getElementById(id);
 const money = (n) => (n === null || n === undefined || n === "") ? "-"
   : "₹" + Math.round(Number(n)).toLocaleString("en-IN");
@@ -681,21 +708,7 @@ async function renderDecision(el) {
         </div></div>
 
         <div class="card" style="margin-top:16px"><div class="card-h"><h3>Actions</h3></div><div class="card-b">
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button type="button" class="btn primary" onclick="decide('approve')">Approve</button>
-            <button type="button" class="btn" onclick="decide('request_evidence')">Request evidence</button>
-            <button type="button" class="btn" onclick="decide('assign_investigator')">Assign investigator</button>
-            <button type="button" class="btn danger" onclick="decide('decline')">Decline</button>
-          </div>
-          <div id="decisionOut" style="margin-top:12px"></div>
-          <div style="margin-top:14px"><button type="button" class="btn primary" style="width:100%;justify-content:center" onclick="settleClaim()">Settle &amp; pay out</button></div>
-          <div id="settleOut" style="margin-top:12px"></div>
-          <details style="margin-top:14px"><summary style="cursor:pointer;font-size:12.5px;color:var(--slate);font-weight:600">Override lane (captured as a training label)</summary>
-            <div style="margin-top:10px">
-              <div class="field"><label>Route to</label><select id="ovLane">${Object.keys(LANE).map(k => `<option value="${k}">${LANE[k].label}</option>`).join("")}</select></div>
-              <div class="field"><label>Reason (required)</label><input type="text" id="ovWhy" placeholder="why the model was wrong"></div>
-              <button type="button" class="btn" onclick="override()">Apply override</button>
-            </div></details>
+          ${actionsBlock()}
         </div></div>
       </div>
     </div>
@@ -763,6 +776,53 @@ async function renderDecision(el) {
   };
 }
 
+/* Role-aware Actions card. Officer acts + proposes; Manager signs off payouts
+   (maker-checker); Admin is read-only on decisions. */
+function actionsBlock() {
+  const r = curRole();
+  if (!r.canDecide && !r.canSettle) {
+    return `<div class="note info"><span>●</span><div><b>${r.label}</b> - read-only on claim decisions (separation of duties). Switch to Officer or Manager to act. Admins manage users, thresholds and the audit trail.</div></div>`;
+  }
+  const buttons = `<div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" class="btn primary" onclick="decide('approve')">Approve</button>
+      <button type="button" class="btn" onclick="decide('request_evidence')">Request evidence</button>
+      <button type="button" class="btn" onclick="decide('assign_investigator')">Assign investigator</button>
+      <button type="button" class="btn danger" onclick="decide('decline')">Decline</button>
+    </div>
+    <div id="decisionOut" style="margin-top:12px"></div>`;
+  const pay = r.canSettle
+    ? `<div style="margin-top:14px"><button type="button" class="btn primary" style="width:100%;justify-content:center" onclick="settleClaim()">Approve &amp; pay out</button></div>`
+    : `<div style="margin-top:14px"><button type="button" class="btn" style="width:100%;justify-content:center" onclick="proposePayout()">Propose payout <span style="opacity:.65;font-weight:600;margin-left:5px">needs Manager sign-off</span></button></div>`;
+  const ov = r.canOverride
+    ? `<details style="margin-top:14px"><summary style="cursor:pointer;font-size:12.5px;color:var(--slate);font-weight:600">Override lane (captured as a training label)</summary>
+        <div style="margin-top:10px">
+          <div class="field"><label>Route to</label><select id="ovLane">${Object.keys(LANE).map(k => `<option value="${k}">${LANE[k].label}</option>`).join("")}</select></div>
+          <div class="field"><label>Reason (required)</label><input type="text" id="ovWhy" placeholder="why the model was wrong"></div>
+          <button type="button" class="btn" onclick="override()">Apply override</button>
+        </div></details>`
+    : "";
+  return buttons + pay + `<div id="settleOut" style="margin-top:12px"></div>` + ov;
+}
+
+async function proposePayout() {
+  const out = $("settleOut");
+  if (out) out.innerHTML = `<div class="note info"><span class="spin"></span><div>Recording payout proposal…</div></div>`;
+  try {
+    await api(`/api/claims/${S.claimId}/decision`, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "propose_payout", actor: S.actor }),
+    });
+    if (out) out.innerHTML = `<div class="note warn"><span>◔</span><div>
+      <b>Payout proposed - awaiting Manager sign-off.</b> The file is prepared; under maker-checker control a Manager must approve before any money moves.
+      <div class="t-caption" style="margin-top:3px">Proposed by ${esc(S.actor)} at ${new Date().toLocaleTimeString()}.</div></div></div>`;
+    toast("Payout proposed - awaiting Manager");
+  } catch (e) {
+    if (out) out.innerHTML = `<div class="note bad"><span>!</span><div>Failed: ${esc(e.message)}</div></div>`;
+    toast("Failed: " + e.message, 6000);
+  }
+}
+window.proposePayout = proposePayout;
+
 const DECISION_UI = {
   approve: ["Approved", "Claim approved and marked for settlement.", "ok", "✓"],
   request_evidence: ["Evidence requested", "Sent back to the customer for a retake / re-submission.", "info", "●"],
@@ -808,6 +868,12 @@ async function override() {
 }
 
 async function settleClaim() {
+  if (!curRole().canSettle) {
+    const out = $("settleOut");
+    if (out) out.innerHTML = `<div class="note warn"><span>◔</span><div><b>Manager sign-off required.</b> Only a Manager can approve a payout (maker-checker). Use "Propose payout", then switch to the Manager role to approve.</div></div>`;
+    toast("Only a Manager can approve a payout");
+    return;
+  }
   try {
     const r = await api(`/api/claims/${S.claimId}/settle?actor=${encodeURIComponent(S.actor)}`, { method: "POST" });
     $("settleOut").innerHTML = `
@@ -1687,5 +1753,6 @@ document.addEventListener("click", (e) => {
 });
 
 loadHealth();
+try { const rs = $("roleSel"); if (rs) rs.value = S.role; const av = $("who"); if (av) av.textContent = ROLES[S.role].init; } catch (e) {}
 (() => { let b = "dashboard"; try { b = sessionStorage.getItem('cos_view') || b; } catch (e) {}
   go(["dashboard","queue","intake","workflow"].includes(b) ? b : "dashboard"); })();
