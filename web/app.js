@@ -81,6 +81,7 @@ function setQCount(n) {
 }
 function go(v) {
   S.view = v;
+  try { if (["dashboard","queue","intake","workflow"].includes(v)) sessionStorage.setItem('cos_view', v); } catch (e) {}
   document.querySelectorAll("#nav button, #nav2 button, #mnav button")
     .forEach(b => b.classList.toggle("on", b.dataset.v === v));
   const pt = $("pageTitle"); if (pt) pt.textContent = TITLES[v][0];
@@ -353,7 +354,7 @@ function renderIntake(el) {
         <label class="check"><input type="checkbox" id="third_party_involved"> Third party involved</label>
         <label class="check"><input type="checkbox" id="injury_hint"> Injury reported</label>
       </div>
-      <button class="btn primary" id="openClaim" style="margin-top:14px;width:100%;justify-content:center">Open claim</button>
+      <button type="button" class="btn primary" id="openClaim" style="margin-top:14px;width:100%;justify-content:center">Open claim</button>
     </div></div>
   </div>`;
 
@@ -446,8 +447,8 @@ async function renderEvidence(el) {
     </div>
 
     <div style="margin-top:16px;display:flex;gap:10px">
-      <button class="btn primary" id="scoreBtn">Score &amp; route this claim</button>
-      <button class="btn" onclick="go('decision')">Open decision view</button>
+      <button type="button" class="btn primary" id="scoreBtn">Score &amp; route this claim</button>
+      <button type="button" class="btn" onclick="go('decision')">Open decision view</button>
     </div>`;
 
   wireDrop("pdrop", "pfile", uploadPhotos);
@@ -615,7 +616,7 @@ async function renderDecision(el) {
   const c = d.claim, s = d.score;
   if (!s) {
     el.innerHTML = `<div class="note info"><span>i</span><div>This claim hasn't been scored yet.
-      <button class="btn primary" style="margin-left:10px" onclick="scoreClaim()">Score &amp; route now</button></div></div>`;
+      <button type="button" class="btn primary" style="margin-left:10px" onclick="scoreClaim()">Score &amp; route now</button></div></div>`;
     return;
   }
   const ratio = c.claim_amount && s.cost_p50 ? c.claim_amount / s.cost_p50 : null;
@@ -632,7 +633,7 @@ async function renderDecision(el) {
       <div><div class="eyebrow">Predicted repair</div><div class="num" style="font-weight:700;margin-top:6px">${money(s.cost_p50)}</div></div>
       <div style="flex:1"></div>
       ${slaClock(c)}
-      <button class="btn" onclick="scoreClaim()">Re-score</button>
+      <button type="button" class="btn" onclick="scoreClaim()">Re-score</button>
     </div></div>
 
     ${s.legal_weak_reject_flag ? `<div class="note warn" style="margin-bottom:16px"><span>⚖</span><div>
@@ -676,23 +677,23 @@ async function renderDecision(el) {
         <div class="card"><div class="card-h"><h3>Why this lane</h3></div><div class="card-b">
           ${(s.lane_reasons || []).map(r => `<div class="kv"><span class="k">trigger</span><span class="v mono">${esc(hz(r))}</span></div>`).join("") || "<div class='empty'>No triggers recorded.</div>"}
           <div id="narr" style="margin-top:12px"></div>
-          <button class="btn" id="narrBtn" style="margin-top:10px">Draft officer note</button>
+          <button type="button" class="btn" id="narrBtn" style="margin-top:10px">Draft officer note</button>
         </div></div>
 
         <div class="card" style="margin-top:16px"><div class="card-h"><h3>Actions</h3></div><div class="card-b">
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn primary" onclick="decide('approve')">Approve</button>
-            <button class="btn" onclick="decide('request_evidence')">Request evidence</button>
-            <button class="btn" onclick="decide('assign_investigator')">Assign investigator</button>
-            <button class="btn danger" onclick="decide('decline')">Decline</button>
+            <button type="button" class="btn primary" onclick="decide('approve')">Approve</button>
+            <button type="button" class="btn" onclick="decide('request_evidence')">Request evidence</button>
+            <button type="button" class="btn" onclick="decide('assign_investigator')">Assign investigator</button>
+            <button type="button" class="btn danger" onclick="decide('decline')">Decline</button>
           </div>
-          <div style="margin-top:14px"><button class="btn primary" style="width:100%;justify-content:center" onclick="settleClaim()">Settle &amp; pay out</button></div>
+          <div style="margin-top:14px"><button type="button" class="btn primary" style="width:100%;justify-content:center" onclick="settleClaim()">Settle &amp; pay out</button></div>
           <div id="settleOut" style="margin-top:12px"></div>
           <details style="margin-top:14px"><summary style="cursor:pointer;font-size:12.5px;color:var(--slate);font-weight:600">Override lane (captured as a training label)</summary>
             <div style="margin-top:10px">
               <div class="field"><label>Route to</label><select id="ovLane">${Object.keys(LANE).map(k => `<option value="${k}">${LANE[k].label}</option>`).join("")}</select></div>
               <div class="field"><label>Reason (required)</label><input type="text" id="ovWhy" placeholder="why the model was wrong"></div>
-              <button class="btn" onclick="override()">Apply override</button>
+              <button type="button" class="btn" onclick="override()">Apply override</button>
             </div></details>
         </div></div>
       </div>
@@ -1055,7 +1056,7 @@ function streamCard() {
       <h3>Process the book</h3>
       <span class="sub">watch ${STREAM_N} real held-out claims sort themselves</span>
       <div style="flex:1"></div>
-      <button class="btn primary" id="streamBtn">▶ Process ${STREAM_N} claims</button>
+      <button type="button" class="btn primary" id="streamBtn">▶ Process ${STREAM_N} claims</button>
     </div>
     <div class="stream-lanes">
       <div class="slane l1"><div class="sh"><i></i>Lane 1 · Touchless</div>
@@ -1293,7 +1294,7 @@ async function renderWorkflow(el) {
 
   if (!active) {
     el.innerHTML = `<div class="empty"><div>No scored claims yet - open one and score it first.</div>
-      <button class="btn primary" style="margin-top:12px" onclick="go('intake')">New claim</button></div>`;
+      <button type="button" class="btn primary" style="margin-top:12px" onclick="go('intake')">New claim</button></div>`;
     return;
   }
 
@@ -1312,9 +1313,9 @@ async function renderWorkflow(el) {
       <p>Seven stages, running on the live engine. Every module returns a
          <b style="color:var(--ink)">result, a confidence, and a reason</b> - no black boxes.</p>
       <div class="wf-run">
-        ${scenarios.map(sc => `<button class="btn ${sc.c.claim_id === active.claim_id ? "primary" : ""}"
+        ${scenarios.map(sc => `<button type="button" class="btn ${sc.c.claim_id === active.claim_id ? "primary" : ""}"
           onclick="wfPick('${sc.c.claim_id}')">${sc.label}</button>`).join("")}
-        <button class="btn" id="wfReplay">▶ Replay</button>
+        <button type="button" class="btn" id="wfReplay">▶ Replay</button>
       </div>
       <div class="t-caption" style="margin-top:10px">
         Showing <span class="mono">${esc(active.claim_id)}</span> ·
@@ -1630,8 +1631,8 @@ function noClaim() {
   return `<div class="empty">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 10h8M8 14h5"/></svg>
     <div>No claim selected.</div>
-    <button class="btn primary" style="margin-top:12px" onclick="go('intake')">Open a new claim</button>
-    <button class="btn" style="margin-top:12px" onclick="go('queue')">Pick from the queue</button>
+    <button type="button" class="btn primary" style="margin-top:12px" onclick="go('intake')">Open a new claim</button>
+    <button type="button" class="btn" style="margin-top:12px" onclick="go('queue')">Pick from the queue</button>
   </div>`;
 }
 
@@ -1666,4 +1667,5 @@ document.addEventListener("click", (e) => {
 });
 
 loadHealth();
-go("dashboard");
+(() => { let b = "dashboard"; try { b = sessionStorage.getItem('cos_view') || b; } catch (e) {}
+  go(["dashboard","queue","intake","workflow"].includes(b) ? b : "dashboard"); })();

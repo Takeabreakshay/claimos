@@ -83,7 +83,7 @@ function stepPolicy(el) {
       </div>
       <div id="polResult"></div>
       <div class="cx-actions">
-        <button class="cx-btn primary" id="findBtn">Find my policy</button>
+        <button type="button" class="cx-btn primary" id="findBtn">Find my policy</button>
       </div>
     </div>`;
   $("findBtn").onclick = () => findPolicy($("pol").value.trim());
@@ -138,13 +138,13 @@ function stepIncident(el) {
       <h1 class="cx-h">Tell us about the incident</h1>
       <p class="cx-lede">A few quick details. This shapes how fast we can settle.</p>
       <div class="cx-grid">
-        ${INCIDENTS.map(x => `<button class="cx-opt ${I.type === x.k ? "sel" : ""}" data-inc="${x.k}">
+        ${INCIDENTS.map(x => `<button type="button" class="cx-opt ${I.type === x.k ? "sel" : ""}" data-inc="${x.k}">
           <span class="ic">${x.ic}</span><span class="t">${x.t}</span><span class="d">${x.d}</span></button>`).join("")}
       </div>
       <div id="sevBlock" style="${isTheft ? "display:none" : ""}">
         <div class="cx-field" style="margin-top:20px"><label>How bad is the damage?</label></div>
         <div class="cx-grid" style="margin-top:0">
-          ${SEVERITIES.map(s => `<button class="cx-opt ${I.severity === s.k ? "sel" : ""}" data-sev="${s.k}">
+          ${SEVERITIES.map(s => `<button type="button" class="cx-opt ${I.severity === s.k ? "sel" : ""}" data-sev="${s.k}">
             <span class="ic">${s.ic}</span><span class="t">${s.t}</span><span class="d">${s.d}</span></button>`).join("")}
         </div>
       </div>
@@ -155,8 +155,8 @@ function stepIncident(el) {
       <div class="cx-field"><label>Approx. repair estimate, if you have a quote <span style="color:var(--slate-2)">(optional)</span></label>
         <input class="cx-input" id="incAmt" inputmode="numeric" placeholder="e.g. 28000" value="${esc(I.amount)}"></div>
       <div class="cx-actions">
-        <button class="cx-btn ghost" onclick="CX.go('policy')">Back</button>
-        <button class="cx-btn primary" id="incNext" disabled>Continue</button>
+        <button type="button" class="cx-btn ghost" onclick="CX.go('policy')">Back</button>
+        <button type="button" class="cx-btn primary" id="incNext" disabled>Continue</button>
       </div>
     </div>`;
 
@@ -218,7 +218,7 @@ function stepPhotos(el) {
       <div class="cx-angles" id="angles">
         ${ANGLES.map((a, i) => `<span class="cx-angle ${i < C.photos.length ? "got" : ""}">${i < C.photos.length ? "✓" : "○"} ${esc(a)}</span>`).join("")}
       </div>
-      <button class="cx-btn primary cx-cam-btn" id="camBtn">
+      <button type="button" class="cx-btn primary cx-cam-btn" id="camBtn">
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2.5"/><circle cx="12" cy="13" r="3.4"/><path d="M8 6l1.2-2h5.6L16 6"/></svg>
         Open camera &amp; capture damage
       </button>
@@ -227,8 +227,8 @@ function stepPhotos(el) {
       <input type="file" id="file" accept="image/*" multiple style="display:none">
       <div id="shots">${C.photos.map(photoRow).join("")}</div>
       <div class="cx-actions">
-        <button class="cx-btn ghost" onclick="CX.go('incident')">Back</button>
-        <button class="cx-btn primary" id="phNext" ${C.photos.length ? "" : "disabled"}>${C.photos.length ? "Review my claim" : "Add a photo to continue"}</button>
+        <button type="button" class="cx-btn ghost" onclick="CX.go('incident')">Back</button>
+        <button type="button" class="cx-btn primary" id="phNext" ${C.photos.length ? "" : "disabled"}>${C.photos.length ? "Review my claim" : "Add a photo to continue"}</button>
       </div>
     </div>`;
   const drop = $("drop"), file = $("file");
@@ -260,7 +260,7 @@ function openCamera() {
     <div class="cam-top">
       <div class="cam-timer" id="camTimer">10:00</div>
       <div class="cam-ttl">Capture the damage</div>
-      <button class="cam-x" id="camX" aria-label="Close camera">✕</button>
+      <button type="button" class="cam-x" id="camX" aria-label="Close camera">✕</button>
     </div>
     <div class="cam-stage">
       <video id="camVid" autoplay playsinline muted></video>
@@ -270,7 +270,7 @@ function openCamera() {
     <div class="cam-clarity"><span class="cam-clbl">Clarity</span>
       <div class="cam-meter"><i id="camMeter"></i></div><b id="camPct">-</b></div>
     <div class="cam-status" id="camStat">Starting camera…</div>
-    <div class="cam-controls"><button class="cam-shot" id="camShot" disabled aria-label="Capture"></button></div>`;
+    <div class="cam-controls"><button type="button" class="cam-shot" id="camShot" disabled aria-label="Capture"></button></div>`;
   document.body.appendChild(ov);
   $("camX").onclick = closeCamera;
   $("camShot").onclick = captureFrame;
@@ -444,8 +444,8 @@ function stepReview(el) {
       </div>
       <div class="cx-note"><span>🔒</span><div>Filing a false claim is an offence. By submitting you confirm these details are accurate.</div></div>
       <div class="cx-actions">
-        <button class="cx-btn ghost" onclick="CX.go('photos')">Back</button>
-        <button class="cx-btn primary" id="submit">Submit claim</button>
+        <button type="button" class="cx-btn ghost" onclick="CX.go('photos')">Back</button>
+        <button type="button" class="cx-btn primary" id="submit">Submit claim</button>
       </div>
     </div>`;
   $("submit").onclick = submitClaim;
@@ -474,7 +474,7 @@ function stepResult(el) {
   if (!r || r.error) {
     el.innerHTML = `<div class="cx-card"><div class="cx-hero stop"><div class="mark">!</div>
       <h2>Something went wrong</h2><p>${esc(r?.error || "Please try again.")}</p></div>
-      <div class="cx-actions"><button class="cx-btn primary" onclick="CX.go('review')">Try again</button></div></div>`;
+      <div class="cx-actions"><button type="button" class="cx-btn primary" onclick="CX.go('review')">Try again</button></div></div>`;
     return;
   }
   const s = r.score || {};
@@ -497,8 +497,8 @@ function stepResult(el) {
       ${view.payout ? `<div class="cx-payout">${money(view.payout)}</div><div class="cx-eta">${esc(view.eta)}</div>` : ""}
       ${view.extra || ""}
       <div class="cx-actions">
-        <button class="cx-btn primary" onclick="CX.go('track')">Track my claim</button>
-        <button class="cx-btn ghost" onclick="CX.restart()">File another</button>
+        <button type="button" class="cx-btn primary" onclick="CX.go('track')">Track my claim</button>
+        <button type="button" class="cx-btn ghost" onclick="CX.restart()">File another</button>
       </div>
     </div>`;
 }
@@ -515,7 +515,7 @@ function laneView(lane, s, sett) {
       return { tone: "wait", icon: "↺", title: "Almost there",
         body: "One or two photos weren't clear enough to assess. A quick retake and you're done.",
         extra: `<div class="cx-note warn"><span class="s">📷</span><div>${esc(retakeHint(s))}</div></div>
-          <div style="margin-top:12px"><button class="cx-btn" onclick="CX.go('photos')">Add better photos</button></div>` };
+          <div style="margin-top:12px"><button type="button" class="cx-btn" onclick="CX.go('photos')">Add better photos</button></div>` };
     case "coverage_reject":
       if (isLegalWeak) return { tone: "look", icon: "⚖", title: "Under review",
         body: "There's a technicality on your policy, but the law is on your side here - so a specialist will review it personally rather than auto-decline. We'll be in touch." };
@@ -572,8 +572,8 @@ function adviseWithdraw(el, s, aw) {
       </div>
       <div class="cx-note ok"><span class="s">✓</span><div>Skip this claim and your No-Claim Bonus stays intact for next year's renewal.</div></div>
       <div class="cx-actions">
-        <button class="cx-btn primary" id="wd">Withdraw &amp; protect my bonus</button>
-        <button class="cx-btn ghost" id="anyway">Claim anyway</button>
+        <button type="button" class="cx-btn primary" id="wd">Withdraw &amp; protect my bonus</button>
+        <button type="button" class="cx-btn ghost" id="anyway">Claim anyway</button>
       </div>
     </div>`;
   $("wd").onclick = () => { C.withdrawChoice = "withdraw"; render(); };
@@ -590,14 +590,14 @@ function withdrawn(el, aw) {
         <h2>Smart move</h2>
         <p>Your claim's been set aside and your No-Claim Bonus is protected. ${saved}</p></div>
       <div class="cx-note ok"><span class="s">✓</span><div>Changed your mind? You can still file within your policy's notification window.</div></div>
-      <div class="cx-actions"><button class="cx-btn primary" onclick="CX.restart()">Done</button></div>
+      <div class="cx-actions"><button type="button" class="cx-btn primary" onclick="CX.restart()">Done</button></div>
     </div>`;
 }
 
 /* ============================ TRACK ============================ */
 async function stepTrack(el) {
   el.innerHTML = `<div class="cx-card"><div class="cx-center"><span class="cx-spin"></span> Loading your claim…</div></div>`;
-  let d; try { d = await api("/api/claims/" + C.claimId); } catch (e) { el.innerHTML = `<div class="cx-card">Couldn't load. <button class="cx-btn" onclick="CX.go('track')">Retry</button></div>`; return; }
+  let d; try { d = await api("/api/claims/" + C.claimId); } catch (e) { el.innerHTML = `<div class="cx-card">Couldn't load. <button type="button" class="cx-btn" onclick="CX.go('track')">Retry</button></div>`; return; }
   const c = d.claim, s = d.score || {};
   const statusLabel = {
     approved: ["✓ Approved", "ok"], awaiting_officer: ["In review", "wait"],
@@ -624,7 +624,7 @@ async function stepTrack(el) {
           <div><div class="e">${esc(friendly[e.event] || e.event)}</div>
           <div class="t">${esc((e.created_at || "").slice(0, 16).replace("T", " "))}</div></div></div>`).join("") || "<div class='cx-center'>No updates yet.</div>"}
       </div>
-      <div class="cx-actions"><button class="cx-btn ghost" onclick="CX.restart()">File another claim</button></div>
+      <div class="cx-actions"><button type="button" class="cx-btn ghost" onclick="CX.restart()">File another claim</button></div>
     </div>`;
 }
 
