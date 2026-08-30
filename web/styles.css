@@ -410,13 +410,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue);
 .wf-stage-h .sub{font-size:11.5px;color:var(--slate);margin-left:auto;text-align:right}
 
 /* connector */
-.wf-link{height:34px;width:2px;margin:0 auto;background:linear-gradient(var(--line),var(--g-500));
-  position:relative}
-.wf-link::after{content:"";position:absolute;left:50%;bottom:-1px;transform:translateX(-50%);
-  width:7px;height:7px;border-right:2px solid var(--g-500);border-bottom:2px solid var(--g-500);
-  rotate:45deg}
+.wf-link{height:32px;width:2px;margin:2px auto 9px;border-radius:2px;
+  background:linear-gradient(var(--line),var(--slate));position:relative}
+/* Filled triangle arrowhead - centred with translateX(-50%) and NO rotation, so
+   the tip sits exactly on the line's centreline (a rotated border-chevron skews
+   its own translate axis and lands off-centre). */
+.wf-link::after{content:"";position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);
+  width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;
+  border-top:8px solid var(--slate)}
 .wf-link.lit{background:linear-gradient(var(--blue),var(--blue-2))}
-.wf-link.lit::after{border-color:var(--blue-2)}
+.wf-link.lit::after{border-top-color:var(--blue-2)}
 
 /* FNOL chips */
 .wf-chips{display:flex;gap:8px;flex-wrap:wrap}
