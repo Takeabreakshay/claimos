@@ -248,7 +248,11 @@ function stepPhotos(el) {
    Captured frames go through the same /photos endpoint (real server vision). */
 let _camStream = null, _camTimer = null, _camRAF = null, _camDeadline = 0, _lastSharp = 0;
 const _camCanvas = document.createElement("canvas");
-const SHARP_MIN = 110;   // below this Laplacian-variance = too blurry to accept
+// Capture is allowed only at/above this server-scale variance. The server accepts
+// a photo (quality>=0.35) at ~179 and reads damage/OCR (quality>=0.45) at ~213;
+// we set the "100% clear" bar at 230 (quality~0.50) so even after JPEG compression
+// the uploaded photo clears the server's gate AND is CV/OCR-usable - no rework.
+const SHARP_MIN = 230;
 
 function openCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -318,26 +322,33 @@ function expireCamera() {
   }
 }
 
+// EXACT mirror of the server's blur measure (src/live/vision.py): normalise the
+// frame to 640px longest side, grayscale on a 0-1 scale, Laplacian variance x10000.
+// This makes the live clarity number directly comparable to the server's gate, so
+// "100%" on the phone == a photo the server will accept and the CV/OCR can read.
 function sharpness(v) {
-  const w = 300, h = Math.max(1, Math.round((v.videoHeight / v.videoWidth || 0.75) * 300));
+  const vw = v.videoWidth || 1, vh = v.videoHeight || 1;
+  const scale = Math.min(1, 640 / Math.max(vw, vh));
+  const w = Math.max(3, Math.round(vw * scale)), h = Math.max(3, Math.round(vh * scale));
   const c = _camCanvas; c.width = w; c.height = h;
   const ctx = c.getContext("2d", { willReadFrequently: true });
   let d; try { ctx.drawImage(v, 0, 0, w, h); d = ctx.getImageData(0, 0, w, h).data; } catch (e) { return 0; }
   const g = new Float32Array(w * h);
-  for (let i = 0, p = 0; i < w * h; i++, p += 4) g[i] = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
+  for (let i = 0, p = 0; i < w * h; i++, p += 4) g[i] = (0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2]) / 255;
   let sum = 0, sum2 = 0, n = 0;
   for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
     const i = y * w + x, lap = 4 * g[i] - g[i - 1] - g[i + 1] - g[i - w] - g[i + w];
     sum += lap; sum2 += lap * lap; n++;
   }
-  return Math.max(0, sum2 / n - (sum / n) * (sum / n));   // variance of the Laplacian
+  const variance = Math.max(0, sum2 / n - (sum / n) * (sum / n));
+  return variance * 10000;   // same scale as the server's blur_variance
 }
 
 function clarityLoop() {
   const v = $("camVid");
   if (!v || !_camStream || !$("cam")) return;
   if (v.readyState >= 2) _lastSharp = sharpness(v);
-  const pct = Math.max(0, Math.min(100, Math.round(_lastSharp / (SHARP_MIN * 1.6) * 100)));
+  const pct = Math.max(0, Math.min(100, Math.round(_lastSharp / SHARP_MIN * 100)));
   const sharp = _lastSharp >= SHARP_MIN, live = Date.now() < _camDeadline;
   const meter = $("camMeter"), pctEl = $("camPct"), stat = $("camStat"), shot = $("camShot");
   if (meter) { meter.style.width = pct + "%";
