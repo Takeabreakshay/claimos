@@ -164,6 +164,11 @@ def ocr_document(data: bytes, doc_type: str = "other") -> NvResult:
     # the hosted nemotron-ocr-v2 function 404s on many accounts. Overridable via
     # NVIDIA_OCR_MODEL so a dedicated OCR NIM can be swapped in where provisioned.
     model = os.getenv("NVIDIA_OCR_MODEL", "meta/llama-3.2-11b-vision-instruct").strip()
+    # Known-dead / non-multimodal OCR ids -> route to the vision model. A stale
+    # env var (e.g. NVIDIA_OCR_MODEL=nvidia/nemotron-ocr-v2 on a host) would
+    # otherwise 400/404 on an image, and there is no local OCR fallback in prod.
+    if model in ("", "nvidia/nemotron-ocr-v2", "nemotron-ocr-v2"):
+        model = "meta/llama-3.2-11b-vision-instruct"
     prompt = (
         "Extract ALL text from this Indian motor-insurance document "
         f"(declared type: {doc_type}). Return the raw text verbatim, preserving "

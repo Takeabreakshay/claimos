@@ -132,10 +132,13 @@ def health() -> dict[str, Any]:
         "supabase_configured": bool(os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_SERVICE_KEY")),
         "models_loaded": models_ok,
         "models_error": models_err,
-        "ocr_engine": (os.getenv("NVIDIA_OCR_MODEL", "meta/llama-3.2-11b-vision-instruct")
-                       if os.getenv("NVIDIA_OCR_KEY")
-                       and str(os.getenv("NVIDIA_OCR_DISABLED", "")).lower() not in ("1", "true", "yes")
-                       else "local:rapidocr"),
+        "ocr_engine": (
+            (lambda m: "meta/llama-3.2-11b-vision-instruct"
+             if m in ("", "nvidia/nemotron-ocr-v2", "nemotron-ocr-v2") else m)(
+                os.getenv("NVIDIA_OCR_MODEL", "meta/llama-3.2-11b-vision-instruct"))
+            if os.getenv("NVIDIA_OCR_KEY")
+            and str(os.getenv("NVIDIA_OCR_DISABLED", "")).lower() not in ("1", "true", "yes")
+            else "local:rapidocr"),
         "llm": bool(os.getenv("NVIDIA_LLM_KEY")),
         "llm_model": os.getenv("NVIDIA_LLM_MODEL", ""),
         "rails_live": os.getenv("RAILS_LIVE", "false") == "true",
