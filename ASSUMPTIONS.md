@@ -82,3 +82,25 @@ either sourced or logged below.
 1. Never change a **[SOURCED]** value. If §2 itself needs updating, that's a research task, flagged separately.
 2. To change an **[ASSUMPTION]**: update the value in `config/*.yaml`, add/append a row here (new date, rationale), and re-run the affected phase's acceptance test.
 3. If a change moves a headline number in the deck (e.g. % touchless, TAT drop), note it so the pitch and the model stay in sync.
+
+---
+
+## Model-specific OEM parts pricing (added 2026-08-30)
+
+**[ASSUMPTION]** `config/model_parts.yaml` — per-model [low, high] retail price band
+(INR, GST-inclusive, metro) for each damageable part, for **Maruti Suzuki Alto**
+(entry hatchback) and **Honda City** (mid-size sedan).
+
+- **Rationale:** a segment multiplier alone can't capture that a Honda City body
+  panel costs ~2–3× a Maruti Alto panel. When a claim's make+model matches, each
+  part is priced from that model's own basket; the segment multiplier is dropped
+  (the model fixes the segment) and only the region multiplier applies. Parts
+  without a model price fall back to the segment-scaled base rate card.
+- **Source:** curated from typical Indian OEM/OES dealer + aftermarket pricing
+  (2025). Not a sourced §2 figure — a modeling assumption, internally consistent
+  (City ≈ 2–3× Alto on panels; airbags/glass scaled to trim).
+- **Where it lives:** ships in `config/model_parts.yaml`; optionally moved into a
+  Supabase `model_parts` table (`supabase/migration_004_model_parts.sql` +
+  `scripts/seed_model_parts.py`), which the rate card prefers when present.
+- **To extend:** add a model block (make/model/segment/aliases/parts) to the YAML
+  and, if using Supabase, re-run the seed script.

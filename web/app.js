@@ -775,7 +775,7 @@ function reconAndSettlementCards(c, s) {
         <span class="sub">rate-card line-item vs model vs claimed</span></div>
       <div class="card-b">
         <div class="kv"><span class="k">Line-item estimate (rate card)</span><span class="v num">${money(li)}</span></div>
-        <div class="t-caption" style="margin:-4px 0 8px">P10-P90 ${money(s.line_item_p10)} - ${money(s.line_item_p90)} · deterministic parts + labour</div>
+        <div class="t-caption" style="margin:-4px 0 8px">P10-P90 ${money(s.line_item_p10)} - ${money(s.line_item_p90)} · deterministic parts + labour${s.n_model_priced && s.priced_from ? ` · <b>${esc(s.priced_from)}</b> OEM prices (${s.n_model_priced} part${s.n_model_priced > 1 ? "s" : ""})` : ""}</div>
         <div class="kv"><span class="k">Model estimate (GBT P50)</span><span class="v num">${money(gbt)}</span></div>
         <div class="kv"><span class="k">Claimed</span><span class="v num">${money(claimed)}</span></div>
         ${ratio != null ? `<div class="note ${ratioTone}" style="margin-top:10px"><span>${ratio > 1.3 ? "!" : "✓"}</span>

@@ -1,0 +1,94 @@
+# Model-specific OEM part prices (INR) - MODELING ASSUMPTION (see ASSUMPTIONS.md).
+#
+# When a claim's make + model matches an entry here, these prices REPLACE the
+# segment-scaled base price from rate_card.yaml for each matched part. The region
+# multiplier still applies (metro vs tier-2 labour/parts availability); the
+# segment multiplier does NOT - the model already fixes the segment, so applying
+# it again would double-count.
+#
+# Each value is a [low, high] retail band for the OEM / OES part in a metro,
+# GST-inclusive, curated from typical Indian dealer + aftermarket pricing (2025).
+# Labour hours, material class and structural/airbag flags are NOT model-specific
+# and continue to come from rate_card.yaml.
+#
+# Match key = lowercased "<make> <model>" with extra spaces collapsed. Aliases let
+# common OCR / operator spellings resolve to the same entry.
+
+models:
+  # ----------------------------------------------------------------------- #
+  # Maruti Suzuki Alto - entry hatchback, India's cheapest OEM parts basket.
+  # ----------------------------------------------------------------------- #
+  maruti suzuki alto:
+    make: Maruti Suzuki
+    model: Alto
+    segment: hatchback
+    aliases: ["maruti alto", "alto", "suzuki alto", "maruti suzuki alto k10", "alto k10", "maruti alto 800", "alto 800"]
+    parts:
+      front_bumper: [1800, 3200]
+      rear_bumper: [1600, 3000]
+      bonnet: [4500, 7500]
+      front_fender: [1800, 3200]
+      rear_fender: [2000, 3600]
+      front_door: [6500, 11000]
+      rear_door: [6000, 10000]
+      boot_lid: [4500, 8000]
+      roof_panel: [8000, 14000]
+      quarter_panel: [6000, 10500]
+      headlamp: [2000, 4200]
+      tail_lamp: [1100, 2600]
+      windshield_front: [4000, 7000]
+      windshield_rear: [2800, 4800]
+      door_glass: [1400, 2800]
+      orvm: [900, 2400]
+      grille: [900, 2200]
+      radiator: [3200, 6000]
+      condenser: [3800, 6800]
+      airbag: [11000, 22000]
+      airbag_module: [8000, 15000]
+      suspension_strut: [2600, 4800]
+      alloy_wheel: [3200, 6000]
+      steel_wheel: [1600, 3000]
+      tyre: [2400, 4200]
+      battery: [3500, 5800]
+      engine_assembly: [42000, 95000]
+      gearbox: [28000, 65000]
+      chassis_straighten: [9000, 26000]
+
+  # ----------------------------------------------------------------------- #
+  # Honda City - mid-size sedan, premium OEM parts (LED lamps, chrome grille).
+  # ----------------------------------------------------------------------- #
+  honda city:
+    make: Honda
+    model: City
+    segment: sedan
+    aliases: ["city", "honda city zx", "honda city vx", "honda city v", "honda city ivtec", "honda city i-vtec", "honda city hybrid", "honda city e:hev"]
+    parts:
+      front_bumper: [5500, 11000]
+      rear_bumper: [5000, 10000]
+      bonnet: [11000, 20000]
+      front_fender: [4500, 8500]
+      rear_fender: [5000, 9500]
+      front_door: [16000, 28000]
+      rear_door: [15000, 26000]
+      boot_lid: [12000, 22000]
+      roof_panel: [20000, 38000]
+      quarter_panel: [14000, 26000]
+      headlamp: [9000, 24000]
+      tail_lamp: [4000, 11000]
+      windshield_front: [9000, 18000]
+      windshield_rear: [6000, 12000]
+      door_glass: [3000, 6500]
+      orvm: [4500, 12000]
+      grille: [3500, 9000]
+      radiator: [7000, 15000]
+      condenser: [8000, 16000]
+      airbag: [22000, 45000]
+      airbag_module: [15000, 32000]
+      suspension_strut: [6000, 12000]
+      alloy_wheel: [9000, 18000]
+      steel_wheel: [3000, 5500]
+      tyre: [5500, 11000]
+      battery: [6000, 11000]
+      engine_assembly: [95000, 210000]
+      gearbox: [60000, 145000]
+      chassis_straighten: [18000, 50000]

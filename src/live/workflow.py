@@ -361,6 +361,7 @@ def score_and_route(claim_id: str, actor: str = "SYSTEM") -> dict[str, Any]:
         city_tier=str(claim.get("city_tier") or "metro"),
         vehicle_age_years=mrow["vehicle_age_years"],
         is_ev=bool(claim.get("is_ev")), is_import=bool(claim.get("is_import")),
+        make=claim.get("make"), model=claim.get("model"),
     ) if parts else None
     recon = (rate_card.reconciliation_flag(
         mrow["claim_amount"], li["line_item_estimate"], mrow["garage_type"])
@@ -474,6 +475,8 @@ def score_and_route(claim_id: str, actor: str = "SYSTEM") -> dict[str, Any]:
         "line_item_p10": (li or {}).get("cost_p10"),
         "line_item_p90": (li or {}).get("cost_p90"),
         "line_items": (li or {}).get("line_items"),
+        "priced_from": (li or {}).get("priced_from"),
+        "n_model_priced": (li or {}).get("n_model_priced"),
         "reconciliation_ratio": (recon or {}).get("ratio"),
         "inflation_flag": bool((recon or {}).get("inflation_flag")),
         "has_structural": bool((li or {}).get("has_structural")),

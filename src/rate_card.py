@@ -26,12 +26,78 @@ import yaml
 from src import constants
 
 RATE_CARD_YAML = constants.CONFIG_DIR / "rate_card.yaml"
+MODEL_PARTS_YAML = constants.CONFIG_DIR / "model_parts.yaml"
 
 
 @lru_cache(maxsize=1)
 def _card() -> dict[str, Any]:
     with RATE_CARD_YAML.open("r", encoding="utf-8") as fh:
         return yaml.safe_load(fh)
+
+
+# --------------------------------------------------------------------------- #
+# Model-specific parts pricing (config/model_parts.yaml, optionally overridden
+# by a Supabase `model_parts` table). A Honda City door costs ~2.5x a Maruti
+# Alto door - segment multipliers alone can't capture that, so when the claim's
+# make+model matches we price each part from the model's own OEM basket.
+# --------------------------------------------------------------------------- #
+# A provider set by the live layer (store.model_parts) so Supabase can override
+# the shipped config without this module importing the DB. Signature:
+#   provider(make, model) -> {"segment": str, "parts": {key: [low, high]}} | None
+_price_provider = None
+
+
+def set_model_price_provider(fn) -> None:
+    """Register a Supabase-backed lookup, preferred over the bundled config."""
+    global _price_provider
+    _price_provider = fn
+
+
+@lru_cache(maxsize=1)
+def _model_index() -> dict[str, dict[str, Any]]:
+    """Flatten config/model_parts.yaml into an alias -> entry lookup."""
+    if not MODEL_PARTS_YAML.exists():
+        return {}
+    with MODEL_PARTS_YAML.open("r", encoding="utf-8") as fh:
+        raw = yaml.safe_load(fh) or {}
+    idx: dict[str, dict[str, Any]] = {}
+    for canon, entry in (raw.get("models") or {}).items():
+        keys = {canon} | {str(a) for a in (entry.get("aliases") or [])}
+        mm = f"{entry.get('make', '')} {entry.get('model', '')}"
+        keys.add(mm)
+        for k in keys:
+            idx[_norm_model_key(k)] = entry
+    return idx
+
+
+def _norm_model_key(s: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]", " ", str(s or "").lower())).strip()
+
+
+def model_prices(make: str | None, model: str | None) -> dict[str, Any] | None:
+    """Model-specific {segment, parts:{key:[low,high]}} for a make+model, or None.
+
+    Prefers the registered Supabase provider; falls back to the bundled config.
+    Matches on the full "make model" string and on the model token alone, so
+    "Honda", "City" and a bare "city" all resolve.
+    """
+    make = (make or "").strip()
+    model = (model or "").strip()
+    if not (make or model):
+        return None
+    if _price_provider is not None:
+        try:
+            hit = _price_provider(make, model)
+            if hit and hit.get("parts"):
+                return hit
+        except Exception:
+            pass  # DB down -> fall through to config, never dead-end pricing
+    idx = _model_index()
+    for cand in (f"{make} {model}", model, f"{make} {model}".replace("  ", " ")):
+        entry = idx.get(_norm_model_key(cand))
+        if entry:
+            return entry
+    return None
 
 
 # --------------------------------------------------------------------------- #
@@ -169,14 +235,25 @@ def estimate(
     vehicle_age_years: float = 0.0,
     is_ev: bool = False,
     is_import: bool = False,
+    make: str | None = None,
+    model: str | None = None,
 ) -> dict[str, Any]:
     """Deterministic line-item repair estimate - P10/P50/P90 (gross, no dep).
 
     Depreciation is computed per part and returned for the settlement waterfall
     (§2.4) but NOT subtracted here - the estimate is the gross repair cost the
     garage charges.
+
+    If ``make``/``model`` match a model-specific parts basket (Honda City, Maruti
+    Alto, ...), each matched part is priced from that basket - region multiplier
+    still applies, the segment multiplier does not (the model fixes the segment).
+    Parts without a model-specific price fall back to the segment-scaled base.
     """
     c = _card()
+    mp = model_prices(make, model)
+    part_prices = (mp or {}).get("parts") or {}
+    if mp and mp.get("segment"):
+        segment = mp["segment"]
     seg_mult = c["segment_multipliers"].get((segment or "").lower(),
                                             c["segment_multipliers"][c["default_segment"]])
     region_mult = c["region_multipliers"].get((city_tier or "").lower(),
@@ -197,10 +274,18 @@ def estimate(
     has_structural = has_airbag = has_hidden = total_loss_trigger = False
     line_items: list[dict[str, Any]] = []
     n_panels = 0
+    n_model_priced = 0
 
     for key in matched:
         p = c["parts"][key]
-        price = _mid(p["price"]) * seg_mult * region_mult
+        override = part_prices.get(key)
+        if override:
+            # Model-specific OEM price: absolute for this model, so the segment
+            # multiplier is NOT applied (only region). Base parts still scale.
+            price = _mid(override) * region_mult
+            n_model_priced += 1
+        else:
+            price = _mid(p["price"]) * seg_mult * region_mult
         if is_ev and p.get("ev_electrical"):
             price *= c["ev_electrical_mult"]
         if is_import and p.get("material") == "metal":
@@ -256,6 +341,9 @@ def estimate(
         "paint_cost": round(paint_cost), "consumables": round(consumables),
         "parts_depreciation": round(parts_dep_amt + paint_dep_amt),
         "n_parts": len(matched), "n_panels": n_panels,
+        "n_model_priced": n_model_priced,
+        "priced_from": (f"{(mp or {}).get('make','')} {(mp or {}).get('model','')}".strip()
+                        if n_model_priced else None),
         "has_structural": has_structural, "has_airbag": has_airbag,
         "has_hidden_risk": has_hidden, "total_loss_trigger": total_loss_trigger,
         "escalate_min_lane": constants.Lane.ASSISTED.value if escalate else None,

@@ -360,12 +360,55 @@ class Store:
                 return None
         return None
 
+    # ---------------- model parts pricing ----------------
+    _model_parts_cache: dict | None = None
+
+    def model_parts(self, make: str, model: str) -> dict | None:
+        """Model-specific OEM part prices from the Supabase `model_parts` table.
+
+        Returns {"make","model","segment","parts":{key:[low,high]}} or None. The
+        whole table is small (a few models x ~30 parts) so it is fetched once and
+        cached. Returns None if the table is absent or the DB is unreachable, and
+        rate_card then falls back to the bundled config - pricing never dead-ends.
+        """
+        if self.mode != "supabase":
+            return None
+        if self._model_parts_cache is None:
+            index: dict[str, dict] = {}
+            try:
+                res = self._exec_read(self._sb.table("model_parts").select("*"))
+                for r in (res.data or []):
+                    mk, md = str(r.get("make", "")), str(r.get("model", ""))
+                    key = _norm_mm(f"{mk} {md}")
+                    ent = index.setdefault(key, {"make": mk, "model": md,
+                                                 "segment": r.get("segment"), "parts": {}})
+                    lo, hi = r.get("price_low"), r.get("price_high")
+                    if r.get("part") and lo is not None and hi is not None:
+                        ent["parts"][str(r["part"])] = [float(lo), float(hi)]
+                # index the bare model token too ("city" -> Honda City)
+                for ent in list(index.values()):
+                    index.setdefault(_norm_mm(ent["model"]), ent)
+            except Exception:
+                index = {}  # table missing / DB down -> config fallback
+            self._model_parts_cache = index
+        idx = self._model_parts_cache
+        for cand in (f"{make} {model}", model):
+            hit = idx.get(_norm_mm(cand))
+            if hit and hit.get("parts"):
+                return hit
+        return None
+
     # ---------------- audit ----------------
     def event(self, claim_id: str, event: str, detail: dict | None = None,
               actor: str = "SYSTEM") -> None:
         self.insert("claim_events", {"claim_id": claim_id, "event": event,
                                      "detail": detail or {}, "actor": actor,
                                      "created_at": _now()})
+
+
+def _norm_mm(s: str) -> str:
+    import re as _re
+    return _re.sub(r"\s+", " ", _re.sub(r"[^a-z0-9 ]", " ", str(s or "").lower())).strip()
 
 
 _store: Store | None = None
@@ -375,4 +418,11 @@ def get_store() -> Store:
     global _store
     if _store is None:
         _store = Store()
+        # Let the rate card price from Supabase `model_parts` when available,
+        # falling back to config/model_parts.yaml otherwise.
+        try:
+            from src import rate_card
+            rate_card.set_model_price_provider(_store.model_parts)
+        except Exception:
+            pass
     return _store
