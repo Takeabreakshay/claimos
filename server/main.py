@@ -194,7 +194,8 @@ def get_claim(claim_id: str) -> dict[str, Any]:
 
 
 _MEDIA_TYPES = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
-                "gif": "image/gif", "webp": "image/webp", "pdf": "application/pdf"}
+                "gif": "image/gif", "webp": "image/webp", "pdf": "application/pdf",
+                "webm": "video/webm", "mp4": "video/mp4", "mov": "video/quicktime"}
 
 
 @app.get("/api/media")
@@ -253,6 +254,21 @@ async def upload_document(claim_id: str, file: UploadFile = File(...),
         "fields": res["ocr_fields"], "applied": res.get("applied"),
         "text": (res.get("ocr_text") or "")[:4000], "error": res.get("error"),
     }
+
+
+@app.post("/api/claims/{claim_id}/video")
+async def upload_video(claim_id: str, file: UploadFile = File(...)) -> dict[str, Any]:
+    """Store a scene-walkthrough video as evidence (no CV/OCR - it's a record)."""
+    data = await file.read()
+    if not data:
+        raise HTTPException(400, "empty video")
+    try:
+        res = await run_in_threadpool(
+            wf.add_video, claim_id, file.filename or "scene.webm",
+            data, file.content_type or "video/webm")
+    except Exception as exc:
+        raise HTTPException(400, f"video upload failed: {exc}") from exc
+    return res
 
 
 @app.post("/api/claims/{claim_id}/score")

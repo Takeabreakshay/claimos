@@ -277,6 +277,28 @@ def add_document(claim_id: str, filename: str, data: bytes,
     return {**row, "engine": res.engine, "error": res.error, "applied": patch}
 
 
+def add_video(claim_id: str, filename: str, data: bytes,
+              content_type: str = "video/webm") -> dict[str, Any]:
+    """Store a scene-walkthrough video as evidence. No CV/OCR - it is a visual
+    record the officer can play back. Registered in claim_documents (doc_type
+    'scene_video') so it appears in the evidence view and streams via /api/media."""
+    st = get_store()
+    path = st.upload(claim_id, filename, data, content_type)
+    # doc_type stays within the claim_documents CHECK constraint ('other'); the
+    # 'scene_video' marker lives in ocr_fields (unconstrained jsonb) and the file
+    # extension identifies it as video for the evidence view + /api/media.
+    row = {
+        "claim_id": claim_id, "doc_type": "other", "storage_path": path,
+        "ocr_text": "", "ocr_fields": {"kind": "scene_video", "content_type": content_type},
+        "ocr_confidence": None, "created_at": _now(),
+    }
+    st.insert("claim_documents", row)
+    st.update_claim(claim_id, {"status": "evidence"})
+    st.event(claim_id, "scene_video", {"filename": filename, "bytes": len(data)})
+    return {"filename": filename, "storage_path": path, "bytes": len(data),
+            "content_type": content_type}
+
+
 # --------------------------------------------------------------------------- #
 # 3. SCORE + ROUTE  (real models + real triage policy)
 # --------------------------------------------------------------------------- #

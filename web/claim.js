@@ -13,6 +13,7 @@ const C = {
   incident: { type: null, severity: null, date: today(), desc: "", amount: "" },
   claimId: null,
   photos: [],
+  videos: [],
   result: null,
   withdrawChoice: null,
 };
@@ -220,26 +221,34 @@ function stepPhotos(el) {
       </div>
       <button type="button" class="cx-btn primary cx-cam-btn" id="camBtn">
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2.5"/><circle cx="12" cy="13" r="3.4"/><path d="M8 6l1.2-2h5.6L16 6"/></svg>
-        Open camera &amp; capture damage
+        Open camera - photo or video
       </button>
-      <div class="cx-cam-note">A 10-minute guided session opens your camera. Each shot is clarity-checked live - blurry frames won't capture, so there's no rework.</div>
-      <div class="cx-drop" id="drop"><b>or upload existing photos</b><br><span style="font-size:12px">tap / drag &amp; drop · analysed instantly</span></div>
-      <input type="file" id="file" accept="image/*" multiple style="display:none">
-      <div id="shots">${C.photos.map(photoRow).join("")}</div>
+      <div class="cx-cam-note">A guided session opens your camera with a live clarity check - blurry frames won't capture, so there's no rework. Switch to <b>video</b> to walk through the whole scene.</div>
+      <div class="cx-nativecam">
+        <span class="cx-nativecam-lbl">Prefer your phone's own camera?</span>
+        <div class="cx-nativecam-row">
+          <button type="button" class="cx-btn ghost sm" id="nativePhotoBtn">📷 Photo</button>
+          <button type="button" class="cx-btn ghost sm" id="nativeVideoBtn">🎥 Video</button>
+        </div>
+      </div>
+      <input type="file" id="nativePhoto" accept="image/*" capture="environment" style="display:none">
+      <input type="file" id="nativeVideo" accept="video/*" capture="environment" style="display:none">
+      <div id="shots">${C.photos.map(photoRow).join("")}${(C.videos || []).map(videoRow).join("")}</div>
       <div class="cx-actions">
         <button type="button" class="cx-btn ghost" onclick="CX.go('incident')">Back</button>
-        <button type="button" class="cx-btn primary" id="phNext" ${C.photos.length ? "" : "disabled"}>${C.photos.length ? "Review my claim" : "Add a photo to continue"}</button>
+        <button type="button" class="cx-btn primary" id="phNext" ${hasEvidence() ? "" : "disabled"}>${hasEvidence() ? "Review my claim" : "Capture the damage to continue"}</button>
       </div>
     </div>`;
-  const drop = $("drop"), file = $("file");
+  const np = $("nativePhoto"), nv = $("nativeVideo");
   $("camBtn").onclick = openCamera;
-  drop.onclick = () => file.click();
-  file.onchange = () => uploadPhotos(file.files);
-  ["dragover", "dragenter"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
-  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
-  drop.addEventListener("drop", e => uploadPhotos(e.dataTransfer.files));
+  $("nativePhotoBtn").onclick = () => np.click();
+  $("nativeVideoBtn").onclick = () => nv.click();
+  np.onchange = () => { uploadPhotos(np.files); np.value = ""; };
+  nv.onchange = () => { if (nv.files && nv.files[0]) uploadVideo(nv.files[0]); nv.value = ""; };
   $("phNext").onclick = () => go("review");
 }
+
+const hasEvidence = () => C.photos.length > 0 || (C.videos && C.videos.length > 0);
 
 /* =============================== LIVE CAMERA ===============================
    Opens the device camera, starts a 10-minute capture window, and gates the
@@ -256,7 +265,7 @@ const SHARP_MIN = 230;
 
 function openCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    alert("Camera isn't available here. Use ‘upload existing photos’ instead."); return;
+    alert("The in-app camera isn't available here. Use the “Photo” or “Video” button to open your phone's own camera."); return;
   }
   const ov = document.createElement("div");
   ov.className = "cam"; ov.id = "cam";
@@ -266,18 +275,30 @@ function openCamera() {
       <div class="cam-ttl">Capture the damage</div>
       <button type="button" class="cam-x" id="camX" aria-label="Close camera">✕</button>
     </div>
+    <div class="cam-mode">
+      <button type="button" class="cam-mode-btn on" id="modePhoto">Photo</button>
+      <button type="button" class="cam-mode-btn" id="modeVideo">Video</button>
+    </div>
     <div class="cam-stage">
       <video id="camVid" autoplay playsinline muted></video>
       <div class="cam-frame"></div>
+      <div class="cam-rec" id="camRec" hidden><span class="cam-rec-dot"></span><b id="camRecT">0:00</b></div>
     </div>
     <div class="cam-angles" id="camAngles"></div>
-    <div class="cam-clarity"><span class="cam-clbl">Clarity</span>
+    <div class="cam-clarity" id="camClarity"><span class="cam-clbl">Clarity</span>
       <div class="cam-meter"><i id="camMeter"></i></div><b id="camPct">-</b></div>
     <div class="cam-status" id="camStat">Starting camera…</div>
-    <div class="cam-controls"><button type="button" class="cam-shot" id="camShot" disabled aria-label="Capture"></button></div>`;
+    <div class="cam-controls">
+      <button type="button" class="cam-shot" id="camShot" disabled aria-label="Capture photo"></button>
+      <button type="button" class="cam-rec-btn" id="camRecBtn" hidden aria-label="Record video"></button>
+    </div>`;
   document.body.appendChild(ov);
+  _camMode = "photo";
   $("camX").onclick = closeCamera;
   $("camShot").onclick = captureFrame;
+  $("camRecBtn").onclick = toggleRec;
+  $("modePhoto").onclick = () => setCamMode("photo");
+  $("modeVideo").onclick = () => setCamMode("video");
   renderCamAngles();
   navigator.mediaDevices.getUserMedia({
     video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } },
@@ -288,8 +309,84 @@ function openCamera() {
     _camDeadline = Date.now() + 10 * 60 * 1000;
     tickTimer(); clarityLoop();
   }).catch(() => {
-    $("camStat").innerHTML = `<span style="color:var(--bad)">Camera access blocked. Allow the camera, or close and use ‘upload existing photos’.</span>`;
+    $("camStat").innerHTML = `<span style="color:var(--bad)">Camera access blocked. Allow the camera, or close and use the “Photo” / “Video” buttons for your phone's own camera.</span>`;
   });
+}
+
+/* Photo vs video mode inside the overlay camera. Photo = blur-gated shutter;
+   Video = record the whole scene (MediaRecorder) and upload it as evidence. */
+let _camMode = "photo";
+function setCamMode(m) {
+  if (_recActive) return;                    // don't switch mid-recording
+  _camMode = m;
+  const isV = m === "video";
+  const pB = $("modePhoto"), vB = $("modeVideo");
+  if (pB) pB.classList.toggle("on", !isV);
+  if (vB) vB.classList.toggle("on", isV);
+  const shot = $("camShot"), rec = $("camRecBtn"), clar = $("camClarity"), stat = $("camStat");
+  if (shot) shot.hidden = isV;
+  if (rec) rec.hidden = !isV;
+  if (clar) clar.style.display = isV ? "none" : "";
+  if (stat) stat.innerHTML = isV
+    ? "Tap the red button, then walk around the whole scene"
+    : "Hold steady - too blurry to capture";
+}
+
+/* --- video recording (scene walkthrough) --- */
+let _rec = null, _recChunks = [], _recActive = false, _recStart = 0, _recTimer = null;
+const REC_MAX_SEC = 90;   // cap the clip so uploads stay reasonable
+
+function toggleRec() { _recActive ? stopRec() : startRec(); }
+
+function startRec() {
+  if (!_camStream || !window.MediaRecorder) {
+    const s = $("camStat"); if (s) s.innerHTML = `<span style="color:var(--bad)">Recording isn't supported on this device</span>`;
+    return;
+  }
+  _recChunks = [];
+  let mime = "";
+  for (const m of ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"]) {
+    if (MediaRecorder.isTypeSupported(m)) { mime = m; break; }
+  }
+  try { _rec = mime ? new MediaRecorder(_camStream, { mimeType: mime }) : new MediaRecorder(_camStream); }
+  catch (e) { const s = $("camStat"); if (s) s.innerHTML = `<span style="color:var(--bad)">Recording not supported here</span>`; return; }
+  _rec.ondataavailable = e => { if (e.data && e.data.size) _recChunks.push(e.data); };
+  _rec.onstop = onRecStop;
+  _rec.start();
+  _recActive = true; _recStart = Date.now();
+  const rb = $("camRecBtn"); if (rb) rb.classList.add("rec");
+  const rc = $("camRec"); if (rc) rc.hidden = false;
+  const mp = $("modePhoto"); if (mp) mp.disabled = true;   // lock mode during record
+  recTick();
+}
+
+function recTick() {
+  clearTimeout(_recTimer);
+  const s = Math.floor((Date.now() - _recStart) / 1000);
+  const t = $("camRecT"); if (t) t.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  if (s >= REC_MAX_SEC) return stopRec();
+  _recTimer = setTimeout(recTick, 500);
+}
+
+function stopRec() {
+  clearTimeout(_recTimer);
+  if (_rec && _rec.state !== "inactive") { try { _rec.stop(); } catch (e) { /* ignore */ } }
+}
+
+async function onRecStop() {
+  _recActive = false;
+  const rb = $("camRecBtn"); if (rb) rb.classList.remove("rec");
+  const rc = $("camRec"); if (rc) rc.hidden = true;
+  const mp = $("modePhoto"); if (mp) mp.disabled = false;
+  const type = (_rec && _rec.mimeType) || "video/webm";
+  const blob = new Blob(_recChunks, { type });
+  if (!blob.size) { const s = $("camStat"); if (s) s.innerHTML = `<span style="color:var(--warn)">Nothing recorded - try again</span>`; return; }
+  const ext = type.includes("mp4") ? "mp4" : "webm";
+  const stat = $("camStat"); if (stat) stat.innerHTML = `<span class="cx-spin"></span> Uploading scene video…`;
+  try { await uploadVideo(new File([blob], `scene-${(C.videos.length || 0) + 1}.${ext}`, { type })); }
+  catch (e) { if (stat) stat.innerHTML = `<span style="color:var(--bad)">Upload failed - try again</span>`; return; }
+  if (stat) stat.innerHTML = `<span style="color:var(--good)">✓ Scene video added as evidence</span>`;
+  addCamDone();
 }
 
 function renderCamAngles() {
@@ -347,18 +444,23 @@ function sharpness(v) {
 function clarityLoop() {
   const v = $("camVid");
   if (!v || !_camStream || !$("cam")) return;
-  if (v.readyState >= 2) _lastSharp = sharpness(v);
-  const pct = Math.max(0, Math.min(100, Math.round(_lastSharp / SHARP_MIN * 100)));
-  const sharp = _lastSharp >= SHARP_MIN, live = Date.now() < _camDeadline;
-  const meter = $("camMeter"), pctEl = $("camPct"), stat = $("camStat"), shot = $("camShot");
-  if (meter) { meter.style.width = pct + "%";
-    meter.style.background = sharp ? "var(--good)" : (pct > 55 ? "var(--warn)" : "var(--bad)"); }
-  if (pctEl) pctEl.textContent = pct + "%";
-  if (shot && live) shot.disabled = !sharp;
-  if (shot) shot.classList.toggle("ready", sharp && live);
-  if (stat && live) stat.innerHTML = sharp
-    ? `<span style="color:var(--good)">✓ Sharp - tap the shutter</span>`
-    : `Hold steady - too blurry to capture`;
+  // The clarity gate only governs photo mode. In video mode leave the status
+  // line and controls to the recorder, but keep the loop alive so switching
+  // back to photo resumes instantly.
+  if (_camMode !== "video") {
+    if (v.readyState >= 2) _lastSharp = sharpness(v);
+    const pct = Math.max(0, Math.min(100, Math.round(_lastSharp / SHARP_MIN * 100)));
+    const sharp = _lastSharp >= SHARP_MIN, live = Date.now() < _camDeadline;
+    const meter = $("camMeter"), pctEl = $("camPct"), stat = $("camStat"), shot = $("camShot");
+    if (meter) { meter.style.width = pct + "%";
+      meter.style.background = sharp ? "var(--good)" : (pct > 55 ? "var(--warn)" : "var(--bad)"); }
+    if (pctEl) pctEl.textContent = pct + "%";
+    if (shot && live) shot.disabled = !sharp;
+    if (shot) shot.classList.toggle("ready", sharp && live);
+    if (stat && live) stat.innerHTML = sharp
+      ? `<span style="color:var(--good)">✓ Sharp - tap the shutter</span>`
+      : `Hold steady - too blurry to capture`;
+  }
   _camRAF = requestAnimationFrame(() => setTimeout(clarityLoop, 170));
 }
 
@@ -378,19 +480,63 @@ async function captureFrame() {
   if (stat) stat.innerHTML = C.photos.length > before
     ? `<span style="color:var(--good)">✓ Photo added (${C.photos.length}/${ANGLES.length})</span>`
     : `<span style="color:var(--warn)">Server flagged that shot - retake</span>`;
-  if (C.photos.length >= ANGLES.length && !$("camDone")) {
-    const b = document.createElement("button");
-    b.id = "camDone"; b.className = "cam-done"; b.textContent = "Done - review my claim";
-    b.onclick = () => { closeCamera(); go("review"); };
-    $("cam").querySelector(".cam-controls").appendChild(b);
-  }
+  if (C.photos.length >= ANGLES.length) addCamDone();
+}
+
+// Show the "Done" button inside the camera once there is enough evidence to
+// proceed (all angles shot, or at least one scene video recorded).
+function addCamDone() {
+  const ov = $("cam"); if (!ov || $("camDone")) return;
+  const b = document.createElement("button");
+  b.id = "camDone"; b.className = "cam-done"; b.textContent = "Done - review my claim";
+  b.onclick = () => { closeCamera(); go("review"); };
+  ov.querySelector(".cam-controls").appendChild(b);
 }
 
 function closeCamera() {
-  clearTimeout(_camTimer); cancelAnimationFrame(_camRAF);
+  clearTimeout(_camTimer); cancelAnimationFrame(_camRAF); clearTimeout(_recTimer);
+  // Discard any in-progress recording (detach onstop so it isn't uploaded).
+  if (_rec && _rec.state !== "inactive") { _rec.onstop = null; try { _rec.stop(); } catch (e) { /* ignore */ } }
+  _rec = null; _recActive = false; _recChunks = [];
   if (_camStream) { _camStream.getTracks().forEach(t => t.stop()); _camStream = null; }
   const ov = $("cam"); if (ov) ov.remove();
   if (C.step === "photos") stepPhotos(app());
+}
+
+/* Upload a scene video (from the overlay recorder or the phone's native camera).
+   Stored as evidence on the claim and viewable by the officer. */
+async function uploadVideo(file) {
+  if (!file) return;
+  const shots = $("shots");
+  let pending = null;
+  if (shots) {
+    pending = document.createElement("div");
+    pending.className = "cx-photo cx-vid";
+    pending.innerHTML = `<div class="cx-vidico">🎥</div><div class="pi"><div class="pn">${esc(file.name)}</div>
+      <div class="pm"><span class="cx-spin"></span> Uploading scene video…</div></div>`;
+    shots.appendChild(pending);
+  }
+  try {
+    const fd = new FormData(); fd.append("file", file);
+    const r = await api(`/api/claims/${C.claimId}/video`, { method: "POST", body: fd });
+    C.videos.push(r);
+    if (pending) pending.outerHTML = videoRow(r);
+    const nx = $("phNext"); if (nx) { nx.disabled = false; nx.textContent = "Review my claim"; }
+    return r;
+  } catch (e) {
+    if (pending) { const pm = pending.querySelector(".pm"); if (pm) pm.innerHTML = `<span style="color:var(--bad)">Upload failed - try again</span>`; }
+    throw e;
+  }
+}
+
+function videoRow(v) {
+  return `<div class="cx-photo cx-vid">
+    <div class="cx-vidico">🎥</div>
+    <div class="pi">
+      <div class="pn">${esc(v.filename || "scene video")}</div>
+      <div class="pm">Scene walkthrough · attached as evidence</div>
+    </div>
+  </div>`;
 }
 
 function photoRow(p) {
@@ -450,6 +596,7 @@ function stepReview(el) {
         <div class="cx-kv"><span class="k">Severity</span><span class="v">${esc(hz(I.severity || "-"))}</span></div>
         <div class="cx-kv"><span class="k">Date</span><span class="v">${esc(I.date)}</span></div>
         <div class="cx-kv"><span class="k">Photos</span><span class="v">${C.photos.length}</span></div>
+        ${(C.videos && C.videos.length) ? `<div class="cx-kv"><span class="k">Scene videos</span><span class="v">${C.videos.length}</span></div>` : ""}
         ${I.amount ? `<div class="cx-kv"><span class="k">Your estimate</span><span class="v">${money(I.amount)}</span></div>` : ""}
         ${worst.length ? `<div class="cx-kv"><span class="k">AI damage read</span><span class="v">${esc([...new Set(worst)].join(", "))}</span></div>` : ""}
       </div>

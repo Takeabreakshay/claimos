@@ -558,6 +558,13 @@ function nextStep(c) {
     paid: ["Settled - payout complete.", "ok"],
   })[s] || ["Review this claim and decide the next action.", "info"];
 }
+// A scene walkthrough is stored as an "other" document with a kind marker (and a
+// video file extension) - detect either so the officer sees a player, not OCR.
+function isSceneVideo(x) {
+  if (x && x.ocr_fields && x.ocr_fields.kind === "scene_video") return true;
+  const p = (x && (x.storage_path || x.url)) || "";
+  return /\.(webm|mp4|mov)(\?|$)/i.test(p);
+}
 const _EV_NOISE = new Set(["CAPACITY", "SCHEDULE", "MODEL", "CHASSIS", "ENGINE", "REGISTRATIONVALID",
   "DATE", "GSTIN", "BRANCH", "SON", "NO", "NAME", "TYPE"]);
 function evKeyFields(f) {
@@ -644,7 +651,12 @@ async function renderEvidence(el) {
           <input type="file" id="dfile" accept="image/*,.pdf" class="hide">
           <div id="dresult" style="margin-top:12px"></div>
           ${(d.documents || []).length ? `<div style="margin-top:14px"><div class="eyebrow" style="margin-bottom:6px">Submitted documents</div>
-            ${d.documents.map(x => { const kf = evKeyFields(x.ocr_fields); return `<div class="doc-item">
+            ${d.documents.map(x => {
+              if (isSceneVideo(x)) return `<div class="doc-item">
+                <div class="doc-hd"><b>Scene video</b><span class="doc-conf">customer walkthrough</span>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" class="doc-view">open</a>` : ""}</div>
+                ${x.url ? `<video class="doc-video" src="${esc(x.url)}" controls preload="metadata" playsinline></video>` : `<div class="t-caption">video unavailable</div>`}
+              </div>`;
+              const kf = evKeyFields(x.ocr_fields); return `<div class="doc-item">
               <div class="doc-hd"><b>${esc(hz(x.doc_type))}</b><span class="doc-conf">OCR ${((x.ocr_confidence || 0) * 100).toFixed(0)}%</span>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" class="doc-view">view</a>` : ""}</div>
               ${kf.length ? `<div class="doc-fields">${kf.map(([k, v]) => `<span class="doc-f"><i>${esc(hz(k))}</i> ${esc(String(v))}</span>`).join("")}</div>` : `<div class="t-caption">no fields extracted</div>`}
             </div>`; }).join("")}</div>` : `<div class="empty" style="margin-top:12px">No documents submitted yet.</div>`}

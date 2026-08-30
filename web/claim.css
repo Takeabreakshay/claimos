@@ -238,6 +238,34 @@ body.cx::before{
 .cam-restart{background:rgba(255,255,255,.14);color:#fff}
 .cam-done{background:var(--good);color:#04140a}
 
+/* Photo / Video mode switch */
+.cam-mode{display:flex;gap:6px;align-self:center;background:rgba(255,255,255,.1);
+  border-radius:999px;padding:4px;flex:none;margin-top:2px}
+.cam-mode-btn{border:0;background:transparent;color:#cdd6e6;font-family:var(--font-ui);
+  font-size:13px;font-weight:650;padding:7px 20px;border-radius:999px;cursor:pointer;transition:background .15s,color .15s}
+.cam-mode-btn.on{background:#fff;color:#0a0f18}
+.cam-mode-btn:disabled{opacity:.4;cursor:not-allowed}
+/* Recording indicator + record button */
+.cam-rec{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:7px;
+  background:rgba(5,7,12,.6);padding:5px 12px;border-radius:999px;font-family:var(--font-data,monospace);font-size:13px;font-weight:700}
+.cam-rec-dot{width:10px;height:10px;border-radius:50%;background:#ff4136;animation:campulse 1s infinite}
+.cam-rec-btn{width:74px;height:74px;border-radius:50%;border:5px solid rgba(255,255,255,.35);
+  background:transparent;cursor:pointer;position:relative;transition:transform .1s}
+.cam-rec-btn::after{content:"";position:absolute;inset:8px;border-radius:50%;background:#ff4136;transition:border-radius .18s,inset .18s}
+.cam-rec-btn.rec::after{inset:22px;border-radius:5px}
+.cam-rec-btn:active{transform:scale(.92)}
+
+/* Native-camera fallback (phone's own camera) */
+.cx-nativecam{margin:2px 2px 14px;display:flex;flex-direction:column;gap:8px;align-items:center}
+.cx-nativecam-lbl{font-size:12px;color:var(--slate)}
+.cx-nativecam-row{display:flex;gap:10px}
+.cx-btn.sm{padding:9px 18px;font-size:13.5px;width:auto}
+
+/* Scene-video row in the shots list */
+.cx-vid{align-items:center}
+.cx-vidico{width:56px;height:56px;flex:none;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:24px;background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid var(--g-500)}
+
 /* ============================================================================
    MOBILE POLISH - safe-area insets (notch / home indicator) + tactile feedback.
    Keeps the customer filing flow feeling like a native phone app.
