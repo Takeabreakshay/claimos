@@ -1384,3 +1384,13 @@ input:focus, select:focus, textarea:focus{ border-color:var(--blue) !important;
 .pc-q-amt{font-size:12px;color:#fff;font-weight:700}
 .pc-q-lane{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;color:#fff}
 .pc-q-lane.l1{background:var(--l1-dot)}.pc-q-lane.l2{background:var(--l2-dot)}.pc-q-lane.l3{background:var(--l3-dot)}.pc-q-lane.gray{background:#64789a}
+
+/* ---- evidence: real photo thumbnails + document field breakdown ---- */
+.thumb-img{width:100%;height:120px;object-fit:cover;border-radius:8px;display:block;margin-bottom:6px;border:1px solid var(--line)}
+.doc-item{border:1px solid var(--line-2);border-radius:10px;padding:11px 12px;margin-bottom:8px;background:var(--panel)}
+.doc-hd{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink)}
+.doc-conf{font-family:var(--font-data);font-size:11px;color:var(--slate-2);margin-left:auto}
+.doc-view{font-size:11.5px;color:var(--blue);text-decoration:none;font-weight:600}
+.doc-fields{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:8px}
+.doc-f{font-size:11.5px;color:var(--ink-2);background:var(--g-850);border-radius:6px;padding:3px 8px}
+.doc-f i{color:var(--slate-2);font-style:normal;margin-right:4px}

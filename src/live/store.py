@@ -336,10 +336,29 @@ class Store:
         if self.mode == "supabase" and not Path(path).exists():
             try:
                 res = self._sb.storage.from_(BUCKET).create_signed_url(path, seconds)
-                return res.get("signedURL") or res.get("signed_url")
+                return res.get("signedURL") or res.get("signedUrl") or res.get("signed_url")
             except Exception:
                 return None
         return path
+
+    def download(self, path: str) -> bytes | None:
+        """Fetch the raw bytes of a stored file (Supabase Storage or local). Used
+        to stream evidence through our own /api/media endpoint - robust across
+        both backends and free of signed-URL / CORS quirks."""
+        if not path:
+            return None
+        p = Path(path)
+        if p.exists():
+            try:
+                return p.read_bytes()
+            except Exception:
+                return None
+        if self.mode == "supabase":
+            try:
+                return self._sb.storage.from_(BUCKET).download(path)
+            except Exception:
+                return None
+        return None
 
     # ---------------- audit ----------------
     def event(self, claim_id: str, event: str, detail: dict | None = None,

@@ -543,6 +543,39 @@ function renderIntake(el) {
 }
 
 /* ---------- EVIDENCE ---------- */
+function nextStep(c) {
+  const s = (c.status || "").toLowerCase();
+  if (!c.lane) return ["Add the evidence, then Score & route to triage this claim.", "info"];
+  return ({
+    awaiting_officer: ["Review the evidence, then Approve or send to investigation.", "info"],
+    scored: ["Review the evidence, then Approve or send to investigation.", "info"],
+    retake: ["Evidence gap - request a retake from the customer.", "warn"],
+    evidence: ["Evidence gap - request a retake from the customer.", "warn"],
+    payout_proposed: ["Awaiting a Manager to approve the payout (maker-checker).", "warn"],
+    investigating: ["In investigation - surveyor & fraud review in progress.", "warn"],
+    approved: ["Approved - ready to settle & pay out.", "ok"],
+    declined: ["Declined - recorded with the reason on file.", "bad"],
+    paid: ["Settled - payout complete.", "ok"],
+  })[s] || ["Review this claim and decide the next action.", "info"];
+}
+const _EV_NOISE = new Set(["CAPACITY", "SCHEDULE", "MODEL", "CHASSIS", "ENGINE", "REGISTRATIONVALID",
+  "DATE", "GSTIN", "BRANCH", "SON", "NO", "NAME", "TYPE"]);
+function evKeyFields(f) {
+  if (!f) return [];
+  // registration_no first (dedup the *_number / vehicle_ variants), then the rest
+  const order = ["registration_no", "dl_number", "policy_no", "fir_number", "amount",
+    "chassis_no", "ifsc", "account_number", "bank_name", "garage_gstin"];
+  const out = [];
+  for (const k of order) {
+    const v = f[k];
+    if (v != null && v !== "" && typeof v !== "object" && !_EV_NOISE.has(String(v).toUpperCase())) out.push([k, v]);
+  }
+  if (!out.some(([k]) => k === "registration_no")) {
+    const r = f.registration_number || f.vehicle_registration;
+    if (r && !_EV_NOISE.has(String(r).toUpperCase())) out.unshift(["registration_no", r]);
+  }
+  return out.slice(0, 6);
+}
 async function renderEvidence(el) {
   if (!S.claimId) { el.innerHTML = noClaim(); return; }
   const d = await api("/api/claims/" + S.claimId);
@@ -558,8 +591,27 @@ async function renderEvidence(el) {
 
     ${c.cv_severity ? `<div class="note ${c.cv_severity_mismatch ? "warn" : "ok"}" style="margin-bottom:16px"><span>◈</span><div><b>AI damage assessment:</b> photos read as <b>${esc(hz(c.cv_severity))}</b>; operator declared <b>${esc(hz(c.incident_severity))}</b>. ${c.cv_severity_mismatch ? "Severity mismatch - surfaced to the officer, not auto-actioned." : "Consistent with the declaration."}</div></div>` : ""}
 
+    ${(() => { const [msg, tone] = nextStep(c); return `<div class="note ${tone}" style="margin-bottom:16px"><span>●</span><div><b>Next step:</b> ${esc(msg)}</div></div>`; })()}
+
+    <div class="card" style="margin-bottom:16px"><div class="card-h"><h3>Claim summary</h3><span class="sub">what the customer submitted</span></div>
+      <div class="card-b">
+        <div class="grid g3">
+          <div class="kv"><span class="k">Type</span><span class="v">${esc(hz(c.claim_type || "-"))}</span></div>
+          <div class="kv"><span class="k">Declared severity</span><span class="v">${esc(hz(c.incident_severity || "-"))}</span></div>
+          <div class="kv"><span class="k">Claimed</span><span class="v">${money(c.claim_amount)}</span></div>
+          <div class="kv"><span class="k">Vehicle</span><span class="v">${esc([c.make, c.model].filter(Boolean).join(" ") || "-")}</span></div>
+          <div class="kv"><span class="k">Policy</span><span class="v">${esc(c.policy_id || "-")}</span></div>
+          <div class="kv"><span class="k">Garage</span><span class="v">${esc(hz(c.garage_type || "-"))}</span></div>
+          <div class="kv"><span class="k">FIR filed</span><span class="v">${c.fir_filed ? "yes" : "no"}</span></div>
+          <div class="kv"><span class="k">Photos</span><span class="v">${c.num_photos || 0}</span></div>
+          <div class="kv"><span class="k">Documents</span><span class="v">${(d.documents || []).length}</span></div>
+        </div>
+        ${c.incident_description ? `<div class="t-caption" style="margin-top:10px">"${esc(c.incident_description)}"</div>` : ""}
+      </div>
+    </div>
+
     <div class="grid g2">
-      <div class="card"><div class="card-h"><h3>Damage photos</h3><span class="sub">quality · blur · EXIF · reuse</span></div>
+      <div class="card"><div class="card-h"><h3>Damage photos</h3><span class="sub">what the customer captured</span></div>
         <div class="card-b">
           <div class="field"><label>Angle</label><select id="angle">
             <option>front-left</option><option>front-right</option><option>rear-left</option>
@@ -568,11 +620,13 @@ async function renderEvidence(el) {
           <div class="drop" id="pdrop"><b>Drop photos</b> or click to choose<br><span style="font-size:12px">JPG / PNG · analysed on upload</span></div>
           <input type="file" id="pfile" accept="image/*" multiple class="hide">
           <div class="thumbs" id="pthumbs">
-            ${(d.photos || []).map(p => `<div class="thumb"><div class="meta">
-              <div class="q">quality ${(p.quality_score || 0).toFixed(2)}</div>
-              <div style="color:var(--slate)">${p.is_blurry ? "blurry ⚠" : "sharp ✓"} · ${p.width}x${p.height}</div>
-              ${p.cv_severity ? `<div style="color:var(--accent)">AI: ${esc(p.cv_severity)}</div>` : ""}
-            </div></div>`).join("")}
+            ${(d.photos || []).map(p => `<div class="thumb">
+              ${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener"><img src="${esc(p.url)}" alt="damage photo ${esc(p.angle_label || "")}" loading="lazy" class="thumb-img"></a>` : ""}
+              <div class="meta">
+                <div class="q">quality ${(p.quality_score || 0).toFixed(2)} · ${p.is_blurry ? "<span style='color:var(--bad)'>blurry</span>" : "<span style='color:var(--good)'>sharp</span>"}</div>
+                <div style="color:var(--slate)">${esc(hz(p.angle_label || "wide"))} · ${p.width}x${p.height}</div>
+                ${p.cv_severity ? `<div style="color:var(--accent)">AI: ${esc(hz(p.cv_severity))}</div>` : ""}
+              </div></div>`).join("") || `<div class="empty">No photos submitted yet.</div>`}
           </div>
           <div id="presult" style="margin-top:12px"></div>
         </div>
@@ -589,8 +643,11 @@ async function renderEvidence(el) {
           <div class="drop" id="ddrop"><b>Drop a document</b> or click to choose<br><span style="font-size:12px">Nemotron OCR v2 · local fallback</span></div>
           <input type="file" id="dfile" accept="image/*,.pdf" class="hide">
           <div id="dresult" style="margin-top:12px"></div>
-          ${(d.documents || []).length ? `<div style="margin-top:14px"><div class="eyebrow" style="margin-bottom:6px">Attached</div>
-            ${d.documents.map(x => `<div class="kv"><span class="k">${esc(hz(x.doc_type))}</span><span class="v">${Object.keys(x.ocr_fields || {}).length} fields</span></div>`).join("")}</div>` : ""}
+          ${(d.documents || []).length ? `<div style="margin-top:14px"><div class="eyebrow" style="margin-bottom:6px">Submitted documents</div>
+            ${d.documents.map(x => { const kf = evKeyFields(x.ocr_fields); return `<div class="doc-item">
+              <div class="doc-hd"><b>${esc(hz(x.doc_type))}</b><span class="doc-conf">OCR ${((x.ocr_confidence || 0) * 100).toFixed(0)}%</span>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" class="doc-view">view</a>` : ""}</div>
+              ${kf.length ? `<div class="doc-fields">${kf.map(([k, v]) => `<span class="doc-f"><i>${esc(hz(k))}</i> ${esc(String(v))}</span>`).join("")}</div>` : `<div class="t-caption">no fields extracted</div>`}
+            </div>`; }).join("")}</div>` : `<div class="empty" style="margin-top:12px">No documents submitted yet.</div>`}
         </div>
       </div>
     </div>

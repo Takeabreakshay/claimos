@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile  # noqa: E402
+from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile  # noqa: E402
 from fastapi.concurrency import run_in_threadpool  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import FileResponse, JSONResponse  # noqa: E402
@@ -174,14 +174,40 @@ def get_claim(claim_id: str) -> dict[str, Any]:
     claim = store.get_claim(claim_id)
     if not claim:
         raise HTTPException(404, "claim not found")
+    from urllib.parse import quote
+    photos = store.list_child("claim_photos", claim_id)
+    documents = store.list_child("claim_documents", claim_id)
+    # Surface a viewable URL for each piece of evidence the customer submitted, so
+    # the officer sees the actual photo/document, not just its metadata. Streamed
+    # through our own /api/media endpoint (robust across Supabase + local storage).
+    for m in photos + documents:
+        sp = m.get("storage_path") or ""
+        m["url"] = ("/api/media?path=" + quote(sp, safe="")) if sp else None
     return {
         "claim": claim,
         "score": store.latest_score(claim_id),
-        "photos": store.list_child("claim_photos", claim_id),
-        "documents": store.list_child("claim_documents", claim_id),
+        "photos": photos,
+        "documents": documents,
         "decisions": store.list_child("claim_decisions", claim_id),
         "timeline": wf.timeline(claim_id),
     }
+
+
+_MEDIA_TYPES = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
+                "gif": "image/gif", "webp": "image/webp", "pdf": "application/pdf"}
+
+
+@app.get("/api/media")
+def media(path: str) -> Response:
+    """Stream a stored evidence file (photo/document) by its storage path."""
+    if not path or ".." in path:
+        raise HTTPException(400, "bad path")
+    data = get_store().download(path)
+    if data is None:
+        raise HTTPException(404, "not found")
+    ext = path.rsplit(".", 1)[-1].lower() if "." in path else ""
+    return Response(content=data, media_type=_MEDIA_TYPES.get(ext, "application/octet-stream"),
+                    headers={"Cache-Control": "private, max-age=600"})
 
 
 @app.post("/api/claims/{claim_id}/photos")
