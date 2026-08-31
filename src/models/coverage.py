@@ -210,8 +210,14 @@ def settlement_waterfall(
             ],
         }
 
-    dep = 0.0 if (zero_dep_active and zero_dep_within_cap) else float(parts_depreciation)
-    cons = 0.0 if consumables_covered else float(consumables)
+    # parts_depreciation + consumables are computed on the FULL line-item estimate.
+    # When we assess at a lower claimed amount (assessed = min(claimed, estimate)),
+    # those deductions must scale to what is actually being assessed - otherwise a
+    # small claim against a large estimate gets over-deducted to a near-zero net.
+    scale = (assessed / float(line_item_estimate)) if (line_item_estimate
+             and float(line_item_estimate) > 0 and assessed < float(line_item_estimate)) else 1.0
+    dep = 0.0 if (zero_dep_active and zero_dep_within_cap) else float(parts_depreciation) * scale
+    cons = 0.0 if consumables_covered else float(consumables) * scale
     gross = assessed - dep - cons
     salvage = float(salvage_value) if insured_retains_salvage else 0.0
     net = max(0.0, gross - float(deductible_total) - salvage - float(unrepaired_deduction))
