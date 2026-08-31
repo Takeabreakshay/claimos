@@ -342,7 +342,6 @@ async function renderDashboard(el) {
   const d = await api("/api/dashboard");
   setQCount(d.n_claims);
   const n = d.n_claims || 0, mix = d.lane_mix || {}, ac = d.action_counts || {};
-  const leakOk = d.leakage_rate <= d.leakage_ceiling;
   el.innerHTML = `<div class="lp-dark">
     <section class="lp-hero">
       <div class="lp-hero-copy">
@@ -381,9 +380,9 @@ async function renderDashboard(el) {
 
     <section class="lp-band">
       ${dashBand(n, "claims in the book")}
-      ${dashBand((mix.lane1_touchless || 0), "in the Lane-1 touchless bucket", "var(--l1-fg)")}
-      ${dashBand(money(d.leakage_exposure || 0), "Lane-1 leakage \u00B7 exposure to management", leakOk ? "var(--good)" : "var(--bad)")}
-      ${dashBand(money(d.total_exposure), "book value under management")}
+      ${dashBand((d.fraud_flagged || 0), "flagged for fraud review", "var(--warn)")}
+      ${dashBand((ac.investigating || 0), "in investigation")}
+      ${dashBand((d.settled || 0), "settled &amp; paid", "var(--good)")}
     </section>
 
     <section class="lp-section">
