@@ -421,7 +421,7 @@ async function renderQueue(el) {
         <select id="fLane" style="width:auto">${lanes.map(l => `<option value="${l}">${(LANE[l] || {}).label || l}</option>`).join("")}</select>
       </div>
       <div class="tblwrap"><table class="tbl"><thead><tr>
-        <th>Claim</th><th>Type</th><th>Claimed</th><th>Severity</th><th>Lane</th>
+        <th>Claim</th><th>Type</th><th>Claim Amount</th><th>Severity</th><th>Lane</th>
         <th>Fraud</th><th>Confidence</th><th>Status</th>
       </tr></thead><tbody id="qbody"></tbody></table></div>
     </div>`;
