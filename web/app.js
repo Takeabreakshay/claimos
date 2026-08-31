@@ -221,7 +221,7 @@ async function render() {
 const DASH_FEATURES = [
   { ic: "\u25A7", t: "Document intelligence (OCR)", d: "Reads RC, licence, policy, FIR, estimates and bank details, then cross-checks them for tampering." },
   { ic: "\u25C8", t: "Damage assessment (CV)", d: "Reads severity and damaged parts from the photos; blur-gated so only usable evidence counts." },
-  { ic: "\u2318", t: "Fraud & duplicate", d: "Calibrated fraud probability plus a collusion graph and perceptual-hash reuse detection." },
+  { ic: "\u2318", t: "Fraud & duplicate", d: "Calibrated fraud probability with perceptual-hash photo-reuse and duplicate / re-filing detection." },
   { ic: "\u20B9", t: "Repair-cost estimate", d: "A deterministic parts-and-labour rate card gives a P10-P50-P90 band and flags padding." },
   { ic: "\u25A4", t: "Coverage validation", d: "Maps the claim against policy terms - in-force, cover type, exclusions - in four clear states." },
   { ic: "\u2442", t: "Risk-triage wedge", d: "Combines value, confidence, fraud, severity and escalation risk to pick the lane." },
@@ -857,9 +857,6 @@ async function renderDecision(el) {
     ${s.legal_weak_reject_flag ? `<div class="note warn" style="margin-bottom:16px"><span>⚖</span><div>
       <b>Legal check.</b> Late intimation with a valid reason is <b>not</b> a lawful ground for rejection
       (Supreme Court rulings). This claim is routed to a human instead of being declined.</div></div>` : ""}
-    ${Number(s.ring_risk) > 0.5 ? `<div class="note bad" style="margin-bottom:16px"><span>!</span><div>
-      <b>Collusion signal.</b> Ring risk ${Number(s.ring_risk).toFixed(2)} - this claim shares entities with
-      ${(s.component_size || 1) - 1} other claim(s) in the book.</div></div>` : ""}
     ${ratio && ratio > 1.25 ? `<div class="note warn" style="margin-bottom:16px"><span>~</span><div>
       Claimed amount is <b>${ratio.toFixed(2)}x</b> the predicted repair cost - possible inflation.</div></div>` : ""}
     ${(() => { const dr = (s.lane_reasons || []).find(r => String(r).startsWith("duplicate_claim")); return dr ? `<div class="note bad" style="margin-bottom:16px"><span>⧉</span><div><b>Duplicate claim detected.</b> ${esc(hz(String(dr).replace("duplicate_claim:", "")))} - force-routed to investigation regardless of value.</div></div>` : ""; })()}
@@ -874,7 +871,7 @@ async function renderDecision(el) {
             ${confChip(s.c_cost, "cost")}</div>
           <div class="mod"><div class="name">Fraud</div>
             <div><div class="val num">${pct(s.p_fraud, 1)}</div>
-              <div class="why">calibrated probability · ring risk ${Number(s.ring_risk || 0).toFixed(2)}</div></div>
+              <div class="why">calibrated probability · rules + photo-reuse</div></div>
             ${confChip(cert(s.p_fraud))}</div>
           <div class="mod"><div class="name">Escalation</div>
             <div><div class="val num">${pct(s.p_escalation, 1)}</div>
@@ -913,23 +910,6 @@ async function renderDecision(el) {
       </div>
     </div>
 
-    <div class="card" style="margin-top:16px"><div class="card-h"><h3>Collusion network</h3>
-      <span class="sub">shared garages, surveyors and payout accounts across "independent" claims</span></div>
-      <div class="card-b" style="display:grid;grid-template-columns:1.3fr 1fr;gap:18px">
-        <svg id="cgraph" class="cg" viewBox="0 0 460 260" role="img" aria-label="Collusion graph"></svg>
-        <div>
-          <div class="kv"><span class="k">Ring risk</span><span class="v num">${Number(s.ring_risk || 0).toFixed(2)}</span></div>
-          <div class="kv"><span class="k">Linked claims</span><span class="v num">${(s.component_size || 1) - 1}</span></div>
-          <div class="kv"><span class="k">Component size</span><span class="v num">${s.component_size || 1}</span></div>
-          <div class="t-caption" style="margin-top:10px">
-            ${Number(s.ring_risk) > 0.5
-      ? "This claim sits inside a dense cluster of claims funnelling through the same entities - the pattern a single-claim review cannot see."
-      : "This claim shares no meaningful entity linkage. Genuine claims sit alone in the graph."}
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="card" style="margin-top:16px"><div class="card-h"><h3>Audit trail</h3><span class="sub">every state change</span></div>
       <div class="card-b"><div class="tl">
         ${(d.timeline || []).slice().reverse().map(e => `<div class="tl-item">
@@ -952,7 +932,6 @@ async function renderDecision(el) {
     }, 95 * mods.length + 160);
   }
 
-  drawCollusion(s);
   loadBrain(S.claimId);
 
   $("narrBtn").onclick = async (ev) => {
@@ -1519,7 +1498,7 @@ function deliverablesMap() {
      "Nemotron OCR v2 extracts fields; deterministic coverage engine validates RC / DL / FIR / policy.",
      "live"],
     ["Fraud & duplicate claim detection",
-     "LightGBM fraud (isotonic-calibrated) + networkx collusion graph + perceptual-hash photo reuse + four-tier duplicate/re-filing rule (exact, near, re-file-after-reject, same-part) with frequency & backdating tells.",
+     "LightGBM fraud (isotonic-calibrated) + perceptual-hash photo reuse + four-tier duplicate/re-filing rule (exact, near, re-file-after-reject, same-part) with frequency & backdating tells.",
      "live"],
     ["AI-based damage assessment",
      "Vision model reads severity + damaged parts; declared-vs-assessed mismatch is a HARD routing rule (a 2-rank gap forces investigation), with a value-tiered confidence floor.",
@@ -1629,8 +1608,8 @@ async function renderWorkflow(el) {
         <div class="wf-mod" data-m="2"><div class="wf-scan"></div>
           <div class="mt">${ICON.fraud}Fraud</div>
           <div class="mr" data-v="${pct(s.p_fraud, 1)}">-</div>
-          <div class="mw">Rules · content (EXIF, reuse) · graph.
-            Ring risk ${Number(s.ring_risk || 0).toFixed(2)}${(s.component_size || 1) > 1 ? ` across ${s.component_size} linked` : ""}</div>
+          <div class="mw">Rules · content signals (EXIF, perceptual-hash reuse) ·
+            duplicate / re-filing checks</div>
           <div class="mc">${confChip(Math.min(1, 2 * Math.abs(Number(s.p_fraud || 0) - .5)))}</div></div>
 
         <div class="wf-mod" data-m="3"><div class="wf-scan"></div>
@@ -1859,49 +1838,6 @@ function waterfall(r) {
       <b>Constructive total loss</b> - repair exceeds 75% of IDV, settled on the IRDAI
       depreciation grid.</div></div>` : ""}
   </div>`;
-}
-
-/* CollusionGraph - the claim against the entities it shares */
-function drawCollusion(s) {
-  const svg = document.getElementById("cgraph");
-  if (!svg) return;
-  const comp = Number(s.component_size) || 1;
-  const NS = "http://www.w3.org/2000/svg";
-  svg.innerHTML = "";
-  const W = 460, H = 260, cx = W / 2, cy = H / 2 - 6;
-  const mk = (tag, attrs) => { const e = document.createElementNS(NS, tag);
-    for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
-
-  if (comp <= 1) {
-    svg.appendChild(mk("circle", { cx, cy, r: 21, fill: "var(--panel)",
-      stroke: "var(--slate-2)", "stroke-width": 2 }));
-    const t = mk("text", { x: cx, y: cy + 44, "text-anchor": "middle",
-      fill: "var(--slate)", "font-size": 12, "font-family": "var(--font-ui)" });
-    t.textContent = "No shared entities - isolated claim";
-    svg.appendChild(t);
-    return;
-  }
-  const n = Math.min(comp, 9), R = 88;
-  // shared entity hub
-  svg.appendChild(mk("rect", { x: cx - 11, y: cy - 11, width: 22, height: 22, rx: 6,
-    fill: "var(--blue)" }));
-  const ht = mk("text", { x: cx, y: cy + 32, "text-anchor": "middle", fill: "var(--slate)",
-    "font-size": 10, "font-family": "var(--font-data)" });
-  ht.textContent = "shared garage / surveyor / account";
-  svg.appendChild(ht);
-
-  for (let i = 0; i < n; i++) {
-    const a = -Math.PI / 2 + (i / n) * 2 * Math.PI;
-    const x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
-    svg.appendChild(mk("line", { x1: cx, y1: cy, x2: x, y2: y,
-      stroke: "var(--l3-line)", "stroke-width": 1.4, opacity: .85 }));
-    svg.appendChild(mk("circle", { cx: x, cy: y, r: 15, fill: "var(--l3-fg)", opacity: .13 }));
-    const dot = mk("circle", { cx: x, cy: y, r: 8, fill: "var(--l3-fg)",
-      stroke: "var(--panel)", "stroke-width": 2, opacity: 0 });
-    svg.appendChild(dot);
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) dot.setAttribute("opacity", 1);
-    else setTimeout(() => { dot.style.transition = "opacity .4s"; dot.setAttribute("opacity", 1); }, 90 * i + 120);
-  }
 }
 
 function noClaim() {

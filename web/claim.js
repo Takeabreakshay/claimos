@@ -14,11 +14,12 @@ const C = {
   claimId: null,
   photos: [],
   videos: [],
+  documents: [],
   result: null,
   withdrawChoice: null,
 };
 
-const STEPS = ["policy", "incident", "photos", "review"];
+const STEPS = ["policy", "incident", "photos", "documents", "review"];
 const $ = (id) => document.getElementById(id);
 const app = () => $("app");
 function today() { const d = new Date(); return d.toISOString().slice(0, 10); }
@@ -62,7 +63,8 @@ function render() {
   const el = app();
   el.scrollTo?.(0, 0); window.scrollTo(0, 0);
   ({ policy: stepPolicy, incident: stepIncident, photos: stepPhotos,
-     review: stepReview, result: stepResult, track: stepTrack }[C.step] || stepPolicy)(el);
+     documents: stepDocuments, review: stepReview, result: stepResult,
+     track: stepTrack }[C.step] || stepPolicy)(el);
 }
 
 /* ============================ STEP 1 · POLICY ============================ */
@@ -236,7 +238,7 @@ function stepPhotos(el) {
       <div id="shots">${C.photos.map(photoRow).join("")}${(C.videos || []).map(videoRow).join("")}</div>
       <div class="cx-actions">
         <button type="button" class="cx-btn ghost" onclick="CX.go('incident')">Back</button>
-        <button type="button" class="cx-btn primary" id="phNext" ${hasEvidence() ? "" : "disabled"}>${hasEvidence() ? "Review my claim" : "Capture the damage to continue"}</button>
+        <button type="button" class="cx-btn primary" id="phNext" ${hasEvidence() ? "" : "disabled"}>${hasEvidence() ? "Next: documents" : "Capture the damage to continue"}</button>
       </div>
     </div>`;
   const np = $("nativePhoto"), nv = $("nativeVideo");
@@ -245,7 +247,7 @@ function stepPhotos(el) {
   $("nativeVideoBtn").onclick = () => nv.click();
   np.onchange = () => { uploadPhotos(np.files); np.value = ""; };
   nv.onchange = () => { if (nv.files && nv.files[0]) uploadVideo(nv.files[0]); nv.value = ""; };
-  $("phNext").onclick = () => go("review");
+  $("phNext").onclick = () => go("documents");
 }
 
 const hasEvidence = () => C.photos.length > 0 || (C.videos && C.videos.length > 0);
@@ -488,8 +490,8 @@ async function captureFrame() {
 function addCamDone() {
   const ov = $("cam"); if (!ov || $("camDone")) return;
   const b = document.createElement("button");
-  b.id = "camDone"; b.className = "cam-done"; b.textContent = "Done - review my claim";
-  b.onclick = () => { closeCamera(); go("review"); };
+  b.id = "camDone"; b.className = "cam-done"; b.textContent = "Done - next: documents";
+  b.onclick = () => { closeCamera(); go("documents"); };
   ov.querySelector(".cam-controls").appendChild(b);
 }
 
@@ -581,14 +583,83 @@ function fileThumb(file) {
   return new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file); });
 }
 
-/* ============================ STEP 4 · REVIEW ============================ */
+/* =========================== STEP 4 · DOCUMENTS ===========================
+   Photograph or upload the supporting papers. Each is read on the spot by the
+   live OCR (RC, licence, policy, estimate, FIR) - the same engine the officer
+   sees. doc_type values match the OCR extractors + the DB constraint. */
+const DOC_TYPES = [
+  { k: "rc_copy", t: "Registration Certificate (RC)", hint: "front of the RC book / smart-card" },
+  { k: "driving_licence", t: "Driving licence", hint: "the driver's licence" },
+  { k: "policy_copy", t: "Policy copy", hint: "your insurance policy schedule" },
+  { k: "repair_estimate", t: "Repair estimate", hint: "garage quotation, if you have one" },
+  { k: "fir", t: "FIR / police report", hint: "for theft, third-party or severe damage" },
+];
+
+function docSummary(d) {
+  const f = d.fields || {};
+  for (const k of ["registration_no", "dl_number", "policy_no", "amount", "fir_number"]) {
+    if (f[k]) return `✓ read · ${esc(hz(k))} ${esc(String(f[k]))}`;
+  }
+  return d.engine ? `✓ read (${Math.round((d.confidence || 0) * 100)}% confidence)` : "added";
+}
+
+function stepDocuments(el) {
+  const n = C.documents.length;
+  el.innerHTML = `
+    <div class="cx-card">
+      <div class="cx-eyebrow">Step 4 · Supporting documents</div>
+      <h1 class="cx-h">Add your documents</h1>
+      <p class="cx-lede">Photograph or upload the papers for your claim. Your RC and policy help us verify and settle faster - each one is read instantly.</p>
+      <div class="cx-doclist">
+        ${DOC_TYPES.map(dt => {
+          const got = C.documents.filter(d => d.doc_type === dt.k);
+          const last = got[got.length - 1];
+          return `<div class="cx-doc ${got.length ? "got" : ""}">
+            <div class="cx-doc-main">
+              <div class="cx-doc-t">${esc(dt.t)}${got.length ? ` <span class="cx-doc-n">${got.length}</span>` : ""}</div>
+              <div class="cx-doc-h">${got.length ? docSummary(last) : esc(dt.hint)}</div>
+            </div>
+            <button type="button" class="cx-btn ghost sm" data-dt="${dt.k}">${got.length ? "＋ Add" : "Add"}</button>
+          </div>`;
+        }).join("")}
+      </div>
+      <input type="file" id="docfile" accept="image/*,.pdf" style="display:none">
+      <div id="docstatus" class="cx-docstatus"></div>
+      <div class="cx-cam-note">Optional but recommended. A photo or a PDF/scan both work - your phone will offer its camera or files.</div>
+      <div class="cx-actions">
+        <button type="button" class="cx-btn ghost" onclick="CX.go('photos')">Back</button>
+        <button type="button" class="cx-btn primary" id="docNext">${n ? "Review my claim" : "Skip &amp; review my claim"}</button>
+      </div>
+    </div>`;
+  const file = $("docfile");
+  let pendingType = "other";
+  el.querySelectorAll("[data-dt]").forEach(b => b.onclick = () => { pendingType = b.dataset.dt; file.click(); });
+  file.onchange = () => { if (file.files && file.files[0]) uploadDoc(file.files[0], pendingType); file.value = ""; };
+  $("docNext").onclick = () => go("review");
+}
+
+async function uploadDoc(f, docType) {
+  const st = $("docstatus");
+  if (st) st.innerHTML = `<span class="cx-spin"></span> Reading ${esc(f.name)}…`;
+  try {
+    const fd = new FormData(); fd.append("file", f); fd.append("doc_type", docType || "other");
+    const r = await api(`/api/claims/${C.claimId}/documents`, { method: "POST", body: fd });
+    C.documents.push({ doc_type: docType || "other", filename: f.name,
+      fields: r.fields || {}, engine: r.engine, confidence: r.confidence });
+    stepDocuments(app());   // re-render so the row shows what was read
+  } catch (e) {
+    if (st) st.innerHTML = `<span style="color:var(--bad)">Couldn't read that document - try again</span>`;
+  }
+}
+
+/* ============================ STEP 5 · REVIEW ============================ */
 function stepReview(el) {
   const p = C.policy, I = C.incident;
   const inc = INCIDENTS.find(x => x.k === I.type);
   const worst = C.photos.map(x => x.damage?.severity).filter(Boolean);
   el.innerHTML = `
     <div class="cx-card">
-      <div class="cx-eyebrow">Step 4 · Review &amp; submit</div>
+      <div class="cx-eyebrow">Step 5 · Review &amp; submit</div>
       <h1 class="cx-h">Does this look right?</h1>
       <div style="margin-top:14px">
         <div class="cx-kv"><span class="k">Vehicle</span><span class="v">${esc(p.make)} ${esc(p.model)}</span></div>
@@ -597,12 +668,13 @@ function stepReview(el) {
         <div class="cx-kv"><span class="k">Date</span><span class="v">${esc(I.date)}</span></div>
         <div class="cx-kv"><span class="k">Photos</span><span class="v">${C.photos.length}</span></div>
         ${(C.videos && C.videos.length) ? `<div class="cx-kv"><span class="k">Scene videos</span><span class="v">${C.videos.length}</span></div>` : ""}
+        <div class="cx-kv"><span class="k">Documents</span><span class="v">${C.documents.length}</span></div>
         ${I.amount ? `<div class="cx-kv"><span class="k">Your estimate</span><span class="v">${money(I.amount)}</span></div>` : ""}
         ${worst.length ? `<div class="cx-kv"><span class="k">AI damage read</span><span class="v">${esc([...new Set(worst)].join(", "))}</span></div>` : ""}
       </div>
       <div class="cx-note"><span>🔒</span><div>Filing a false claim is an offence. By submitting you confirm these details are accurate.</div></div>
       <div class="cx-actions">
-        <button type="button" class="cx-btn ghost" onclick="CX.go('photos')">Back</button>
+        <button type="button" class="cx-btn ghost" onclick="CX.go('documents')">Back</button>
         <button type="button" class="cx-btn primary" id="submit">Submit claim</button>
       </div>
     </div>`;

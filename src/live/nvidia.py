@@ -24,6 +24,36 @@ from dataclasses import dataclass
 
 BASE_URL = os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1")
 TIMEOUT = int(os.getenv("NVIDIA_TIMEOUT", "90"))
+# OCR reads dense documents and is far slower than a chat turn (a full-res RC scan
+# has spiked to ~145s), so it gets its own, longer budget. Downscaling first keeps
+# most calls well under it.
+OCR_TIMEOUT = int(os.getenv("NVIDIA_OCR_TIMEOUT", "150"))
+OCR_MAX_DIM = int(os.getenv("NVIDIA_OCR_MAX_DIM", "1600"))
+
+
+def _downscale_for_ocr(data: bytes, max_dim: int = OCR_MAX_DIM) -> bytes:
+    """Shrink an oversized document image before OCR - smaller payload + faster,
+    more reliable inference (1600px long side keeps document text legible). Falls
+    back to the raw bytes if Pillow is missing or the image can't be decoded."""
+    try:
+        import io
+
+        from PIL import Image
+
+        im = Image.open(io.BytesIO(data)).convert("RGB")
+        w, h = im.size
+        scale = min(1.0, max_dim / max(w, h))
+        # Already small and lightweight -> leave it as-is.
+        if scale >= 1.0 and len(data) < 400_000:
+            return data
+        if scale < 1.0:
+            im = im.resize((max(1, int(w * scale)), max(1, int(h * scale))), Image.LANCZOS)
+        buf = io.BytesIO()
+        im.save(buf, "JPEG", quality=85)
+        out = buf.getvalue()
+        return out if out else data
+    except Exception:
+        return data
 
 
 @dataclass
@@ -92,7 +122,7 @@ def resolve_model(key: str, preferred: str) -> str:
     return preferred
 
 
-def _post(path: str, key: str, body: dict) -> dict:
+def _post(path: str, key: str, body: dict, timeout: int | None = None) -> dict:
     req = urllib.request.Request(
         f"{BASE_URL}{path}",
         data=json.dumps(body).encode(),
@@ -103,12 +133,12 @@ def _post(path: str, key: str, body: dict) -> dict:
         },
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+    with urllib.request.urlopen(req, timeout=timeout or TIMEOUT) as r:
         return json.loads(r.read().decode())
 
 
 def _chat(key: str, model: str, content, max_tokens: int = 1800,
-          temperature: float = 0.2, _tries: int = 0) -> NvResult:
+          temperature: float = 0.2, _tries: int = 0, timeout: int | None = None) -> NvResult:
     if not key:
         return NvResult(False, error="no NVIDIA key set", model=model)
 
@@ -121,7 +151,7 @@ def _chat(key: str, model: str, content, max_tokens: int = 1800,
         "stream": False,
     }
     try:
-        data = _post("/chat/completions", key, body)
+        data = _post("/chat/completions", key, body, timeout=timeout)
         txt = data["choices"][0]["message"]["content"]
         return NvResult(True, text=txt, model=model)
     except urllib.error.HTTPError as e:
@@ -136,14 +166,14 @@ def _chat(key: str, model: str, content, max_tokens: int = 1800,
             _dead.add(model)
             nxt = resolve_model(key, "")
             if nxt and nxt != model:
-                return _chat(key, nxt, content, max_tokens, temperature, _tries + 1)
+                return _chat(key, nxt, content, max_tokens, temperature, _tries + 1, timeout)
         return NvResult(False, error=f"HTTP {e.code}: {detail}", model=model)
     except Exception as e:  # network, timeout, shape
         # NIM occasionally stalls on first token. One retry costs little and
         # removes most transient failures during a live demo.
         msg = str(e)
         if _tries < 1 and ("timed out" in msg.lower() or "timeout" in msg.lower()):
-            return _chat(key, model, content, max_tokens, temperature, _tries + 1)
+            return _chat(key, model, content, max_tokens, temperature, _tries + 1, timeout)
         return NvResult(False, error=msg, model=model)
 
 
@@ -158,7 +188,7 @@ def _img_content(data: bytes, prompt: str, mime: str = "image/jpeg") -> list:
 # --------------------------------------------------------------------------- #
 # OCR - Nemotron OCR v2
 # --------------------------------------------------------------------------- #
-def ocr_document(data: bytes, doc_type: str = "other") -> NvResult:
+def ocr_document(data: bytes, doc_type: str = "other", _retry: bool = True) -> NvResult:
     key = os.getenv("NVIDIA_OCR_KEY", "").strip()
     # Default to the vision model (reads document text accurately as an image);
     # the hosted nemotron-ocr-v2 function 404s on many accounts. Overridable via
@@ -174,7 +204,16 @@ def ocr_document(data: bytes, doc_type: str = "other") -> NvResult:
         f"(declared type: {doc_type}). Return the raw text verbatim, preserving "
         "line breaks. Do not summarise, do not add commentary."
     )
-    return _chat(key, model, _img_content(data, prompt), max_tokens=2500, temperature=0.0)
+    # Downscale a heavy scan first (smaller payload + faster inference), give OCR
+    # its own longer timeout, and re-OCR once if the model returns nothing - the
+    # empty result on a slow doc is usually a transient stall, not a real blank.
+    img = _downscale_for_ocr(data)
+    res = _chat(key, model, _img_content(img, prompt),
+                max_tokens=2500, temperature=0.0, timeout=OCR_TIMEOUT)
+    if _retry and (not res.ok or not (res.text or "").strip()):
+        res = _chat(key, model, _img_content(img, prompt),
+                    max_tokens=2500, temperature=0.0, timeout=OCR_TIMEOUT)
+    return res
 
 
 # --------------------------------------------------------------------------- #

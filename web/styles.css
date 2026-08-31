@@ -321,8 +321,6 @@ input:focus,select:focus,textarea:focus{border-color:var(--blue);
 .wf-row.total .amt{font-size:17px;font-weight:700;color:var(--l1-fg)}
 
 /* ---- CollusionGraph ---- */
-.cg{width:100%;height:260px;display:block;background:
-  radial-gradient(circle at 50% 45%,rgba(30,111,217,.06),transparent 62%);border-radius:10px}
 
 /* ---- StatusTracker ---- */
 .track{display:flex;align-items:flex-start;gap:0;margin:4px 0}
