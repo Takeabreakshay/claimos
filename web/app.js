@@ -381,9 +381,9 @@ async function renderDashboard(el) {
 
     <section class="lp-band">
       ${dashBand(n, "claims in the book")}
-      ${dashBand(pct(d.touchless_share), "settled touchless", "var(--l1-fg)")}
-      ${dashBand(pct(d.leakage_rate, 2), "Lane-1 leakage \u00B7 ceiling " + pct(d.leakage_ceiling, 1), leakOk ? "var(--good)" : "var(--bad)")}
-      ${dashBand(money(d.total_exposure), "exposure under management")}
+      ${dashBand((mix.lane1_touchless || 0), "in the Lane-1 touchless bucket", "var(--l1-fg)")}
+      ${dashBand(money(d.leakage_exposure || 0), "Lane-1 leakage \u00B7 exposure to management", leakOk ? "var(--good)" : "var(--bad)")}
+      ${dashBand(money(d.total_exposure), "book value under management")}
     </section>
 
     <section class="lp-section">

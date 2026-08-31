@@ -378,6 +378,10 @@ def dashboard() -> dict[str, Any]:
     fraud_flagged = [c["claim_id"] for c, s in rows if (s.get("p_fraud") or 0) >= 0.5]
     leaked = [c["claim_id"] for c, s in rows
               if c.get("lane") == "lane1_touchless" and (s.get("p_fraud") or 0) >= 0.5]
+    # Leakage as a rupee figure - the amount auto-cleared in Lane 1 that the fraud
+    # model would flag: the exposure the touchless lane hands to management.
+    leakage_exposure = sum(float(c.get("claim_amount") or 0) for c, s in rows
+                           if c.get("lane") == "lane1_touchless" and (s.get("p_fraud") or 0) >= 0.5)
     settled = [c for c, _ in rows if c.get("status") == "paid"]
     exposure = sum(float(c.get("claim_amount") or 0) for c, _ in rows)
 
@@ -393,6 +397,7 @@ def dashboard() -> dict[str, Any]:
         "fraud_flagged": len(fraud_flagged),
         "leaked_claims": leaked,
         "leakage_rate": (len(leaked) / touchless) if touchless else 0,
+        "leakage_exposure": leakage_exposure,
         "leakage_ceiling": constants.load_thresholds()["guardrails"]["lane1_leakage_ceiling"],
         "settled": len(settled),
         "total_exposure": exposure,
