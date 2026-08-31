@@ -137,15 +137,45 @@ def _post(path: str, key: str, body: dict, timeout: int | None = None) -> dict:
         return json.loads(r.read().decode())
 
 
+def strip_reasoning(text: str) -> str:
+    """Return only the model's answer - drop any chain-of-thought.
+
+    Reasoning models (Nemotron, etc.) can emit their working before the answer,
+    either wrapped in <think>...</think> tags or as a preamble. This keeps only
+    the final note so the officer never sees the model thinking out loud."""
+    import re
+    t = text or ""
+    # Remove complete <think>/<thinking>/<reasoning> blocks.
+    t = re.sub(r"<\s*(think|thinking|reasoning)\s*>.*?<\s*/\s*\1\s*>", "", t,
+               flags=re.I | re.S)
+    # An unclosed opener (truncated) or a stray closer: keep what follows it.
+    if re.search(r"<\s*/\s*(think|thinking|reasoning)\s*>", t, re.I):
+        t = re.split(r"<\s*/\s*(?:think|thinking|reasoning)\s*>", t, flags=re.I)[-1]
+    t = re.sub(r"<\s*/?\s*(think|thinking|reasoning)\s*>", "", t, flags=re.I)
+    # Strip markdown fences, bold markers, and label prefixes the model sometimes adds.
+    t = t.strip().removeprefix("```").removesuffix("```").strip()
+    t = t.replace("**", "").replace("__", "")
+    t = re.sub(r"^\s*(officer[' ]?s?\s*note|note|answer|final answer|response|decision)\s*[:\-]\s*",
+               "", t, flags=re.I).strip()
+    # Drop inline label runs like "Decision: ... Next Action: ..." -> keep the prose.
+    t = re.sub(r"\b(Next Action|Next Step|Key Flag|Decision|Rationale)\s*:\s*", "", t, flags=re.I)
+    return re.sub(r"\s+\n", "\n", t).strip()
+
+
 def _chat(key: str, model: str, content, max_tokens: int = 1800,
-          temperature: float = 0.2, _tries: int = 0, timeout: int | None = None) -> NvResult:
+          temperature: float = 0.2, _tries: int = 0, timeout: int | None = None,
+          system: str | None = None) -> NvResult:
     if not key:
         return NvResult(False, error="no NVIDIA key set", model=model)
 
     model = resolve_model(key, model)
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": content})
     body = {
         "model": model,
-        "messages": [{"role": "user", "content": content}],
+        "messages": messages,
         "max_tokens": max_tokens,
         "temperature": temperature,
         "stream": False,
@@ -166,14 +196,14 @@ def _chat(key: str, model: str, content, max_tokens: int = 1800,
             _dead.add(model)
             nxt = resolve_model(key, "")
             if nxt and nxt != model:
-                return _chat(key, nxt, content, max_tokens, temperature, _tries + 1, timeout)
+                return _chat(key, nxt, content, max_tokens, temperature, _tries + 1, timeout, system)
         return NvResult(False, error=f"HTTP {e.code}: {detail}", model=model)
     except Exception as e:  # network, timeout, shape
         # NIM occasionally stalls on first token. One retry costs little and
         # removes most transient failures during a live demo.
         msg = str(e)
         if _tries < 1 and ("timed out" in msg.lower() or "timeout" in msg.lower()):
-            return _chat(key, model, content, max_tokens, temperature, _tries + 1, timeout)
+            return _chat(key, model, content, max_tokens, temperature, _tries + 1, timeout, system)
         return NvResult(False, error=msg, model=model)
 
 
@@ -226,21 +256,38 @@ def claim_narrative(payload: dict) -> NvResult:
     like a human wrote it. Never invents numbers - it is handed the decision.
     """
     key = os.getenv("NVIDIA_LLM_KEY", "").strip()
-    model = os.getenv("NVIDIA_LLM_MODEL", "moonshotai/kimi-k2-instruct").strip()
+    # Use a straight instruction-follower, NOT a reasoning model. Nemotron-super /
+    # nano dump their chain-of-thought as plain prose (no <think> tags) and burn
+    # the token budget before writing the note; the vision-instruct model answers
+    # cleanly. Overridable via NVIDIA_NOTE_MODEL.
+    model = os.getenv("NVIDIA_NOTE_MODEL", "meta/llama-3.2-11b-vision-instruct").strip()
     prompt = (
-        "You are a senior motor-claims officer at an Indian general insurer.\n"
-        "Write a 2-3 sentence decision note for the claim file: what the system "
-        "decided, the single most important reason, and the next action.\n\n"
+        "You are a senior motor-claims officer at an Indian general insurer, "
+        "writing the decision note for a claim file.\n\n"
+        "Write EXACTLY 2 tight sentences (max ~45 words total):\n"
+        "1. The decision and the single fact that drove it - lead with the number "
+        "or flag that matters most.\n"
+        "2. The one next action the handling officer should take.\n\n"
         "STRICT RULES:\n"
-        "- Use ONLY the facts given. Never invent numbers, reasons or outcomes.\n"
-        "- The 'decision' field is authoritative. Do NOT contradict it. If the "
-        "decision is an approval, do not describe it as a rejection (or vice versa).\n"
-        "- 'coverage_status' describes policy eligibility checks. 'No rule hits' "
-        "means the policy IS valid and eligible - it does NOT mean uncovered.\n"
-        "- Plain English, no jargon, no bullet points.\n\n"
+        "- Output ONLY the two sentences. No preamble, no reasoning, no headings, "
+        "no labels (no 'Decision:', 'Next action:'), no bold, no asterisks, no "
+        "markdown, no bullet points - just plain flowing prose.\n"
+        "- Use ONLY the facts given; never invent numbers, reasons or outcomes.\n"
+        "- The 'decision' field is authoritative - never contradict it (an approval "
+        "is not a rejection).\n"
+        "- 'coverage_status' is an eligibility check: 'No rule hits' means the policy "
+        "IS valid and eligible - it does NOT mean uncovered.\n"
+        "- Plain, confident English an underwriter would write.\n\n"
         "FACTS:\n" + json.dumps(payload, default=str, indent=1)
     )
-    return _chat(key, model, prompt, max_tokens=400, temperature=0.3)
+    # 'detailed thinking off' suppresses any Nemotron reasoning at the source (for a
+    # swapped-in model); strip_reasoning() cleans whatever slips through, so the
+    # officer only ever sees the note itself.
+    res = _chat(key, model, prompt, max_tokens=300, temperature=0.3,
+                system="detailed thinking off")
+    if res.ok:
+        res.text = strip_reasoning(res.text)
+    return res
 
 
 # A vision-capable default so damage assessment works even if NVIDIA_VLM_MODEL
