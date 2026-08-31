@@ -843,7 +843,7 @@ async function renderDecision(el) {
     ${statusTracker(c)}
     <div class="card" style="margin-bottom:16px"><div class="card-b" style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
       <div><div class="eyebrow">Routing decision</div>
-        <div style="margin-top:8px" id="laneSlot">${laneChip(s.lane)}</div></div>
+        <div style="margin-top:8px" id="laneSlot">${laneChip(c.lane || s.lane)}</div></div>
       <div style="height:42px;width:1px;background:var(--line)"></div>
       <div><div class="eyebrow">Claim</div><div class="mono" style="font-weight:700;margin-top:6px">${esc(c.claim_id)}</div></div>
       <div><div class="eyebrow">Claimed</div><div class="num" style="font-weight:700;margin-top:6px">${money(c.claim_amount)}</div></div>
